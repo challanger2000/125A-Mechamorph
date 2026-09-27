@@ -1,0 +1,18 @@
+internal_id,source_file,role,start_s,end_s,priority,notes
+projector_start,projector35mm_0071.wav,START,0.0,5.2,P0,Real engagement and acceleration
+projector_run,projector35mm_0071.wav,RUN,5.0,18.0,P0,Stable transport bed
+projector_stop,projector35mm_0071.wav,STOP,27.0,40.7,P0,Long mechanical run-down
+press_run_a,heidelberg_press_3409.wav,RUN,2.0,15.0,P0,Heavy cyclic industrial bed
+press_load,heidelberg_press_3409.wav,LOAD,15.0,22.0,P0,Heavier reinforcement section
+calc_action_01,calculator_printer_3553.wav,ACTION,0.96,1.64,P0,Index/calculator burst
+calc_action_02,calculator_printer_3553.wav,ACTION,3.06,3.74,P0,Index/calculator burst
+calc_action_03,calculator_printer_3553.wav,ACTION,5.28,5.96,P0,Index/calculator burst
+calc_action_04,calculator_printer_3553.wav,ACTION,7.21,7.89,P1,Index/calculator burst
+switch_01,old_switch_0540.wav,ACTION,0.15,0.51,P0,Old switch contact
+switch_02,old_switch_0540.wav,ACTION,3.04,3.40,P0,Old switch contact
+switch_03,old_switch_0540.wav,ACTION,6.21,6.57,P0,Old switch contact
+switch_04,old_switch_0540.wav,ACTION,9.40,9.76,P0,Old switch contact
+switch_05,old_switch_0540.wav,RELEASE,12.50,12.86,P1,Old switch return/contact
+slide_action_01,slide_projector_0867.wav,ACTION,6.21,7.14,P0,Slide index mechanism
+slide_action_02,slide_projector_0867.wav,ACTION,9.60,10.53,P0,Slide index mechanism
+slide_action_03,slide_projector_0867.wav,ACTION,14.52,15.45,P1,Slide index mechanism
