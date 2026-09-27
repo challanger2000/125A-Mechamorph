@@ -175,7 +175,8 @@ void Engine::spawn(Role role, float force, bool preferLoop) noexcept {
     if (role == Role::Run) {
         const float speed = clamp01(params_.speed);
         rate = (0.65f + 0.85f * speed) * sampleRateRatio;
-        gain *= 0.55f + 0.30f * load;
+        // Load should feel heavier/slower, not simply louder.
+        gain *= 0.62f - 0.10f * load;
     } else {
         rate *= sampleRateRatio;
         rate *= 1.0f + (0.008f + 0.025f * wear) * rng_.bipolar();
@@ -249,10 +250,12 @@ void Engine::triggerAction(float force) noexcept {
         const int secondary = static_cast<int>(3.0f * clatter * (0.4f + wear));
         for (int i = 0; i < secondary; ++i) {
             const float ms = 5.0f + 28.0f * rng_.uniform01();
+            // Secondary backlash/re-contact is still an ACTION/contact event.
+            // Never use RELEASE material as generic clatter.
             schedule(
-                Role::Release,
+                Role::Action,
                 static_cast<int>(ms * 0.001f * sampleRate_),
-                force * (0.35f + 0.25f * rng_.uniform01()));
+                force * (0.18f + 0.18f * rng_.uniform01()));
         }
     }
 }
@@ -270,7 +273,7 @@ void Engine::setLoadActive(bool active) noexcept {
     } else {
         if (state_ == State::Loaded)
             state_ = State::Releasing;
-        spawn(Role::Release, 0.8f);
+        spawn(Role::Release, 0.52f);
     }
 }
 
