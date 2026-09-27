@@ -1,0 +1,27 @@
+category,asset,author,format,sample_rate,bit_depth,channels,license,status,intended_use,source
+clockwork,"clock / music-box spring mechanism wind-up",OrbitalChiller,WAV,96000,16,stereo,CC0,approved-candidate,"spring drive; wind-up texture; crank reference",https://freesound.org/people/OrbitalChiller/sounds/171233/
+clockwork,"Clock Wind.wav",adeluc4,WAV,48000,24,stereo,CC0,approved-candidate,"winding key; clock spring; dry ratchet texture",https://freesound.org/people/adeluc4/sounds/125320/
+clockwork,"Clock Wind Sounds",BMacZero,WAV,unknown,unknown,unknown,CC0,approved-candidate,"multiple clock wind and ticking variants",https://opengameart.org/content/clock-wind-sounds
+clockwork,"Tick and Tock",cemkalyoncu,WAV,unknown,unknown,unknown,CC0,approved-candidate,"isolated clock tick transients",https://opengameart.org/content/tick-and-tock
+crank,"Wind-up sound",Breviceps,WAV,44100,16,stereo,CC0,approved-candidate,"short crank / handle / winding transient",https://freesound.org/people/Breviceps/sounds/445966/
+crank,"Wooden Crank, Handle with rope, winding.wav",aUREa,WAV,44100,24,stereo,CC0,approved-candidate,"wood crank squeal; handle motion; friction",https://freesound.org/people/aUREa/sounds/491705/
+crank,"Hand cranked water pump 2024 09 07",Sadiquecat,WAV,48000,24,stereo,CC0,approved-candidate,"continuous rotary hand-crank mechanism; physical cadence",https://freesound.org/people/Sadiquecat/sounds/753804/
+air,"air_pump",loganzsound,WAV,48000,24,stereo,CC0,approved-candidate,"pump pressure; air movement; leak/chuff extraction",https://freesound.org/people/loganzsound/sounds/774227/
+air,"Air pump",vollkornbrot,WAV,48000,16,mono,CC0,approved-candidate,"manual pumping; pressure cycles",https://freesound.org/people/vollkornbrot/sounds/240126/
+air,"air-pump-motor.aif",alienistcog,AIFF,44100,16,stereo,CC0,approved-candidate,"continuous air machinery reference; filtered turbulence",https://freesound.org/people/alienistcog/sounds/124426/
+leather,"Leather Creak / Stretching",IENBA,WAV,48000,24,mono,CC0,approved-candidate,"bellows/leather fold creak approximation",https://freesound.org/people/IENBA/sounds/536187/
+leather,"Leather - Rub & creaks",Vrymaa,WAV,44100,16,mono,CC0,approved-candidate,"clean close leather friction / fold movement",https://freesound.org/people/Vrymaa/sounds/734630/
+leather,"belt leather creaking",breadparticles,FLAC,44100,16,mono,CC0,approved-candidate,"continuous leather creak variation",https://freesound.org/people/breadparticles/sounds/584396/
+leather,"boots_leather_bend_creaking_squeeze.wav",EricsSoundschmiede,WAV,44100,16,mono,CC0,approved-candidate,"short fold/bend squeaks; bellows detail layer",https://freesound.org/people/EricsSoundschmiede/sounds/454624/
+hinge,"creaky door hinge.wav",chonkdonk,WAV,48000,24,stereo,CC0,approved-candidate,"dry hinge squeak; friction model reference",https://freesound.org/people/chonkdonk/sounds/619819/
+hinge,"Old cave door opening side XY - opening 1",Sadiquecat,WAV,192000,24,stereo,CC0,approved-candidate,"high-resolution old hinge/wood friction; spectral study",https://freesound.org/people/Sadiquecat/sounds/801773/
+hinge,"Squeaky Metal Door",Breviceps,WAV,44100,16,stereo,CC0,approved-candidate,"metal hinge squeal; stick-slip reference",https://freesound.org/people/Breviceps/sounds/515289/
+chain,"Big Metal Chain",qubodup,FLAC,44100,24,stereo,CC0,approved-candidate,"heavy chain through mechanism; drag/rattle",https://freesound.org/people/qubodup/sounds/199282/
+ratchet,"Ratchet Wrench Avg Speed Multiple",Rudmer_Rotteveel,WAV,44100,16,stereo,CC0,approved-candidate,"ratchet pulse train; average speed",https://freesound.org/people/Rudmer_Rotteveel/sounds/591524/
+ratchet,"Ratchet Wrench Slow Multiple",Rudmer_Rotteveel,WAV,44100,16,stereo,CC0,approved-candidate,"ratchet pulse train; slow speed",https://freesound.org/people/Rudmer_Rotteveel/sounds/591528/
+mechanism,"Old Mechanism",qubodup,FLAC,44100,16,stereo,CC0,approved-candidate,"compound old mechanism; raising/extending motion",https://freesound.org/people/qubodup/sounds/187853/
+spring,"Spring sounds",bart,7z/WAV,unknown,unknown,unknown,CC0,approved-candidate,"door spring; boing and resonant spring textures",https://opengameart.org/content/spring-sounds
+metal,"Mechanical Explosion",Spring Spring,WAV,unknown,unknown,unknown,CC0,reference-candidate,"dense clattering metal; decomposition reference",https://opengameart.org/content/mechanical-explosion
+cassette-mechanism,"Tape Recorder Opening and Closing Sound Effects",Spring Spring,WAV,unknown,unknown,unknown,CC0,approved-candidate,"machine latch/clank; enclosure mechanism",https://opengameart.org/content/tape-recorder-opening-and-closing-sound-effects
+clock,"Grandmother clock ticking",tryl,WAV,96000,24,mono,CC-BY-4.0,attribution-required,"high-quality escapement/tick reference",https://freesound.org/people/tryl/sounds/475356/
+crank,"Metal creaking and squeaking, turning a crank handle",YleArkisto,WAV,48000,24,stereo,CC-BY-4.0,attribution-required,"historical metal screw-crank; friction and mechanical cadence",https://freesound.org/s/268234/
