@@ -71,7 +71,6 @@ void MechanicalDrive::prepare(double sampleRate) noexcept {
 }
 
 void MechanicalDrive::reset() noexcept {
-    drift_ = 0.0f;
 }
 
 void MechanicalDrive::process(const Parameters& p, MechanicalState& state) noexcept {
@@ -121,7 +120,9 @@ void ModalResonator::setModes(const ModalMode* modes, std::size_t count) noexcep
         auto& m = modes_[i];
         m.a1 = 2.0f * r * std::cos(theta);
         m.a2 = -(r * r);
-        m.b0 = modes[i].gain * (1.0f - r);
+        // Mode gain is defined as direct impulse excitation strength.
+        // Final gains remain EMPIRICALLY TUNED until reference measurements exist.
+        m.b0 = modes[i].gain;
         m.z1 = 0.0f;
         m.z2 = 0.0f;
     }
@@ -157,8 +158,8 @@ float AirEngine::process(const Parameters& p, MechanicalState& state, Determinis
 
     // Prototype rates are expressed per second so behaviour remains sample-rate invariant.
     const float inflowPerSecond = air * (0.35f + 1.15f * phasePump);
-    const float leakPerSecond = 0.18f + 0.90f * state.wear;
-    const float consumptionPerSecond = 0.55f * state.inputEnvelope * air;
+    const float leakPerSecond = 0.04f + 0.30f * state.wear;
+    const float consumptionPerSecond = 0.20f * state.inputEnvelope * air;
 
     state.pressure = std::clamp(
         state.pressure + dt * (inflowPerSecond - leakPerSecond - consumptionPerSecond),
@@ -252,12 +253,12 @@ void Core::prepare(double sampleRate, std::size_t /*maxBlockSize*/) noexcept {
     // Placeholder prototype body. All values are EMPIRICALLY TUNED and
     // must be replaced/calibrated from measurements before product claims.
     const ModalMode wood[] = {
-        { 170.0f, 0.11f, 0.55f },
-        { 315.0f, 0.08f, 0.38f },
-        { 520.0f, 0.07f, 0.26f },
-        { 780.0f, 0.055f, 0.18f },
-        { 1180.0f, 0.045f, 0.12f },
-        { 1760.0f, 0.035f, 0.08f },
+        { 170.0f, 0.11f, 0.080f },
+        { 315.0f, 0.08f, 0.060f },
+        { 520.0f, 0.07f, 0.045f },
+        { 780.0f, 0.055f, 0.030f },
+        { 1180.0f, 0.045f, 0.020f },
+        { 1760.0f, 0.035f, 0.012f },
     };
     body_.setModes(wood, sizeof(wood) / sizeof(wood[0]));
     reset();
