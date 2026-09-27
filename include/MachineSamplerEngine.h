@@ -33,7 +33,7 @@ struct Clip {
 };
 
 struct Pool {
-    static constexpr std::size_t kMaxClips = 16;
+    static constexpr std::size_t kMaxClips = 32;
     std::array<Clip, kMaxClips> clips {};
     std::size_t count = 0;
 
