@@ -247,7 +247,7 @@ tresult PLUGIN_API Processor::getState(IBStream* state) {
 
 uint32 PLUGIN_API Processor::getTailSamples() {
     // Prototype conservative tail: activity release + air pressure decay + body decay.
-    const double samples = std::max(0.0, sampleRate_) * 6.0;
+    const double samples = std::max(0.0, sampleRate_) * 8.0;
     return static_cast<uint32>(std::min<double>(samples, 0xFFFFFFFEu));
 }
 
