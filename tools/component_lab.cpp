@@ -119,6 +119,35 @@ int main(int argc, char** argv) {
         for (auto& s:x) s=clack.process();
 
         const auto m=analyze(x,sr);
+        std::cout<<v.name<<','<<m.peak<<','<<m.rms<<','<<m.centroid<<','<<m.t60ms<<"\n";
+
+        if (!writeFloatWav(prefix+std::string("-")+v.name+".wav",x,static_cast<std::uint32_t>(sr)))
+            return 2;
+    }
+    struct ValveVariant { const char* name; float pressure; float force; double holdMs; };
+    const ValveVariant valves[] = {
+        {"valve_low_pressure", 0.30f, 0.45f, 120.0},
+        {"valve_medium", 0.60f, 0.65f, 160.0},
+        {"valve_high_pressure", 0.90f, 0.85f, 180.0}
+    };
+
+    for (const auto& v : valves) {
+        mechamorph::ValveEngine valve;
+        mechamorph::DeterministicRng rng;
+        rng.seed(0x125A7A1EULL);
+        valve.prepare(sr);
+
+        std::vector<float> x(static_cast<std::size_t>(0.35*sr),0.0f);
+        const std::size_t openAt = static_cast<std::size_t>(0.025*sr);
+        const std::size_t closeAt = openAt + static_cast<std::size_t>(v.holdMs*0.001*sr);
+
+        for (std::size_t i=0;i<x.size();++i) {
+            if (i==openAt) valve.open(v.pressure,v.force,rng);
+            if (i==closeAt) valve.close(v.pressure,v.force,rng);
+            x[i]=valve.process(v.pressure,rng);
+        }
+
+        const auto m=analyze(x,sr);
 
         auto windowRms = [&](std::size_t a, std::size_t b) {
             a = std::min(a,x.size());
@@ -148,35 +177,6 @@ int main(int argc, char** argv) {
                  <<",open_rms="<<openRms
                  <<",hold_rms="<<holdRms
                  <<",close_rms="<<closeRms<<"\n";
-
-        if (!writeFloatWav(prefix+std::string("-")+v.name+".wav",x,static_cast<std::uint32_t>(sr)))
-            return 2;
-    }
-    struct ValveVariant { const char* name; float pressure; float force; double holdMs; };
-    const ValveVariant valves[] = {
-        {"valve_low_pressure", 0.30f, 0.45f, 120.0},
-        {"valve_medium", 0.60f, 0.65f, 160.0},
-        {"valve_high_pressure", 0.90f, 0.85f, 180.0}
-    };
-
-    for (const auto& v : valves) {
-        mechamorph::ValveEngine valve;
-        mechamorph::DeterministicRng rng;
-        rng.seed(0x125A7A1EULL);
-        valve.prepare(sr);
-
-        std::vector<float> x(static_cast<std::size_t>(0.35*sr),0.0f);
-        const std::size_t openAt = static_cast<std::size_t>(0.025*sr);
-        const std::size_t closeAt = openAt + static_cast<std::size_t>(v.holdMs*0.001*sr);
-
-        for (std::size_t i=0;i<x.size();++i) {
-            if (i==openAt) valve.open(v.pressure,v.force,rng);
-            if (i==closeAt) valve.close(v.pressure,v.force,rng);
-            x[i]=valve.process(v.pressure,rng);
-        }
-
-        const auto m=analyze(x,sr);
-        std::cout<<v.name<<','<<m.peak<<','<<m.rms<<','<<m.centroid<<','<<m.t60ms<<"\n";
 
         if (!writeFloatWav(prefix+std::string("-")+v.name+".wav",x,static_cast<std::uint32_t>(sr)))
             return 3;
