@@ -1,6 +1,8 @@
 name: Fetch CC0 Machine Research Audio
 
 on:
+  push:
+    branches: [ "v0.1.0" ]
   workflow_dispatch:
 
 jobs:
@@ -19,11 +21,16 @@ jobs:
           mkdir -p research-fetch/mp3 research-fetch/wav
 
           declare -A files=(
-            [projector35mm_0071]="https://bigsoundbank.com/UPLOAD/mp3/0071.mp3"
-            [heidelberg_press_3409]="https://bigsoundbank.com/UPLOAD/mp3/3409.mp3"
-            [calculator_printer_3553]="https://bigsoundbank.com/UPLOAD/mp3/3553.mp3"
-            [old_switch_0540]="https://bigsoundbank.com/UPLOAD/mp3/0540.mp3"
-            [slide_projector_0867]="https://bigsoundbank.com/UPLOAD/mp3/0867.mp3"
+            [manual_winch_0902]="https://bigsoundbank.com/UPLOAD/mp3/0902.mp3"
+            [large_ratchet_0795]="https://bigsoundbank.com/UPLOAD/mp3/0795.mp3"
+            [sewing_slow_1115]="https://bigsoundbank.com/UPLOAD/mp3/1115.mp3"
+            [sewing_fast_1116]="https://bigsoundbank.com/UPLOAD/mp3/1116.mp3"
+            [large_spring_0206]="https://bigsoundbank.com/UPLOAD/mp3/0206.mp3"
+            [medium_chain_0619]="https://bigsoundbank.com/UPLOAD/mp3/0619.mp3"
+            [air_burst_0138]="https://bigsoundbank.com/UPLOAD/mp3/0138.mp3"
+            [ratchet_rattle_0923]="https://bigsoundbank.com/UPLOAD/mp3/0923.mp3"
+            [roller_shutter_2469]="https://bigsoundbank.com/UPLOAD/mp3/2469.mp3"
+            [stapler_0009]="https://bigsoundbank.com/UPLOAD/mp3/0009.mp3"
           )
 
           for name in "${!files[@]}"; do
@@ -57,34 +64,49 @@ jobs:
         shell: bash
         run: |
           cat > research-fetch/PROVENANCE.txt <<'EOF'
-          BigSoundBank / La Sonothèque sources.
+          BigSoundBank / La Sonothèque CC0 machine research pack 02.
           Each selected source page identifies the file as CC0/public-domain equivalent
           and permits editing, commercial use, and redistribution.
 
-          projector35mm_0071
-          Page: https://bigsoundbank.com/35mm-cinema-projector-7-s0071.html
+          manual_winch_0902
+          Page: https://bigsoundbank.com/manual-winch-2-s0902.html
 
-          heidelberg_press_3409
-          Page: https://bigsoundbank.com/heidelberg-printing-press-6-s3409.html
+          large_ratchet_0795
+          Page: https://bigsoundbank.com/large-ratchet-s0795.html
 
-          calculator_printer_3553
-          Page: https://bigsoundbank.com/calculator-printer-1-s3553.html
+          sewing_slow_1115
+          Page: https://bigsoundbank.com/sewing-machine-slow-speed-s1115.html
 
-          old_switch_0540
-          Page: https://bigsoundbank.com/old-switch-s0540.html
+          sewing_fast_1116
+          Page: https://bigsoundbank.com/sewing-machine-fast-speed-s1116.html
 
-          slide_projector_0867
-          Page: https://bigsoundbank.com/slide-projector-s0867.html
+          large_spring_0206
+          Page: https://bigsoundbank.com/large-spring-s0206.html
+
+          medium_chain_0619
+          Page: https://bigsoundbank.com/medium-chain-s0619.html
+
+          air_burst_0138
+          Page: https://bigsoundbank.com/air-s0138.html
+
+          ratchet_rattle_0923
+          Page: https://bigsoundbank.com/rattle-s0923.html
+
+          roller_shutter_2469
+          Page: https://bigsoundbank.com/manual-roller-shutter-opening-int--s2469.html
+
+          stapler_0009
+          Page: https://bigsoundbank.com/stapler-s0009.html
 
           Research conversion: mono 48 kHz / 24-bit PCM WAV.
-          Original MP3 downloads are also retained in this research artifact.
+          Original MP3 downloads are retained in the artifact.
           EOF
           sha256sum research-fetch/mp3/* research-fetch/wav/* > research-fetch/SHA256SUMS.txt
 
       - name: Upload research pack
         uses: actions/upload-artifact@v4
         with:
-          name: Mechamorph-CC0-Machine-Research-Pack-01
+          name: Mechamorph-CC0-Machine-Research-Pack-02
           path: research-fetch/
           if-no-files-found: error
           retention-days: 7
