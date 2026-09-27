@@ -64,6 +64,10 @@ jobs:
           python3 tools/build_machine_sample_set.py \
             docs/MACHINE-SAMPLE-MANIFEST-02.csv \
             research-sources/wav machine-set
+
+          python3 tools/generate_machine_variants.py \
+            machine-set machine-set
+
           ls -lh machine-set
 
       - name: Download OpenAIR BODY SPACE references
