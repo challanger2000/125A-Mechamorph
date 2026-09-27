@@ -7,3 +7,5 @@ Retry after measurement step wiring fix.
 Retry after adding measurement target to CMake.
 
 Re-run after preserving one-shot transients under WEAR.
+
+Run full ACTION/WEAR/BODY/SPACE QA measurements.
