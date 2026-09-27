@@ -1,0 +1,12 @@
+# Local research audio / generated measurements
+research-audio/originals/*
+research-audio/working/*
+research-audio/measurements/*
+!research-audio/README.md
+!research-audio/**/.gitkeep
+
+# Python research caches
+__pycache__/
+*.pyc
+.venv/
+venv/
