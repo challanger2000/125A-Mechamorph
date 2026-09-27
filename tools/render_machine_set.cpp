@@ -94,6 +94,53 @@ bool loadPcm16MonoWav(const fs::path& path, std::vector<float>& out, int& sample
     return true;
 }
 
+bool contains(const std::string& value, const char* needle) {
+    return value.find(needle) != std::string::npos;
+}
+
+bool profileAllows(const std::string& name, Role role, const std::string& profile) {
+    if (profile.empty() || profile == "all")
+        return true;
+
+    if (profile == "projector") {
+        switch (role) {
+            case Role::Start: return contains(name, "projector");
+            case Role::Run: return contains(name, "projector");
+            case Role::Action: return contains(name, "slide") || contains(name, "switch");
+            case Role::Load: return false;
+            case Role::Release: return contains(name, "switch");
+            case Role::Stop: return contains(name, "projector");
+        }
+    }
+
+    if (profile == "handcrank") {
+        switch (role) {
+            case Role::Start: return contains(name, "winch");
+            case Role::Run: return contains(name, "winch");
+            case Role::Action: return contains(name, "ratchet") || contains(name, "switch");
+            case Role::Load: return contains(name, "chain");
+            case Role::Release: return contains(name, "spring") || contains(name, "winch");
+            case Role::Stop: return contains(name, "winch");
+        }
+    }
+
+    if (profile == "industrial") {
+        switch (role) {
+            case Role::Start: return contains(name, "winch");
+            case Role::Run: return contains(name, "press");
+            case Role::Action:
+                return contains(name, "calc") ||
+                       contains(name, "stapler") ||
+                       contains(name, "ratchet");
+            case Role::Load: return contains(name, "press") || contains(name, "chain");
+            case Role::Release: return contains(name, "air") || contains(name, "spring");
+            case Role::Stop: return contains(name, "winch");
+        }
+    }
+
+    return false;
+}
+
 Role roleFromName(const std::string& name) {
     if (name.rfind("start__", 0) == 0) return Role::Start;
     if (name.rfind("run__", 0) == 0) return Role::Run;
@@ -184,12 +231,14 @@ void renderBlock(Engine& engine, std::vector<float>& out, std::size_t& pos, doub
 
 int main(int argc, char** argv) {
     if (argc < 3) {
-        std::cerr << "usage: machine_real_render <sample_dir> <output.wav>\n";
+        std::cerr << "usage: machine_real_render <sample_dir> <output.wav> [profile]\n";
+        std::cerr << "profiles: all, projector, handcrank, industrial\n";
         return 2;
     }
 
     const fs::path sampleDir = argv[1];
     const fs::path outputPath = argv[2];
+    const std::string profile = argc >= 4 ? argv[3] : "all";
     constexpr int sr = 48000;
 
     std::vector<std::unique_ptr<OwnedClip>> owned;
@@ -207,6 +256,9 @@ int main(int argc, char** argv) {
         clip->name = samplePath.stem().string();
         clip->role = roleFromName(clip->name);
         clip->loop = clip->role == Role::Run;
+
+        if (!profileAllows(clip->name, clip->role, profile))
+            continue;
 
         int fileRate = 0;
         if (!loadPcm16MonoWav(samplePath, clip->audio, fileRate)) {
@@ -269,11 +321,11 @@ int main(int argc, char** argv) {
     engine.setParameters(p);
     renderBlock(engine, out, pos, 5.0, sr);
 
-    p.speed = 0.68f;
+    p.speed = 0.52f;
     p.load = 0.70f;
-    p.action = 0.70f;
-    p.clatter = 0.38f;
-    p.wear = 0.30f;
+    p.action = 0.58f;
+    p.clatter = 0.28f;
+    p.wear = 0.26f;
     engine.setParameters(p);
     engine.setLoadActive(true);
     renderBlock(engine, out, pos, 17.0, sr);
@@ -313,6 +365,7 @@ int main(int argc, char** argv) {
     }
 
     std::cout << "Rendered " << outputPath
+              << " profile=" << profile
               << " peak=" << peak
               << " rms=" << rms
               << " final_state=" << static_cast<int>(engine.state())
