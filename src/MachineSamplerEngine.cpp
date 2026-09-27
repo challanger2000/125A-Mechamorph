@@ -180,8 +180,8 @@ void Engine::spawn(Role role, float force, bool preferLoop) noexcept {
         gain *= 0.62f - 0.10f * load;
     } else {
         rate *= sampleRateRatio;
-        rate *= 1.0f + (0.008f + 0.025f * wear) * rng_.bipolar();
-        gain *= 1.0f + 0.10f * wear * rng_.bipolar();
+        rate *= 1.0f + (0.006f + 0.055f * wear * wear) * rng_.bipolar();
+        gain *= 1.0f + (0.06f + 0.22f * wear * wear) * rng_.bipolar();
     }
 
     std::size_t startOffset = 0;
@@ -245,10 +245,14 @@ void Engine::triggerAction(float force) noexcept {
 
     spawn(Role::Action, force);
 
-    const float clatter = clamp01(params_.clatter);
     const float wear = clamp01(params_.wear);
+    const float clatter = clamp01(
+        0.35f * params_.clatter +
+        0.85f * wear * wear);
+
     if (clatter > 0.0f) {
-        const int secondary = static_cast<int>(3.0f * clatter * (0.4f + wear));
+        const int secondary = static_cast<int>(
+            1.0f + 4.0f * clatter * (0.35f + 0.65f * wear));
         for (int i = 0; i < secondary; ++i) {
             const float ms = 5.0f + 28.0f * rng_.uniform01();
             // Secondary backlash/re-contact is still an ACTION/contact event.
@@ -304,7 +308,10 @@ void Engine::updateMachineState() noexcept {
     const float speedForRate = clamp01(params_.speed);
     const float loadForRate = continuousLoad;
     const double wearEccentricity =
-        1.0 + 0.018 * static_cast<double>(wear) * std::sin(phase_);
+        1.0 +
+        (0.010 + 0.040 * static_cast<double>(wear)) *
+        static_cast<double>(wear) *
+        std::sin(phase_);
     const double runRateScale =
         (0.65 + 0.85 * speedForRate) *
         (1.0 - 0.18 * loadForRate) *
@@ -329,11 +336,29 @@ void Engine::updateMachineState() noexcept {
 
         const bool wrapped = phase_ < previousPhase_;
         if (wrapped || currentSector != previousSector) {
-            const float force =
-                0.55f +
-                0.35f * actionAmount +
-                0.10f * clamp01(params_.load);
-            triggerAction(force);
+            const float loadAmount = clamp01(params_.load);
+
+            // Worn linkages do not hit every contact with identical force.
+            const float forceVariation =
+                1.0f + (0.04f + 0.26f * wear * wear) * rng_.bipolar();
+
+            float force =
+                (0.55f +
+                 0.35f * actionAmount +
+                 0.10f * loadAmount) *
+                forceVariation;
+
+            force = std::clamp(force, 0.15f, 1.25f);
+
+            // Severe wear can occasionally fail to engage a tooth/cam cleanly.
+            // Keep this rare below the creative range.
+            const float missProbability =
+                wear > 0.65f
+                    ? 0.10f * ((wear - 0.65f) / 0.35f)
+                    : 0.0f;
+
+            if (missProbability <= 0.0f || rng_.uniform01() >= missProbability)
+                triggerAction(force);
         }
     }
 
