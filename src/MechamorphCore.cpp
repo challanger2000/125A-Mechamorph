@@ -347,7 +347,8 @@ void Core::prepare(double sampleRate, std::size_t /*maxBlockSize*/) noexcept {
     rng_.seed(0x125A0001ULL);
     analyzer_.prepare(sampleRate_);
     drive_.prepare(sampleRate_);
-    body_.prepare(sampleRate_);
+    bodyL_.prepare(sampleRate_);
+    bodyR_.prepare(sampleRate_);
     air_.prepare(sampleRate_);
     friction_.prepare(sampleRate_);
     rattle_.prepare(sampleRate_);
@@ -362,7 +363,8 @@ void Core::prepare(double sampleRate, std::size_t /*maxBlockSize*/) noexcept {
         { 1180.0f, 0.045f, 0.020f },
         { 1760.0f, 0.035f, 0.012f },
     };
-    body_.setModes(wood, sizeof(wood) / sizeof(wood[0]));
+    bodyL_.setModes(wood, sizeof(wood) / sizeof(wood[0]));
+    bodyR_.setModes(wood, sizeof(wood) / sizeof(wood[0]));
     reset();
 }
 
@@ -371,7 +373,8 @@ void Core::reset() noexcept {
     rng_.seed(0x125A0001ULL);
     analyzer_.reset();
     drive_.reset();
-    body_.reset();
+    bodyL_.reset();
+    bodyR_.reset();
     air_.reset();
     friction_.reset();
     gear_.reset();
@@ -383,8 +386,15 @@ float Core::clamp01(float x) noexcept {
     return std::clamp(std::isfinite(x) ? x : 0.0f, 0.0f, 1.0f);
 }
 
-float Core::processOne(float input) noexcept {
-    input = sanitize(input);
+void Core::processFrame(
+    float inputL,
+    float inputR,
+    bool stereo,
+    float& outputL,
+    float& outputR) noexcept {
+
+    inputL = sanitize(inputL);
+    inputR = sanitize(inputR);
 
     Parameters p = params_;
     p.mechanize = clamp01(p.mechanize);
@@ -396,7 +406,13 @@ float Core::processOne(float input) noexcept {
     p.wear = clamp01(p.wear);
     p.output = clamp01(p.output);
 
-    analyzer_.process(input, state_);
+    // Analyze channel energy without phase cancellation. The mechanical state
+    // remains shared, but each audio channel excites its own matching body.
+    const float analysisInput = stereo
+        ? 0.5f * (std::fabs(inputL) + std::fabs(inputR))
+        : std::fabs(inputL);
+
+    analyzer_.process(analysisInput, state_);
     state_.load = std::clamp(state_.inputEnvelope * p.mechanize, 0.0f, 1.0f);
     drive_.process(p, state_);
 
@@ -406,11 +422,15 @@ float Core::processOne(float input) noexcept {
     const float air = air_.process(p, state_, rng_);
     const float friction = friction_.process(p, state_, rng_);
 
-    const float bodyExcitation =
-        (0.18f * input * p.mechanize) +
+    const float sharedMechanicalExcitation =
         gear + ratchet + rattle + air + friction;
+    const float sourceExcitation = 0.18f * p.mechanize;
 
-    const float body = body_.process(bodyExcitation) * p.body;
+    const float bodyL = bodyL_.process(
+        sourceExcitation * inputL + sharedMechanicalExcitation) * p.body;
+    const float bodyR = stereo
+        ? bodyR_.process(sourceExcitation * inputR + sharedMechanicalExcitation) * p.body
+        : bodyL;
 
     const float directMechanics =
         0.16f * gear +
@@ -419,47 +439,48 @@ float Core::processOne(float input) noexcept {
         air +
         0.35f * friction;
 
-    // True source-to-machine morph:
-    // at higher BODY values part of the untouched source is replaced by the
-    // same resonant structure excited by both source and mechanical events.
-    // This is intentionally different from "dry source + Foley layer".
     const float sourceRetention = 1.0f - 0.55f * p.body;
-    const float mechanized =
-        sourceRetention * input +
-        0.85f * body +
+    const float mechanizedL =
+        sourceRetention * inputL +
+        0.85f * bodyL +
+        directMechanics;
+    const float mechanizedR =
+        sourceRetention * inputR +
+        0.85f * bodyR +
         directMechanics;
 
-    // Exact dry at MECHANIZE=0; full mechanical interpretation at 100%.
     const float wet = clamp01(p.mechanize);
-    float y = (1.0f - wet) * input + wet * mechanized;
+    float yL = (1.0f - wet) * inputL + wet * mechanizedL;
+    float yR = (1.0f - wet) * inputR + wet * mechanizedR;
 
-    // Prototype output mapping: -12 dB .. +12 dB, midpoint = unity.
     const float outputDb = 24.0f * (p.output - 0.5f);
     const float gain = std::pow(10.0f, outputDb / 20.0f);
-    y *= gain;
+    yL *= gain;
+    yR *= gain;
 
-    return sanitize(y);
+    outputL = sanitize(yL);
+    outputR = sanitize(yR);
 }
 
 void Core::process(float* left, float* right, std::size_t frames) noexcept {
     if (!left || frames == 0) return;
 
     if (!right) {
-        for (std::size_t i = 0; i < frames; ++i)
-            left[i] = processOne(left[i]);
+        for (std::size_t i = 0; i < frames; ++i) {
+            float outL = 0.0f;
+            float dummy = 0.0f;
+            processFrame(left[i], 0.0f, false, outL, dummy);
+            left[i] = outL;
+        }
         return;
     }
 
-    // First prototype intentionally derives one shared mechanical state from mono sum
-    // to prevent uncorrelated left/right machine behaviour.
     for (std::size_t i = 0; i < frames; ++i) {
-        const float l = sanitize(left[i]);
-        const float r = sanitize(right[i]);
-        const float mono = 0.5f * (l + r);
-        const float processedMono = processOne(mono);
-        const float delta = processedMono - mono;
-        left[i] = sanitize(l + delta);
-        right[i] = sanitize(r + delta);
+        float outL = 0.0f;
+        float outR = 0.0f;
+        processFrame(left[i], right[i], true, outL, outR);
+        left[i] = outL;
+        right[i] = outR;
     }
 }
 
