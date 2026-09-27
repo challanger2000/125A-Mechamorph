@@ -62,9 +62,33 @@ float Voice::process() noexcept {
     const std::size_t i0 = static_cast<std::size_t>(position_);
     const std::size_t i1 = std::min(i0 + 1, clip_.frames - 1);
     const float frac = static_cast<float>(position_ - static_cast<double>(i0));
-    const float y =
+
+    float y =
         clip_.mono[i0] +
         frac * (clip_.mono[i1] - clip_.mono[i0]);
+
+    if (clip_.loop && clip_.frames > 64) {
+        const std::size_t fadeFrames = std::min<std::size_t>(
+            clip_.frames / 4,
+            std::max<std::size_t>(16, static_cast<std::size_t>(0.006 * clip_.sampleRate)));
+
+        const double fadeStart = static_cast<double>(clip_.frames - fadeFrames);
+        if (position_ >= fadeStart) {
+            const double rel = position_ - fadeStart;
+            const float mix = static_cast<float>(
+                std::clamp(rel / static_cast<double>(fadeFrames), 0.0, 1.0));
+
+            const double startPos = std::clamp(rel, 0.0, static_cast<double>(fadeFrames - 1));
+            const std::size_t s0 = static_cast<std::size_t>(startPos);
+            const std::size_t s1 = std::min(s0 + 1, clip_.frames - 1);
+            const float sFrac = static_cast<float>(startPos - static_cast<double>(s0));
+            const float startY =
+                clip_.mono[s0] +
+                sFrac * (clip_.mono[s1] - clip_.mono[s0]);
+
+            y = (1.0f - mix) * y + mix * startY;
+        }
+    }
 
     position_ += rate_;
 
@@ -87,6 +111,7 @@ void Engine::prepare(double sampleRate) noexcept {
 void Engine::reset() noexcept {
     state_ = State::Stopped;
     phase_ = 0.0;
+    previousPhase_ = 0.0;
     activity_ = 0.0f;
     runLoopSpawned_ = false;
     loadActive_ = false;
@@ -253,9 +278,30 @@ void Engine::updateMachineState() noexcept {
     phaseSpeed *= 1.0 - 0.18 * clamp01(params_.load) * (loadActive_ ? 1.0 : 0.0);
     phaseSpeed *= 1.0 + 0.035 * wear * std::sin(phase_);
 
+    previousPhase_ = phase_;
     phase_ += kTwoPi * phaseSpeed / sampleRate_;
     if (phase_ >= kTwoPi)
         phase_ = std::fmod(phase_, kTwoPi);
+
+    const float actionAmount = clamp01(params_.action);
+    if (actionAmount > 0.0f &&
+        state_ != State::Stopping &&
+        state_ != State::Stopped) {
+
+        const int camsPerRev = 1 + static_cast<int>(std::floor(5.0f * actionAmount));
+        const double sector = kTwoPi / static_cast<double>(camsPerRev);
+        const int previousSector = static_cast<int>(previousPhase_ / sector);
+        const int currentSector = static_cast<int>(phase_ / sector);
+
+        const bool wrapped = phase_ < previousPhase_;
+        if (wrapped || currentSector != previousSector) {
+            const float force =
+                0.55f +
+                0.35f * actionAmount +
+                0.10f * clamp01(params_.load);
+            triggerAction(force);
+        }
+    }
 
     if (state_ == State::Stopping)
         activity_ = std::max(0.0f, activity_ - static_cast<float>(1.0 / (0.35 * sampleRate_)));
