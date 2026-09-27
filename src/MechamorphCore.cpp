@@ -411,17 +411,27 @@ float Core::processOne(float input) noexcept {
         gear + ratchet + rattle + air + friction;
 
     const float body = body_.process(bodyExcitation) * p.body;
-    const float machine =
-        0.55f * body +
+
+    const float directMechanics =
         0.16f * gear +
         0.20f * ratchet +
         0.28f * rattle +
         air +
         0.35f * friction;
 
-    // Exact dry at mechanize=0.
+    // True source-to-machine morph:
+    // at higher BODY values part of the untouched source is replaced by the
+    // same resonant structure excited by both source and mechanical events.
+    // This is intentionally different from "dry source + Foley layer".
+    const float sourceRetention = 1.0f - 0.55f * p.body;
+    const float mechanized =
+        sourceRetention * input +
+        0.85f * body +
+        directMechanics;
+
+    // Exact dry at MECHANIZE=0; full mechanical interpretation at 100%.
     const float wet = clamp01(p.mechanize);
-    float y = input + wet * machine;
+    float y = (1.0f - wet) * input + wet * mechanized;
 
     // Prototype output mapping: -12 dB .. +12 dB, midpoint = unity.
     const float outputDb = 24.0f * (p.output - 0.5f);
