@@ -1,6 +1,8 @@
 name: Prototype CI
 
 on:
+  push:
+    branches: [ "v0.1.0" ]
   workflow_dispatch:
 
 jobs:
@@ -21,7 +23,7 @@ jobs:
       - name: Build prototype, core tests and Steinberg validator
         shell: pwsh
         run: |
-          cmake --build build --config Release --target Mechamorph mechamorph_core_tests mechamorph_component_lab validator --parallel 2
+          cmake --build build --config Release --target Mechamorph mechamorph_core_tests machine_sampler_tests mechamorph_component_lab validator --parallel 2
 
       - name: Test standalone core
         shell: pwsh
