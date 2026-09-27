@@ -179,9 +179,9 @@ jobs:
             "",
             "MIDI: Any Note On starts the machine. It stops when all held notes are released.",
             "",
-            "Parameters: Machine, Speed, Load, Action, Wear, Scale, Space, Output.",
+            "Parameters: Machine, Speed, Load, Action, Wear, Scale, Body, Space, Output.",
             "",
-            "BODY is internal and follows Scale.",
+            "BODY controls machine enclosure/resonance independently; SCALE only couples its physical size slightly."
             "SPACE uses real OpenAIR-derived reflection fingerprints plus a lightweight diffuse tail.",
             "Embedded machine sample material uses CC0 sources documented in the repository manifests."
           )
