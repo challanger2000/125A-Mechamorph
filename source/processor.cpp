@@ -8,6 +8,7 @@
 #include "pluginterfaces/vst/vstspeaker.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstring>
 
@@ -82,22 +83,6 @@ void Processor::updateCoreParameters() {
 }
 
 tresult PLUGIN_API Processor::process(ProcessData& data) {
-    if (data.inputParameterChanges) {
-        const int32 count = data.inputParameterChanges->getParameterCount();
-        for (int32 i = 0; i < count; ++i) {
-            if (auto* q = data.inputParameterChanges->getParameterData(i)) {
-                const int32 points = q->getPointCount();
-                if (points > 0) {
-                    int32 offset = 0;
-                    ParamValue value = 0.0;
-                    if (q->getPoint(points - 1, offset, value) == kResultTrue)
-                        applyParameter(q->getParameterId(), static_cast<float>(value));
-                }
-            }
-        }
-        updateCoreParameters();
-    }
-
     if (data.numSamples <= 0 || data.numInputs < 1 || data.numOutputs < 1)
         return kResultOk;
 
@@ -119,12 +104,103 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
         }
     }
 
-    if (bypass_)
-        return kResultOk;
+    struct QueueCursor {
+        IParamValueQueue* queue = nullptr;
+        int32 nextPoint = 0;
+    };
+    std::array<QueueCursor, 9> cursors {};
+
+    auto slotFor = [](ParamID id) -> int {
+        switch (id) {
+            case kMechanize: return 0;
+            case kCrank: return 1;
+            case kClatter: return 2;
+            case kWobble: return 3;
+            case kAir: return 4;
+            case kBody: return 5;
+            case kWear: return 6;
+            case kOutput: return 7;
+            case kBypass: return 8;
+            default: return -1;
+        }
+    };
+
+    if (data.inputParameterChanges) {
+        const int32 count = data.inputParameterChanges->getParameterCount();
+        for (int32 i = 0; i < count; ++i) {
+            if (auto* q = data.inputParameterChanges->getParameterData(i)) {
+                const int slot = slotFor(q->getParameterId());
+                if (slot >= 0)
+                    cursors[static_cast<std::size_t>(slot)].queue = q;
+            }
+        }
+    }
+
+    auto applyPointsAt = [&](int32 sampleOffset) {
+        bool changed = false;
+        for (auto& cursor : cursors) {
+            if (!cursor.queue) continue;
+            const int32 pointCount = cursor.queue->getPointCount();
+            while (cursor.nextPoint < pointCount) {
+                int32 offset = 0;
+                ParamValue value = 0.0;
+                if (cursor.queue->getPoint(cursor.nextPoint, offset, value) != kResultTrue) {
+                    ++cursor.nextPoint;
+                    continue;
+                }
+                offset = std::clamp(offset, 0, data.numSamples);
+                if (offset > sampleOffset)
+                    break;
+                applyParameter(cursor.queue->getParameterId(), static_cast<float>(value));
+                ++cursor.nextPoint;
+                changed = true;
+            }
+        }
+        if (changed)
+            updateCoreParameters();
+    };
+
+    auto nextAutomationOffset = [&](int32 after) {
+        int32 next = data.numSamples;
+        for (auto& cursor : cursors) {
+            if (!cursor.queue) continue;
+            const int32 pointCount = cursor.queue->getPointCount();
+            if (cursor.nextPoint >= pointCount) continue;
+            int32 offset = 0;
+            ParamValue value = 0.0;
+            if (cursor.queue->getPoint(cursor.nextPoint, offset, value) == kResultTrue) {
+                offset = std::clamp(offset, 0, data.numSamples);
+                if (offset > after)
+                    next = std::min(next, offset);
+            }
+        }
+        return next;
+    };
 
     float* left = out.channelBuffers32[0];
     float* right = channels == 2 ? out.channelBuffers32[1] : nullptr;
-    core_.process(left, right, static_cast<std::size_t>(data.numSamples));
+
+    int32 position = 0;
+    applyPointsAt(0);
+
+    while (position < data.numSamples) {
+        const int32 next = nextAutomationOffset(position);
+        const int32 end = std::max(position + 1, next);
+        const int32 count = std::min(data.numSamples, end) - position;
+
+        if (!bypass_) {
+            core_.process(
+                left + position,
+                right ? right + position : nullptr,
+                static_cast<std::size_t>(count));
+        }
+
+        position += count;
+        applyPointsAt(position);
+    }
+
+    // Preserve any legal point exactly at the block end for the next block.
+    applyPointsAt(data.numSamples);
     return kResultOk;
 }
 
