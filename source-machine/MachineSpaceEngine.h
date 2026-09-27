@@ -22,7 +22,7 @@ private:
     float readHistory(std::size_t delaySamples) const noexcept;
     float renderSparseBody(bool right) const noexcept;
     float renderSparseSpace(bool right) const noexcept;
-    float processTail(float input, bool right) noexcept;
+    void processTailStereo(float input, float& left, float& right) noexcept;
 
     double sampleRate_ = 48000.0;
     float body_ = 0.0f;
