@@ -22,6 +22,8 @@ std::uint32_t u32(const unsigned char* p) noexcept {
            (static_cast<std::uint32_t>(p[3]) << 24);
 }
 
+void moduleAnchor() noexcept {}
+
 bool addClip(
     mechamorph::machine::SampleSet& set,
     const mechamorph::machine::Clip& clip,
@@ -102,24 +104,9 @@ bool MachineAssetBank::load() noexcept {
     if (!GetModuleHandleExW(
             GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
             GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-            reinterpret_cast<LPCWSTR>(&MachineAssetBank::load),
-            &module)) {
-        // Member-function address cannot be used portably as module anchor.
-        // Fall back to the address of this translation unit helper via module
-        // handle lookup of the current process is not sufficient for a VST DLL.
-        module = nullptr;
-    }
-
-    // Use an ordinary free-function address as a reliable DLL anchor.
-    if (!module) {
-        const auto anchor = reinterpret_cast<const wchar_t*>(&u16);
-        if (!GetModuleHandleExW(
-                GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                anchor,
-                &module))
-            return false;
-    }
+            reinterpret_cast<LPCWSTR>(&moduleAnchor),
+            &module))
+        return false;
 
     assets_.reserve(kEmbeddedAssetCount);
 
