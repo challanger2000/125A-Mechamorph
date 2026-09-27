@@ -91,6 +91,36 @@ int main() {
         assert(peak < 8.0f);
     }
 
+    // 6) Regression guard against modal gain runaway under sustained/polyphonic material.
+    {
+        Core musicalCore;
+        musicalCore.prepare(sr, 512);
+        Parameters q;
+        q.mechanize = 0.65f;
+        q.crank = 0.42f;
+        q.clatter = 0.58f;
+        q.wobble = 0.40f;
+        q.air = 0.45f;
+        q.body = 0.62f;
+        q.wear = 0.52f;
+        q.output = 0.42f;
+        musicalCore.setParameters(q);
+
+        std::vector<float> x(static_cast<std::size_t>(2.0 * sr), 0.0f);
+        float peak = 0.0f;
+        for (std::size_t i = 0; i < x.size(); ++i) {
+            const double tt = static_cast<double>(i) / sr;
+            x[i] = static_cast<float>(
+                0.07 * std::sin(2.0 * 3.14159265358979323846 * 110.0 * tt) +
+                0.06 * std::sin(2.0 * 3.14159265358979323846 * 164.81 * tt) +
+                0.05 * std::sin(2.0 * 3.14159265358979323846 * 220.0 * tt));
+        }
+        musicalCore.process(x.data(), nullptr, x.size());
+        assert(finiteBuffer(x));
+        for (float v : x) peak = std::max(peak, std::fabs(v));
+        assert(peak < 1.0f);
+    }
+
     std::cout << "Mechamorph core tests PASS\n";
     return 0;
 }
