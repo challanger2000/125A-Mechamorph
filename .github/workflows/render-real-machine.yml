@@ -1,6 +1,10 @@
 name: Render Real CC0 Machine Core
 
 on:
+  push:
+    branches: [ "v0.1.0" ]
+    paths:
+      - "docs/SCALE-AUDITION-TRIGGER.md"
   workflow_dispatch:
 
 jobs:
@@ -75,18 +79,16 @@ jobs:
           cmake --build build --config Release --target machine_sampler_tests machine_real_render --parallel 2
           ctest --test-dir build -R machine_sampler_tests --output-on-failure
 
-      - name: Render real-sample control auditions
+      - name: Render scale auditions
         shell: bash
         run: |
           mkdir -p real-machine-output
-          for control in wear; do
-            for value in 0.0 0.5 1.0; do
-              tag=${value/./}
-              ./build/machine_real_render \
-                machine-set \
-                real-machine-output/INDUSTRIAL_${control}_${tag}.wav \
-                industrial ${control} ${value}
-            done
+          for value in 0.0 0.5 1.0; do
+            tag=${value/./}
+            ./build/machine_real_render \
+              machine-set \
+              real-machine-output/INDUSTRIAL_scale_${tag}.wav \
+              industrial scale ${value}
           done
 
           cp machine-set/machine_sample_set.json real-machine-output/ || true
