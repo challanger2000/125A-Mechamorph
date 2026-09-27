@@ -168,6 +168,8 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
         source-machine/processor.cpp
         source-machine/controller.h
         source-machine/controller.cpp
+        source-machine/MachineSpaceEngine.h
+        source-machine/MachineSpaceEngine.cpp
         source-machine/entry.cpp
         include/MachineSamplerEngine.h
         src/MachineSamplerEngine.cpp
