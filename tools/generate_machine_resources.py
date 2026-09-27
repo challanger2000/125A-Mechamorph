@@ -56,6 +56,26 @@ def main():
     if not rows:
         raise SystemExit("no eligible machine samples")
 
+    profile_names = ("tiny","clockwork","heavy","colossal","pneumatic","broken")
+    required_roles = {0:"START",1:"RUN",2:"ACTION",5:"STOP"}
+    print("PROFILE POOL MATRIX")
+    for profile_index, profile_name in enumerate(profile_names):
+        bit = 1 << profile_index
+        counts = {role: 0 for role in ROLE_MAP.values()}
+        for _, _, role, mask, _ in rows:
+            if mask & bit:
+                counts[role] += 1
+        summary = " ".join(
+            f"{name.upper()}={counts[ROLE_MAP[name]]}"
+            for name in ("start","run","action","load","release","stop")
+        )
+        print(profile_name.upper(), summary)
+        for role_id, role_name in required_roles.items():
+            if counts[role_id] == 0:
+                raise SystemExit(
+                    f"profile {profile_name} missing required role {role_name}"
+                )
+
     header = args.out_dir / "machine_assets_generated.h"
     rc = args.out_dir / "machine_assets_generated.rc"
 
