@@ -146,6 +146,7 @@ private:
     double phase_ = 0.0;
     double previousPhase_ = 0.0;
     float activity_ = 0.0f;
+    float runBlend_ = 0.0f;
     bool runLoopSpawned_ = false;
     bool loadActive_ = false;
     int stopCountdown_ = 0;
