@@ -85,8 +85,14 @@ float MachineSpaceEngine::renderSparseSpace(bool right) const noexcept {
     return (1.0f-reactorBlend)*warehouse+reactorBlend*reactor;
 }
 
-float MachineSpaceEngine::processTail(float input, bool right) noexcept {
-    if(space_<=0.0f) return 0.0f;
+void MachineSpaceEngine::processTailStereo(
+    float input,
+    float& left,
+    float& right) noexcept {
+
+    left=0.0f;
+    right=0.0f;
+    if(space_<=0.0f) return;
 
     const std::array<double,kDelayCount> baseMs{31.1,37.3,43.7,53.9};
     const double roomScale=0.82+0.72*static_cast<double>(scale_);
@@ -102,7 +108,6 @@ float MachineSpaceEngine::processTail(float input, bool right) noexcept {
         read[i]=line[readIndex];
     }
 
-    // Hadamard-like mixing keeps the tail diffuse without modulation.
     const float m0= read[0]+read[1]+read[2]+read[3];
     const float m1= read[0]-read[1]+read[2]-read[3];
     const float m2= read[0]+read[1]-read[2]-read[3];
@@ -121,9 +126,8 @@ float MachineSpaceEngine::processTail(float input, bool right) noexcept {
         delayWrite_[i]=(delayWrite_[i]+1)%delays_[i].size();
     }
 
-    if(right)
-        return 0.35f*(read[0]-read[1]-read[2]+read[3]);
-    return 0.35f*(read[0]+read[1]-read[2]-read[3]);
+    left=0.35f*(read[0]+read[1]-read[2]-read[3]);
+    right=0.35f*(read[0]-read[1]-read[2]+read[3]);
 }
 
 void MachineSpaceEngine::process(float input, float& left, float& right) noexcept {
@@ -144,8 +148,9 @@ void MachineSpaceEngine::process(float input, float& left, float& right) noexcep
 
     const float earlyL=renderSparseSpace(false);
     const float earlyR=renderSparseSpace(true);
-    const float tailL=processTail(0.5f*(baseL+baseR),false);
-    const float tailR=processTail(0.5f*(baseL+baseR),true);
+    float tailL=0.0f;
+    float tailR=0.0f;
+    processTailStereo(0.5f*(baseL+baseR),tailL,tailR);
 
     // Musical range up to 50%; upper half deliberately becomes cinematic.
     const float wet=space_<=0.5f
