@@ -84,6 +84,8 @@ public:
     bool active() const noexcept { return active_; }
     bool looping() const noexcept { return clip_.loop; }
     Role role() const noexcept { return role_; }
+    double sourceSampleRate() const noexcept { return clip_.sampleRate; }
+    void setRate(double rate) noexcept { rate_ = std::clamp(rate, 0.25, 4.0); }
 
 private:
     Clip clip_ {};
