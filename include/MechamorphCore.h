@@ -118,6 +118,30 @@ private:
     float noiseState_ = 0.0f;
 };
 
+class ValveEngine {
+public:
+    void prepare(double sampleRate) noexcept;
+    void reset() noexcept;
+    void open(float pressure, float force, DeterministicRng& rng) noexcept;
+    void close(float pressure, float force, DeterministicRng& rng) noexcept;
+    float process(float pressure, DeterministicRng& rng) noexcept;
+    bool isOpen() const noexcept { return open_; }
+
+private:
+    double sampleRate_ = 48000.0;
+    bool open_ = false;
+    float aperture_ = 0.0f;
+    float targetAperture_ = 0.0f;
+    float apertureAttack_ = 0.0f;
+    float apertureRelease_ = 0.0f;
+    float chuffEnv_ = 0.0f;
+    float chuffDecay_ = 0.0f;
+    float clickEnv_ = 0.0f;
+    float clickDecay_ = 0.0f;
+    float noiseState_ = 0.0f;
+    float clickPolarity_ = 1.0f;
+};
+
 class ContactClackEngine {
 public:
     void prepare(double sampleRate) noexcept;
