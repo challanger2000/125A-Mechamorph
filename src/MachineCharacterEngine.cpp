@@ -45,8 +45,8 @@ void MachineCharacterEngine::updateCoefficients() noexcept {
     // BODY is calibrated from the early "Retro Machines IR" character:
     // bright initial technical impulse, quickly darkening into low/mid body.
     const std::array<float,4> baseFreq { 180.0f, 430.0f, 980.0f, 2350.0f };
-    const std::array<float,4> baseDecay { 0.11f, 0.085f, 0.055f, 0.032f };
-    const std::array<float,4> gain { 0.24f, 0.18f, 0.11f, 0.055f };
+    const std::array<float,4> baseDecay { 0.045f, 0.036f, 0.026f, 0.018f };
+    const std::array<float,4> gain { 1.40f, 1.05f, 0.72f, 0.42f };
 
     for (std::size_t i=0;i<bodyModes_.size();++i) {
         const float frequency = baseFreq[i] * (1.10f - 0.55f * scale);
@@ -55,7 +55,9 @@ void MachineCharacterEngine::updateCoefficients() noexcept {
         const float w = static_cast<float>(2.0 * kPi * frequency / sampleRate_);
         bodyModes_[i].a1 = 2.0f * r * std::cos(w);
         bodyModes_[i].a2 = -(r*r);
-        bodyModes_[i].gain = gain[i] * (0.80f + 0.55f * scale);
+        // Normalize excitation against Q so high-r modes cannot explode.
+        bodyModes_[i].gain =
+            gain[i] * (1.0f - r) * (0.80f + 0.45f * scale);
     }
 
     // SPACE interpolates between a darker compact industrial hall
@@ -101,19 +103,27 @@ float MachineCharacterEngine::process(float input) noexcept {
     }
 
     // Darker compact PA-hall at low SCALE, brighter/larger factory hall at high SCALE.
-    const float damping = 0.16f - 0.07f * scale;
-    const float feedback = 0.72f + 0.12f * scale + 0.08f * space;
+    const float damping = 0.18f - 0.07f * scale;
+    const float feedback = 0.56f + 0.18f * scale + 0.10f * space;
 
-    const std::array<float,kDelayCount> signs { 1.0f, -1.0f, 1.0f, -1.0f };
+    // Energy-preserving 4x4 Hadamard feedback matrix.
+    const std::array<float,kDelayCount> h {
+        0.5f * (tap[0] + tap[1] + tap[2] + tap[3]),
+        0.5f * (tap[0] - tap[1] + tap[2] - tap[3]),
+        0.5f * (tap[0] + tap[1] - tap[2] - tap[3]),
+        0.5f * (tap[0] - tap[1] - tap[2] + tap[3])
+    };
+
     for (std::size_t i=0;i<kDelayCount;++i) {
-        const float mixed = bodied * 0.20f + signs[i] * 0.19f * (sum - 2.0f*tap[i]);
-        dampState_[i] += damping * (mixed - dampState_[i]);
-        delay_[i][write_[i]] =
-            std::clamp(dampState_[i] + feedback * tap[i], -4.0f, 4.0f);
+        dampState_[i] += damping * (h[i] - dampState_[i]);
+        const float writeValue =
+            0.10f * bodied +
+            feedback * dampState_[i];
+        delay_[i][write_[i]] = std::clamp(writeValue, -1.5f, 1.5f);
         write_[i] = (write_[i] + 1) % kMaxDelay;
     }
 
-    const float wetHall = 0.25f * sum + 0.22f * early;
+    const float wetHall = 0.18f * sum + 0.20f * early;
     const float wet = space * space;
     return bodied * (1.0f - 0.42f * wet) + wetHall * (0.58f * wet);
 }
