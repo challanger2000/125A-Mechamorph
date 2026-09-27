@@ -89,3 +89,32 @@ Not yet verified:
 - GUI lifecycle
 
 No VST3 PASS claim is allowed until those are actually tested.
+
+
+## 2026-09-27 — Current core regression after finite-tail changes
+
+Materialized current standalone core after:
+- input-driven machine activity
+- dedicated GearEngine
+- modal energy normalization
+- bounded bellows reservoir discharge
+- 8-second conservative VST3 tail target
+
+Build:
+- GCC 14.2
+- Release
+- C++17
+
+CTest:
+- **1/1 PASS**
+- elapsed approximately 0.15 s
+
+Additional regression now covers:
+- 4 seconds sustained sine excitation at AIR=100%, WEAR=0%
+- 8 seconds subsequent tail window
+- final 1-second peak below 1e-4
+
+Evidence class:
+- MEASURED / VERIFIED STANDALONE CORE
+
+This still does not constitute VST3/host PASS.
