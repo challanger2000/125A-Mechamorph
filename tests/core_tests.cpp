@@ -213,6 +213,40 @@ int main() {
         assert(finalPeak < 1.0e-4f);
     }
 
+    // Anti-phase stereo must still excite the machine and preserve finite stereo output.
+    {
+        Core stereoCore;
+        stereoCore.prepare(sr, 512);
+        Parameters q;
+        q.mechanize = 1.0f;
+        q.crank = 0.5f;
+        q.clatter = 0.3f;
+        q.wobble = 0.3f;
+        q.air = 0.4f;
+        q.body = 0.8f;
+        q.wear = 0.4f;
+        q.output = 0.5f;
+        stereoCore.setParameters(q);
+
+        std::vector<float> l2(8192), r2(8192);
+        std::vector<float> dryL(8192);
+        for (std::size_t i = 0; i < l2.size(); ++i) {
+            const float v = static_cast<float>(
+                0.2 * std::sin(2.0 * 3.14159265358979323846 * 330.0 * i / sr));
+            l2[i] = v;
+            r2[i] = -v;
+            dryL[i] = v;
+        }
+
+        stereoCore.process(l2.data(), r2.data(), l2.size());
+        assert(finiteBuffer(l2) && finiteBuffer(r2));
+
+        double deltaEnergy = 0.0;
+        for (std::size_t i = 0; i < l2.size(); ++i)
+            deltaEnergy += std::fabs(static_cast<double>(l2[i] - dryL[i]));
+        assert(deltaEnergy > 0.01);
+    }
+
     std::cout << "Mechamorph core tests PASS\n";
     return 0;
 }
