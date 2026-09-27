@@ -115,6 +115,7 @@ void Engine::reset() noexcept {
     phase_ = 0.0;
     previousPhase_ = 0.0;
     activity_ = 0.0f;
+    runBlend_ = 0.0f;
     runLoopSpawned_ = false;
     loadActive_ = false;
     stopCountdown_ = 0;
@@ -224,7 +225,7 @@ void Engine::start() noexcept {
     spawn(Role::Start, 1.0f);
 
     const int runDelay = static_cast<int>(
-        sampleRate_ * (0.080 + 0.120 * (1.0 - clamp01(params_.speed))));
+        sampleRate_ * (0.70 + 0.55 * (1.0 - clamp01(params_.speed))));
     schedule(Role::Run, runDelay, 1.0f);
 }
 
@@ -269,7 +270,7 @@ void Engine::setLoadActive(bool active) noexcept {
     if (active) {
         if (state_ == State::Running)
             state_ = State::Loaded;
-        spawn(Role::Load, 1.0f);
+        spawn(Role::Load, 0.55f);
     } else {
         if (state_ == State::Loaded)
             state_ = State::Releasing;
@@ -334,6 +335,18 @@ void Engine::updateMachineState() noexcept {
     else
         activity_ = 1.0f;
 
+    const bool runState =
+        state_ == State::Running ||
+        state_ == State::Loaded ||
+        state_ == State::Releasing;
+    const float runTarget = runState ? 1.0f : 0.0f;
+    const float runCoeff =
+        runTarget > runBlend_
+            ? static_cast<float>(1.0 / (0.55 * sampleRate_))
+            : static_cast<float>(1.0 / (0.20 * sampleRate_));
+    runBlend_ += runCoeff * (runTarget - runBlend_);
+    runBlend_ = std::clamp(runBlend_, 0.0f, 1.0f);
+
     if (state_ == State::Releasing)
         state_ = State::Running;
 
@@ -360,7 +373,9 @@ float Engine::renderVoices() noexcept {
     float out = 0.0f;
     for (auto& v : voices_) {
         const float sample = v.process();
-        if (v.role() == Role::Run || v.role() == Role::Load)
+        if (v.role() == Role::Run)
+            out += sample * activity_ * runBlend_;
+        else if (v.role() == Role::Load)
             out += sample * activity_;
         else
             out += sample;
