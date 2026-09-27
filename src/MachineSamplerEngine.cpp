@@ -142,11 +142,15 @@ void Engine::spawn(Role role, float force, bool preferLoop) noexcept {
     float gain = std::clamp(force, 0.0f, 1.5f);
     float rate = 1.0f;
 
+    const float sampleRateRatio =
+        static_cast<float>(clip->sampleRate / sampleRate_);
+
     if (role == Role::Run) {
         const float speed = clamp01(params_.speed);
-        rate = 0.65f + 0.85f * speed;
+        rate = (0.65f + 0.85f * speed) * sampleRateRatio;
         gain *= 0.55f + 0.30f * load;
     } else {
+        rate *= sampleRateRatio;
         rate *= 1.0f + (0.008f + 0.025f * wear) * rng_.bipolar();
         gain *= 1.0f + 0.10f * wear * rng_.bipolar();
     }
@@ -181,7 +185,8 @@ void Engine::start() noexcept {
         return;
 
     state_ = State::Starting;
-    activity_ = 0.0f;
+    // START is itself a mechanical event and must not be hidden by a fade-in.
+    activity_ = 1.0f;
     runLoopSpawned_ = false;
     spawn(Role::Start, 1.0f);
 
@@ -252,9 +257,7 @@ void Engine::updateMachineState() noexcept {
     if (phase_ >= kTwoPi)
         phase_ = std::fmod(phase_, kTwoPi);
 
-    if (state_ == State::Starting)
-        activity_ = std::min(1.0f, activity_ + static_cast<float>(1.0 / (0.18 * sampleRate_)));
-    else if (state_ == State::Stopping)
+    if (state_ == State::Stopping)
         activity_ = std::max(0.0f, activity_ - static_cast<float>(1.0 / (0.35 * sampleRate_)));
     else
         activity_ = 1.0f;
@@ -265,8 +268,12 @@ void Engine::updateMachineState() noexcept {
     if (state_ == State::Stopping) {
         if (stopCountdown_ > 0)
             --stopCountdown_;
-        if (stopCountdown_ <= 0 && activity_ <= 0.0f)
+        if (stopCountdown_ <= 0 && activity_ <= 0.0f) {
             state_ = State::Stopped;
+            runLoopSpawned_ = false;
+            for (auto& v : voices_) v.reset();
+            for (auto& e : pending_) e = {};
+        }
     }
 }
 
