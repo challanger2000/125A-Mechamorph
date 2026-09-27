@@ -89,8 +89,30 @@ void Processor::updateCoreParameters() {
 }
 
 tresult PLUGIN_API Processor::process(ProcessData& data) {
-    if (data.numSamples <= 0 || data.numInputs < 1 || data.numOutputs < 1)
+    // VST3 hosts may flush automation/state changes with zero samples and
+    // without audio buffers. Those parameter queues must still be consumed.
+    if (data.numSamples <= 0 || data.numInputs < 1 || data.numOutputs < 1) {
+        bool changed = false;
+        if (data.inputParameterChanges) {
+            const int32 count = data.inputParameterChanges->getParameterCount();
+            for (int32 i = 0; i < count; ++i) {
+                if (auto* q = data.inputParameterChanges->getParameterData(i)) {
+                    const int32 points = q->getPointCount();
+                    for (int32 p = 0; p < points; ++p) {
+                        int32 offset = 0;
+                        ParamValue value = 0.0;
+                        if (q->getPoint(p, offset, value) == kResultTrue) {
+                            applyParameter(q->getParameterId(), static_cast<float>(value));
+                            changed = true;
+                        }
+                    }
+                }
+            }
+        }
+        if (changed)
+            updateCoreParameters();
         return kResultOk;
+    }
 
     auto& in = data.inputs[0];
     auto& out = data.outputs[0];
