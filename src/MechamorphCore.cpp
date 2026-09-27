@@ -94,7 +94,7 @@ void MechanicalDrive::process(const Parameters& p, MechanicalState& state) noexc
     state.targetSpeedHz = 0.35f + 3.65f * crank;
 
     // Slow deterministic drift derived from phase, not unrelated random timing.
-    const float eccentric = 0.025f * wobble *
+    const float eccentric = 0.080f * wobble *
         static_cast<float>(std::sin(state.phase));
     const float loadSlow = -0.15f * state.load * wear;
 
@@ -252,11 +252,27 @@ float FrictionEngine::process(
     return sanitize(friction);
 }
 
+void GearEngine::prepare(double sampleRate) noexcept {
+    sampleRate_ = std::max(sampleRate, 1.0);
+    reset();
+}
+
 void GearEngine::reset() noexcept {
     previousPhase_ = 0.0;
+    backlashRemaining_ = 0;
+    backlashAmplitude_ = 0.0f;
 }
 
 float GearEngine::process(const Parameters& p, const MechanicalState& state, DeterministicRng& rng) noexcept {
+    float out = 0.0f;
+
+    if (backlashRemaining_ > 0) {
+        --backlashRemaining_;
+        if (backlashRemaining_ == 0) {
+            out += backlashAmplitude_;
+            backlashAmplitude_ = 0.0f;
+        }
+    }
     constexpr int teeth = 24;
     const double sector = kTwoPi / static_cast<double>(teeth);
     const int prevIndex = static_cast<int>(previousPhase_ / sector);
@@ -268,15 +284,37 @@ float GearEngine::process(const Parameters& p, const MechanicalState& state, Det
     if (state.phase < sector && oldPhase > kTwoPi - sector)
         fired = true;
 
-    if (!fired) return 0.0f;
+    if (!fired) return out;
 
     const float wear = std::clamp(p.wear, 0.0f, 1.0f);
     const float hardness = 0.75f + 0.25f * rng.uniform01();
     const float irregularity = 1.0f + (0.04f + 0.10f * wear) * rng.bipolar();
-    return 0.070f *
-           std::clamp(p.mechanize, 0.0f, 1.0f) *
-           state.activity *
-           hardness * irregularity;
+    const float primary =
+        0.070f *
+        std::clamp(p.mechanize, 0.0f, 1.0f) *
+        state.activity *
+        hardness * irregularity;
+
+    out += primary;
+
+    // Backlash is represented as a bounded delayed re-contact event tied to
+    // the same gear tooth impact. No free-running random clacks.
+    if (backlashRemaining_ <= 0 && primary != 0.0f) {
+        const float backlash = std::clamp(state.backlash, 0.0f, 1.0f);
+        const float probability = 0.10f + 0.80f * backlash;
+        if (backlash > 0.0f && rng.uniform01() < probability) {
+            const float delayMs =
+                0.4f + (0.8f + 2.2f * backlash) * rng.uniform01();
+            backlashRemaining_ = std::max(
+                1, static_cast<int>(delayMs * 0.001f * static_cast<float>(sampleRate_)));
+            backlashAmplitude_ =
+                primary *
+                (0.10f + 0.45f * backlash) *
+                (0.75f + 0.25f * rng.uniform01());
+        }
+    }
+
+    return sanitize(out);
 }
 
 void RatchetEngine::reset() noexcept {
@@ -363,6 +401,7 @@ void Core::prepare(double sampleRate, std::size_t /*maxBlockSize*/) noexcept {
     bodyR_.prepare(sampleRate_);
     air_.prepare(sampleRate_);
     friction_.prepare(sampleRate_);
+    gear_.prepare(sampleRate_);
     rattle_.prepare(sampleRate_);
 
     // Placeholder prototype body. All values are EMPIRICALLY TUNED and
