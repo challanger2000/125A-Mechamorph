@@ -36,6 +36,7 @@ private:
     mechamorph::machine::Engine engine_{};
     mechamorph::machine::Parameters machineParams_{};
     MachineSpaceEngine spaceEngine_{};
+    float bodyAmount_ = 0.28f;
     float spaceAmount_ = 0.18f;
 
     int machineIndex_ = 0;
