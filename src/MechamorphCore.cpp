@@ -213,6 +213,65 @@ float AirEngine::process(const Parameters& p, MechanicalState& state, Determinis
     return noiseState_ * state.pressure * air * 0.12f;
 }
 
+void PipeEngine::prepare(double sampleRate) noexcept {
+    sampleRate_ = std::max(sampleRate, 1.0);
+    setFrequency(440.0f);
+    reset();
+}
+
+void PipeEngine::reset() noexcept {
+    delay_.fill(0.0f);
+    writeIndex_ = 0;
+    boreLowpass_ = 0.0f;
+    previousPressure_ = 0.0f;
+    chiffEnv_ = 0.0f;
+}
+
+void PipeEngine::setFrequency(float frequencyHz) noexcept {
+    const float f = std::clamp(frequencyHz, 40.0f, static_cast<float>(0.20 * sampleRate_));
+    const std::size_t d = static_cast<std::size_t>(std::max(2.0, std::round(sampleRate_ / f)));
+    delaySamples_ = std::min<std::size_t>(kMaxDelay - 2, d);
+}
+
+float PipeEngine::process(float pressure, float aperture, DeterministicRng& rng) noexcept {
+    pressure = std::clamp(pressure, 0.0f, 1.0f);
+    aperture = std::clamp(aperture, 0.0f, 1.0f);
+
+    const std::size_t readIndex =
+        (writeIndex_ + kMaxDelay - delaySamples_) % kMaxDelay;
+    const float bore = delay_[readIndex];
+
+    // Onset/chiff is driven by positive pressure change, not continuously.
+    const float rise = std::max(0.0f, pressure - previousPressure_);
+    chiffEnv_ = std::max(chiffEnv_ * 0.9965f, 4.0f * rise);
+    previousPressure_ = pressure;
+
+    const float thresholdedPressure =
+        std::max(0.0f, pressure * aperture - 0.08f);
+    const float jetNoise =
+        rng.bipolar() * chiffEnv_ * (0.010f + 0.020f * pressure);
+
+    // Reduced jet/bore interaction. The nonlinearity injects energy while
+    // the delayed bore pressure supplies the acoustic feedback.
+    const float jet =
+        std::tanh(2.6f * thresholdedPressure - 1.15f * bore) +
+        jetNoise;
+
+    // Frequency-dependent bore loss proxy: one-pole low-pass in the loop.
+    boreLowpass_ += 0.18f * (bore - boreLowpass_);
+    const float feedback = 0.985f * boreLowpass_;
+
+    const float excitation =
+        thresholdedPressure > 0.0f ? (0.020f * jet + feedback) : 0.985f * feedback;
+
+    delay_[writeIndex_] = sanitize(excitation);
+    writeIndex_ = (writeIndex_ + 1) % kMaxDelay;
+
+    // Radiation emphasizes the pressure difference rather than raw bore state.
+    const float radiated = 0.75f * (bore - boreLowpass_) + 0.25f * bore;
+    return sanitize(radiated * 0.65f);
+}
+
 void ValveEngine::prepare(double sampleRate) noexcept {
     sampleRate_ = std::max(sampleRate, 1.0);
     // Fast but finite mechanical opening/closing.
