@@ -79,13 +79,26 @@ jobs:
           cmake --build build --config Release --target machine_sampler_tests machine_real_render --parallel 2
           ctest --test-dir build -R machine_sampler_tests --output-on-failure
 
-      - name: Render actual C++ machine engine
+      - name: Render actual C++ machine profiles
         shell: bash
         run: |
           mkdir -p real-machine-output
+
           ./build/machine_real_render \
             machine-set \
-            real-machine-output/Mechamorph_MachineSamplerCore_CC0_v0.1.wav
+            real-machine-output/Mechamorph_PROJECTOR_CC0_v0.1.wav \
+            projector
+
+          ./build/machine_real_render \
+            machine-set \
+            real-machine-output/Mechamorph_HANDCRANK_CC0_v0.1.wav \
+            handcrank
+
+          ./build/machine_real_render \
+            machine-set \
+            real-machine-output/Mechamorph_INDUSTRIAL_CC0_v0.1.wav \
+            industrial
+
           cp machine-set/machine_sample_set.json real-machine-output/ || true
           sha256sum real-machine-output/* > real-machine-output/SHA256SUMS.txt
           ls -lh real-machine-output
