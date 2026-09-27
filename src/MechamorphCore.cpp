@@ -173,16 +173,24 @@ float AirEngine::process(const Parameters& p, MechanicalState& state, Determinis
     const float dt = static_cast<float>(1.0 / sampleRate_);
 
     // Prototype rates are expressed per second so behaviour remains sample-rate invariant.
-    const float inflowPerSecond = air * state.activity * (0.35f + 1.15f * phasePump);
-    // Prototype reservoir discharge is deliberately bounded so the effect has
-    // a finite, host-reportable tail. Coefficients remain EMPIRICALLY TUNED.
-    const float leakPerSecond = 0.25f + 0.50f * state.wear;
-    const float consumptionPerSecond = 0.20f * state.inputEnvelope * air;
+    const float inflowPerSecond =
+        air * state.activity * (0.35f + 1.15f * phasePump);
+
+    // Pressure-dependent losses avoid an artificial "nothing happens until
+    // inflow exceeds a fixed leak" threshold. This behaves more like a real
+    // reservoir: any pump input can build some pressure, while leakage and
+    // load drain proportionally to the pressure already present.
+    // Rates remain EMPIRICALLY TUNED pending bellows measurements.
+    const float leakRatePerSecond = 1.0f + 1.5f * state.wear;
+    const float loadRatePerSecond =
+        0.50f * state.inputEnvelope * air;
+    const float outflowPerSecond =
+        state.pressure * (leakRatePerSecond + loadRatePerSecond);
 
     state.pressure = std::clamp(
-        state.pressure + dt * (inflowPerSecond - leakPerSecond - consumptionPerSecond),
+        state.pressure + dt * (inflowPerSecond - outflowPerSecond),
         0.0f, 1.0f);
-    state.leak = leakPerSecond;
+    state.leak = leakRatePerSecond;
 
     const float white = rng.bipolar();
     // Very cheap low-pass coloration for first prototype.
