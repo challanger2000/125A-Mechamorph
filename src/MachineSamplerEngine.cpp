@@ -285,8 +285,12 @@ void Engine::updateMachineState() noexcept {
     const float speed = clamp01(params_.speed);
     const float wear = clamp01(params_.wear);
 
+    const float continuousLoad = clamp01(params_.load);
+
     double phaseSpeed = 0.40 + 3.60 * speed;
-    phaseSpeed *= 1.0 - 0.18 * clamp01(params_.load) * (loadActive_ ? 1.0 : 0.0);
+    // LOAD is a real continuous machine control. A loaded machine slows and
+    // feels heavier even when no discrete LOAD gesture is currently playing.
+    phaseSpeed *= 1.0 - 0.18 * continuousLoad;
     phaseSpeed *= 1.0 + 0.035 * wear * std::sin(phase_);
 
     previousPhase_ = phase_;
@@ -298,10 +302,13 @@ void Engine::updateMachineState() noexcept {
     // This is crucial: changing machine speed or engaging load must change
     // the running mechanism itself, not just future one-shot events.
     const float speedForRate = clamp01(params_.speed);
-    const float loadForRate = loadActive_ ? clamp01(params_.load) : 0.0f;
+    const float loadForRate = continuousLoad;
+    const double wearEccentricity =
+        1.0 + 0.018 * static_cast<double>(wear) * std::sin(phase_);
     const double runRateScale =
         (0.65 + 0.85 * speedForRate) *
-        (1.0 - 0.18 * loadForRate);
+        (1.0 - 0.18 * loadForRate) *
+        wearEccentricity;
 
     for (auto& v : voices_) {
         if (v.active() && v.role() == Role::Run) {
