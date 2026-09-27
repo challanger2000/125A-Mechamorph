@@ -213,6 +213,72 @@ float AirEngine::process(const Parameters& p, MechanicalState& state, Determinis
     return noiseState_ * state.pressure * air * 0.12f;
 }
 
+void ContactClackEngine::prepare(double sampleRate) noexcept {
+    sampleRate_ = std::max(sampleRate, 1.0);
+    reset();
+}
+
+void ContactClackEngine::reset() noexcept {
+    envelope_ = 0.0f;
+    envelopeDecay_ = 0.0f;
+    reson1_ = reson2_ = reson1Prev_ = reson2Prev_ = 0.0f;
+    excitation_ = 0.0f;
+}
+
+float ContactClackEngine::trigger(
+    float force,
+    float hardness,
+    float material,
+    DeterministicRng& rng) noexcept {
+
+    force = std::clamp(force, 0.0f, 1.0f);
+    hardness = std::clamp(hardness, 0.0f, 1.0f);
+    material = std::clamp(material, 0.0f, 1.0f);
+
+    // Very short contact excitation: harder contact = shorter/brighter transient.
+    const float decayMs = 1.8f - 1.2f * hardness;
+    envelopeDecay_ = static_cast<float>(
+        std::exp(-1.0 / (std::max(0.0002f, decayMs * 0.001f) * sampleRate_)));
+    envelope_ = force;
+
+    // Two short material resonances. material=0 -> woodier/lower, 1 -> metalier/higher.
+    const float f1 = 650.0f + 1450.0f * material;
+    const float f2 = 1800.0f + 4200.0f * material;
+    const float r1 = static_cast<float>(std::exp(-1.0 / ((0.010f + 0.020f * (1.0f - material)) * sampleRate_)));
+    const float r2 = static_cast<float>(std::exp(-1.0 / ((0.004f + 0.010f * material) * sampleRate_)));
+
+    reson1A1_ = 2.0f * r1 * std::cos(static_cast<float>(kTwoPi * f1 / sampleRate_));
+    reson1A2_ = -(r1 * r1);
+    reson2A1_ = 2.0f * r2 * std::cos(static_cast<float>(kTwoPi * f2 / sampleRate_));
+    reson2A2_ = -(r2 * r2);
+
+    // Small stochastic contact asperity keeps repeated hits from sounding identical.
+    excitation_ = force * (0.75f + 0.25f * rng.uniform01());
+    return excitation_;
+}
+
+float ContactClackEngine::process() noexcept {
+    if (envelope_ <= 0.0f && std::fabs(reson1_) < kTiny && std::fabs(reson2_) < kTiny)
+        return 0.0f;
+
+    const float contact = excitation_ * envelope_;
+    envelope_ *= envelopeDecay_;
+    if (envelope_ < 1.0e-6f) envelope_ = 0.0f;
+
+    const float y1 = 0.10f * contact + reson1A1_ * reson1_ + reson1A2_ * reson1Prev_;
+    reson1Prev_ = reson1_;
+    reson1_ = sanitize(y1);
+
+    const float y2 = 0.055f * contact + reson2A1_ * reson2_ + reson2A2_ * reson2Prev_;
+    reson2Prev_ = reson2_;
+    reson2_ = sanitize(y2);
+
+    if (std::fabs(reson1_) < kTiny) reson1_ = 0.0f;
+    if (std::fabs(reson2_) < kTiny) reson2_ = 0.0f;
+
+    return sanitize(0.55f * contact + reson1_ + 0.8f * reson2_);
+}
+
 void FrictionEngine::prepare(double sampleRate) noexcept {
     sampleRate_ = std::max(sampleRate, 1.0);
     reset();
@@ -411,6 +477,7 @@ void Core::prepare(double sampleRate, std::size_t /*maxBlockSize*/) noexcept {
     rngRattle_.seed(0x125A0005ULL);
     analyzer_.prepare(sampleRate_);
     drive_.prepare(sampleRate_);
+    clack_.prepare(sampleRate_);
     bodyL_.prepare(sampleRate_);
     bodyR_.prepare(sampleRate_);
     air_.prepare(sampleRate_);
@@ -442,6 +509,7 @@ void Core::reset() noexcept {
     rngRattle_.seed(0x125A0005ULL);
     analyzer_.reset();
     drive_.reset();
+    clack_.reset();
     bodyL_.reset();
     bodyR_.reset();
     air_.reset();
@@ -492,12 +560,24 @@ void Core::processFrame(
 
     const float gear = gear_.process(p, state_, rngGear_);
     const float ratchet = ratchet_.process(p, state_, rngRatchet_);
+
+    if (gear > 0.0f)
+        clack_.trigger(std::clamp(gear * 9.0f, 0.0f, 1.0f),
+                       0.55f + 0.25f * state_.wear,
+                       0.35f,
+                       rngGear_);
+    if (ratchet > 0.0f)
+        clack_.trigger(std::clamp(ratchet * 7.0f, 0.0f, 1.0f),
+                       0.72f,
+                       0.55f,
+                       rngRatchet_);
+    const float clack = clack_.process();
     const float rattle = rattle_.process(p, state_, rngRattle_);
     const float air = air_.process(p, state_, rngAir_);
     const float friction = friction_.process(p, state_, rngFriction_);
 
     const float sharedMechanicalExcitation =
-        gear + ratchet + rattle + air + friction;
+        0.35f * gear + 0.35f * ratchet + clack + rattle + air + friction;
     const float sourceExcitation = 0.42f * mechanize;
 
     const float bodyL = bodyL_.process(
@@ -507,8 +587,9 @@ void Core::processFrame(
         : bodyL;
 
     const float directMechanics =
-        0.32f * gear +
-        0.40f * ratchet +
+        0.12f * gear +
+        0.12f * ratchet +
+        0.80f * clack +
         0.55f * rattle +
         1.20f * air +
         0.70f * friction;
