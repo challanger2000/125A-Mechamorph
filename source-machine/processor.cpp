@@ -105,7 +105,7 @@ void Processor::applyParameter(ParamID id, float normalized) noexcept {
 
     switch (id) {
         case kMachine: {
-            const int next = std::clamp(static_cast<int>(std::floor(v * 3.0f)), 0, 2);
+            const int next = std::clamp(static_cast<int>(std::floor(v * 6.0f)), 0, 5);
             if (next != machineIndex_) {
                 machineIndex_ = next;
                 applyMachineProfile(true);
@@ -403,8 +403,8 @@ tresult PLUGIN_API Processor::setState(IBStream* state) {
     }
 
     machineIndex_ = std::clamp(
-        static_cast<int>(std::floor(std::clamp(machine, 0.0f, 1.0f) * 3.0f)),
-        0, 2);
+        static_cast<int>(std::floor(std::clamp(machine, 0.0f, 1.0f) * 6.0f)),
+        0, 5);
 
     machineParams_.speed = std::clamp(speed, 0.0f, 1.0f);
     machineParams_.load = std::clamp(load, 0.0f, 1.0f);
@@ -425,7 +425,7 @@ tresult PLUGIN_API Processor::getState(IBStream* state) {
     if (!state) return kResultFalse;
 
     IBStreamer s(state, kLittleEndian);
-    const float machine = static_cast<float>(machineIndex_) / 2.0f;
+    const float machine = static_cast<float>(machineIndex_) / 5.0f;
 
     if (!s.writeInt32(kStateVersion) ||
         !s.writeFloat(machine) ||
