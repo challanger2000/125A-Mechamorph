@@ -26,3 +26,43 @@ add_executable(mechamorph_smoke_render
     tools/render_smoke.cpp
 )
 target_link_libraries(mechamorph_smoke_render PRIVATE mechamorph_core)
+
+option(MECHAMORPH_BUILD_VST3 "Build the VST3 prototype wrapper" OFF)
+
+if(MECHAMORPH_BUILD_VST3)
+    include(FetchContent)
+    set(SMTG_ENABLE_VSTGUI_SUPPORT OFF CACHE BOOL "" FORCE)
+    set(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(SMTG_ENABLE_VST3_HOSTING_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+    FetchContent_Declare(
+        vst3sdk
+        GIT_REPOSITORY https://github.com/steinbergmedia/vst3sdk.git
+        GIT_TAG 3cdf9ca5d1f5b1b21e0a86832aa4abe55607bd96
+        GIT_SHALLOW FALSE
+    )
+    FetchContent_MakeAvailable(vst3sdk)
+    smtg_enable_vst3_sdk()
+
+    smtg_add_vst3plugin(Mechamorph
+        source/version.h
+        source/ids.h
+        source/parameters.h
+        source/state_format.h
+        source/processor.h
+        source/processor.cpp
+        source/controller.h
+        source/controller.cpp
+        source/entry.cpp
+        include/MechamorphCore.h
+        src/MechamorphCore.cpp
+    )
+
+    target_include_directories(Mechamorph PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source"
+    )
+    target_link_libraries(Mechamorph PRIVATE sdk)
+    target_compile_features(Mechamorph PRIVATE cxx_std_17)
+    smtg_target_configure_version_file(Mechamorph)
+endif()
