@@ -12,6 +12,20 @@ constexpr float kTiny = 1.0e-20f;
 float sanitize(float x) noexcept {
     return std::isfinite(x) ? x : 0.0f;
 }
+
+// 125A control law:
+// 0% = neutral/off
+// 20..50% = quickly reaches a clearly useful musical range
+// 50..75% = strong
+// 75..100% = creative/extreme
+float intensityCurve(float x) noexcept {
+    x = std::clamp(std::isfinite(x) ? x : 0.0f, 0.0f, 1.0f);
+    if (x <= 0.5f)
+        return 1.4f * x; // 50% -> 70%
+    if (x <= 0.75f)
+        return 0.70f + 0.80f * (x - 0.5f); // 75% -> 90%
+    return 0.90f + 0.40f * (x - 0.75f);    // 100% -> 100%
+}
 }
 
 void DeterministicRng::seed(std::uint64_t s) noexcept {
@@ -87,9 +101,9 @@ void MechanicalDrive::reset() noexcept {
 
 void MechanicalDrive::process(const Parameters& p, MechanicalState& state) noexcept {
     // Prototype mapping only; to be replaced with measured ranges.
-    const float crank = std::clamp(p.crank, 0.0f, 1.0f);
-    const float wobble = std::clamp(p.wobble, 0.0f, 1.0f);
-    const float wear = std::clamp(p.wear, 0.0f, 1.0f);
+    const float crank = intensityCurve(p.crank);
+    const float wobble = intensityCurve(p.wobble);
+    const float wear = intensityCurve(p.wear);
 
     state.targetSpeedHz = 0.35f + 3.65f * crank;
 
@@ -168,7 +182,7 @@ void AirEngine::reset() noexcept {
 }
 
 float AirEngine::process(const Parameters& p, MechanicalState& state, DeterministicRng& rng) noexcept {
-    const float air = std::clamp(p.air, 0.0f, 1.0f);
+    const float air = intensityCurve(p.air);
     const float phasePump = 0.5f + 0.5f * static_cast<float>(std::sin(state.phase));
     const float dt = static_cast<float>(1.0 / sampleRate_);
 
@@ -214,7 +228,7 @@ float FrictionEngine::process(
     const MechanicalState& state,
     DeterministicRng& rng) noexcept {
 
-    const float wear = std::clamp(p.wear, 0.0f, 1.0f);
+    const float wear = intensityCurve(p.wear);
     const float activity = std::clamp(state.activity, 0.0f, 1.0f);
     if (wear <= 0.0f || activity <= 0.0f)
         return 0.0f;
@@ -286,7 +300,7 @@ float GearEngine::process(const Parameters& p, const MechanicalState& state, Det
 
     if (!fired) return out;
 
-    const float wear = std::clamp(p.wear, 0.0f, 1.0f);
+    const float wear = intensityCurve(p.wear);
     const float hardness = 0.75f + 0.25f * rng.uniform01();
     const float irregularity = 1.0f + (0.04f + 0.10f * wear) * rng.bipolar();
     const float primary =
@@ -336,10 +350,10 @@ float RatchetEngine::process(const Parameters& p, const MechanicalState& state, 
 
     if (!fired) return 0.0f;
 
-    const float wear = std::clamp(p.wear, 0.0f, 1.0f);
-    const float variation = 1.0f + 0.12f * wear * rng.bipolar();
+    const float wear = intensityCurve(p.wear);
+    const float variation = 1.0f + 0.18f * wear * rng.bipolar();
     return 0.12f *
-           std::clamp(p.mechanize, 0.0f, 1.0f) *
+           intensityCurve(p.mechanize) *
            state.activity *
            variation;
 }
@@ -356,20 +370,20 @@ void RattleEngine::reset() noexcept {
 float RattleEngine::process(const Parameters& p, const MechanicalState& state, DeterministicRng& rng) noexcept {
     // Trigger one bounded cluster on a transient threshold crossing.
     const bool transientHigh = state.transientStrength > 0.02f;
-    const bool trigger = transientHigh && !transientLatched_ && p.clatter > 0.0f;
+    const float clatter = intensityCurve(p.clatter);
+    const bool trigger = transientHigh && !transientLatched_ && clatter > 0.0f;
     transientLatched_ = transientHigh;
 
     if (trigger) {
         const int requested = 1 + static_cast<int>(
-            4.0f * std::clamp(p.clatter * (0.3f + state.wear), 0.0f, 1.0f));
+            6.0f * std::clamp(clatter * (0.35f + state.wear), 0.0f, 1.0f));
         int placed = 0;
         for (auto& e : events_) {
             if (placed >= requested) break;
             if (e.remaining <= 0) {
                 const float delayMs = 3.0f + 35.0f * rng.uniform01();
                 e.remaining = std::max(1, static_cast<int>(delayMs * 0.001 * sampleRate_));
-                e.amplitude = (0.03f + 0.07f * rng.uniform01()) *
-                              std::clamp(p.clatter, 0.0f, 1.0f);
+                e.amplitude = (0.045f + 0.11f * rng.uniform01()) * clatter;
                 ++placed;
             }
         }
@@ -461,6 +475,11 @@ void Core::processFrame(
     p.wear = clamp01(p.wear);
     p.output = clamp01(p.output);
 
+    const float mechanize = intensityCurve(p.mechanize);
+    const float bodyAmount = intensityCurve(p.body);
+    const float wobbleAmount = intensityCurve(p.wobble);
+    const float wearAmount = intensityCurve(p.wear);
+
     // Analyze channel energy without phase cancellation. The mechanical state
     // remains shared, but each audio channel excites its own matching body.
     const float analysisInput = stereo
@@ -468,7 +487,7 @@ void Core::processFrame(
         : std::fabs(inputL);
 
     analyzer_.process(analysisInput, state_);
-    state_.load = std::clamp(state_.inputEnvelope * p.mechanize, 0.0f, 1.0f);
+    state_.load = std::clamp(state_.inputEnvelope * mechanize, 0.0f, 1.0f);
     drive_.process(p, state_);
 
     const float gear = gear_.process(p, state_, rngGear_);
@@ -479,34 +498,39 @@ void Core::processFrame(
 
     const float sharedMechanicalExcitation =
         gear + ratchet + rattle + air + friction;
-    const float sourceExcitation = 0.18f * p.mechanize;
+    const float sourceExcitation = 0.42f * mechanize;
 
     const float bodyL = bodyL_.process(
-        sourceExcitation * inputL + sharedMechanicalExcitation) * p.body;
+        sourceExcitation * inputL + 1.35f * sharedMechanicalExcitation) * bodyAmount;
     const float bodyR = stereo
-        ? bodyR_.process(sourceExcitation * inputR + sharedMechanicalExcitation) * p.body
+        ? bodyR_.process(sourceExcitation * inputR + 1.35f * sharedMechanicalExcitation) * bodyAmount
         : bodyL;
 
     const float directMechanics =
-        0.16f * gear +
-        0.20f * ratchet +
-        0.28f * rattle +
-        air +
-        0.35f * friction;
+        0.32f * gear +
+        0.40f * ratchet +
+        0.55f * rattle +
+        1.20f * air +
+        0.70f * friction;
 
-    const float sourceRetention = 1.0f - 0.55f * p.body;
+    const float sourceRetention = 1.0f - 0.78f * bodyAmount;
     const float mechanizedL =
         sourceRetention * inputL +
-        0.85f * bodyL +
+        1.10f * bodyL +
         directMechanics;
     const float mechanizedR =
         sourceRetention * inputR +
-        0.85f * bodyR +
+        1.10f * bodyR +
         directMechanics;
 
-    const float wet = clamp01(p.mechanize);
-    float yL = (1.0f - wet) * inputL + wet * mechanizedL;
-    float yR = (1.0f - wet) * inputR + wet * mechanizedR;
+    const float driveWobble =
+        1.0f +
+        (0.035f * wobbleAmount + 0.020f * wearAmount) *
+        static_cast<float>(std::sin(state_.phase));
+
+    const float wet = mechanize;
+    float yL = (1.0f - wet) * inputL + wet * (mechanizedL * driveWobble);
+    float yR = (1.0f - wet) * inputR + wet * (mechanizedR * driveWobble);
 
     const float outputDb = 24.0f * (p.output - 0.5f);
     const float gain = std::pow(10.0f, outputDb / 20.0f);
