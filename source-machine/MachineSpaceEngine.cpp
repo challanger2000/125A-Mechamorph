@@ -141,10 +141,17 @@ void MachineSpaceEngine::process(float input, float& left, float& right) noexcep
     const float bodyL=renderSparseBody(false);
     const float bodyR=renderSparseBody(true);
 
-    // BODY is resonance/cabinet, not a second wet/dry reverb.
-    const float bodyAmount=0.52f*body_;
-    const float baseL=input*(1.0f-0.18f*body_)+bodyL*bodyAmount;
-    const float baseR=input*(1.0f-0.18f*body_)+bodyR*bodyAmount;
+    // BODY is enclosure/material resonance, not stereo width.
+    // Collapse the IR-derived body fingerprint largely to mono so the audible
+    // change is cabinet colour / resonance rather than image widening.
+    const float bodyMono=0.5f*(bodyL+bodyR);
+    const float bodySide=0.5f*(bodyL-bodyR);
+    const float bodyAmount=0.70f*body_;
+    const float sideAmount=0.06f*body_;
+    const float dryBody=1.0f-0.22f*body_;
+
+    const float baseL=input*dryBody+bodyMono*bodyAmount+bodySide*sideAmount;
+    const float baseR=input*dryBody+bodyMono*bodyAmount-bodySide*sideAmount;
 
     const float earlyL=renderSparseSpace(false);
     const float earlyR=renderSparseSpace(true);
@@ -152,13 +159,17 @@ void MachineSpaceEngine::process(float input, float& left, float& right) noexcep
     float tailR=0.0f;
     processTailStereo(0.5f*(baseL+baseR),tailL,tailR);
 
-    // Musical range up to 50%; upper half deliberately becomes cinematic.
+    // 125A control law:
+    // 0% = fully dry, 50% = musical room depth, 100% = true 100% wet.
     const float wet=space_<=0.5f
-        ? 0.55f*space_
-        : 0.275f+0.95f*(space_-0.5f);
+        ? 0.60f*space_
+        : 0.30f+1.40f*(space_-0.5f);
 
-    left=baseL*(1.0f-0.22f*wet)+wet*(0.46f*earlyL+0.72f*tailL);
-    right=baseR*(1.0f-0.22f*wet)+wet*(0.46f*earlyR+0.72f*tailR);
+    const float wetL=0.52f*earlyL+0.88f*tailL;
+    const float wetR=0.52f*earlyR+0.88f*tailR;
+
+    left=baseL*(1.0f-wet)+wetL*wet;
+    right=baseR*(1.0f-wet)+wetR*wet;
 
     historyWrite_=(historyWrite_+1)%history_.size();
 }
