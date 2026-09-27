@@ -40,6 +40,21 @@ struct Metrics {
     double t60ms=0.0;
 };
 
+double estimateZeroCrossFrequency(
+    const std::vector<float>& x,
+    std::size_t a,
+    std::size_t b,
+    double sr) {
+    a = std::min(a,x.size());
+    b = std::min(b,x.size());
+    if (b<=a+2) return 0.0;
+    std::size_t crossings=0;
+    for (std::size_t i=a+1;i<b;++i)
+        if (x[i-1] <= 0.0f && x[i] > 0.0f) ++crossings;
+    const double seconds=static_cast<double>(b-a)/sr;
+    return seconds>0.0?static_cast<double>(crossings)/seconds:0.0;
+}
+
 Metrics analyze(const std::vector<float>& x, double sr) {
     Metrics m;
     double sumSq=0.0;
@@ -165,6 +180,45 @@ int main(int argc, char** argv) {
 
         if (!writeFloatWav(prefix+std::string("-")+v.name+".wav",x,static_cast<std::uint32_t>(sr)))
             return 3;
+    }
+
+    struct PipeVariant { const char* name; float pressure; };
+    const PipeVariant pipes[] = {
+        {"pipe_low_pressure",0.30f},
+        {"pipe_medium_pressure",0.60f},
+        {"pipe_high_pressure",0.90f}
+    };
+
+    for (const auto& v:pipes) {
+        mechamorph::PipeEngine pipe;
+        mechamorph::DeterministicRng rng;
+        rng.seed(0x125A91PEULL);
+        pipe.prepare(sr);
+        pipe.setFrequency(440.0f);
+
+        std::vector<float> x(static_cast<std::size_t>(0.80*sr),0.0f);
+        const std::size_t on=static_cast<std::size_t>(0.05*sr);
+        const std::size_t off=static_cast<std::size_t>(0.58*sr);
+
+        float pressure=0.0f;
+        for (std::size_t i=0;i<x.size();++i) {
+            const float target=(i>=on && i<off)?v.pressure:0.0f;
+            const float coeff=target>pressure?0.0025f:0.0012f;
+            pressure += coeff*(target-pressure);
+            const float aperture=(i>=on && i<off)?1.0f:0.0f;
+            x[i]=pipe.process(pressure,aperture,rng);
+        }
+
+        const auto m=analyze(x,sr);
+        const std::size_t freqA=static_cast<std::size_t>(0.25*sr);
+        const std::size_t freqB=static_cast<std::size_t>(0.50*sr);
+        const double estimatedHz=estimateZeroCrossFrequency(x,freqA,freqB,sr);
+
+        std::cout<<v.name<<','<<m.peak<<','<<m.rms<<','<<m.centroid<<','<<m.t60ms
+                 <<",freq_hz="<<estimatedHz<<"\n";
+
+        if (!writeFloatWav(prefix+std::string("-")+v.name+".wav",x,static_cast<std::uint32_t>(sr)))
+            return 4;
     }
 
     return 0;
