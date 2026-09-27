@@ -8,7 +8,8 @@ enum ParamIds : Steinberg::Vst::ParamID {
     kLoad    = 2002,
     kAction  = 2003,
     kWear    = 2004,
-    kOutput  = 2005
+    kScale   = 2005,
+    kOutput  = 2006
 };
-inline constexpr int kParamCount = 6;
+inline constexpr int kParamCount = 7;
 } // namespace MechamorphMachine
