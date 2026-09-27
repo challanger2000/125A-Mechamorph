@@ -82,6 +82,7 @@ public:
     void start(const Clip& clip, float gain, float rate, std::size_t startOffset = 0) noexcept;
     float process() noexcept;
     bool active() const noexcept { return active_; }
+    bool looping() const noexcept { return clip_.loop; }
 
 private:
     Clip clip_ {};
@@ -138,6 +139,7 @@ private:
     std::array<PendingEvent, kMaxPending> pending_ {};
 
     double phase_ = 0.0;
+    double previousPhase_ = 0.0;
     float activity_ = 0.0f;
     bool runLoopSpawned_ = false;
     bool loadActive_ = false;
