@@ -32,7 +32,7 @@ private:
     void buildProfiles() noexcept;
 
     std::vector<OwnedAsset> assets_;
-    std::array<mechamorph::machine::SampleSet, 3> profiles_{};
+    std::array<mechamorph::machine::SampleSet, 6> profiles_{};
 };
 
 } // namespace MechamorphMachine
