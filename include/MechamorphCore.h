@@ -118,6 +118,25 @@ private:
     float noiseState_ = 0.0f;
 };
 
+class PipeEngine {
+public:
+    static constexpr std::size_t kMaxDelay = 4096;
+
+    void prepare(double sampleRate) noexcept;
+    void reset() noexcept;
+    void setFrequency(float frequencyHz) noexcept;
+    float process(float pressure, float aperture, DeterministicRng& rng) noexcept;
+
+private:
+    double sampleRate_ = 48000.0;
+    std::array<float, kMaxDelay> delay_{};
+    std::size_t writeIndex_ = 0;
+    std::size_t delaySamples_ = 109;
+    float boreLowpass_ = 0.0f;
+    float previousPressure_ = 0.0f;
+    float chiffEnv_ = 0.0f;
+};
+
 class ValveEngine {
 public:
     void prepare(double sampleRate) noexcept;
