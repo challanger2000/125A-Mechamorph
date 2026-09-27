@@ -148,7 +148,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path space-lab | Out-Null
-          $source = Get-ChildItem -Path machine-set -File -Filter "run__*.wav" | Sort-Object Name | Select-Object -First 1
+          $source = Get-ChildItem -Path machine-set -File | Where-Object { $_.Name -like "run__*.wav" } | Sort-Object Name | Select-Object -First 1
           if (-not $source) { Write-Error "No RUN sample available for BODY SPACE lab"; exit 1 }
           & .\build-machine-vst\Release\measure_machine_space.exe $source.FullName space-lab | Tee-Object -FilePath space-lab\metrics.csv
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -179,7 +179,7 @@ jobs:
             "",
             "MIDI: Any Note On starts the machine. It stops when all held notes are released.",
             "",
-            "Parameters: Machine, Speed, Load, Action, Wear, Output.",
+            "Parameters: Machine, Speed, Load, Action, Wear, Scale, Output.",
             "",
             "BODY is intentionally not exposed because it has not passed the control-gate test.",
             "Embedded sample material uses CC0 sources documented in the repository manifests."
