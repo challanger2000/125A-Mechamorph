@@ -7,3 +7,5 @@ Retrigger build after MIDI Note-On restart fix.
 Final MIDI trigger-mode build: Note-On retriggers, Note-Off ignored, transport stop resets.
 
 Active-note gate build: every Note-On retriggers; only matching active Note-Off stops.
+
+Rebuild with visible SCALE parameter plus active-note retrigger gate.
