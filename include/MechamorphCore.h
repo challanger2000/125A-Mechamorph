@@ -118,6 +118,18 @@ private:
     float noiseState_ = 0.0f;
 };
 
+class FrictionEngine {
+public:
+    void prepare(double sampleRate) noexcept;
+    void reset() noexcept;
+    float process(const Parameters& p, const MechanicalState& state, DeterministicRng& rng) noexcept;
+
+private:
+    double sampleRate_ = 48000.0;
+    float roughnessState_ = 0.0f;
+    float slipState_ = 0.0f;
+};
+
 class GearEngine {
 public:
     void reset() noexcept;
@@ -174,6 +186,7 @@ private:
     MechanicalDrive drive_{};
     ModalResonator body_{};
     AirEngine air_{};
+    FrictionEngine friction_{};
     GearEngine gear_{};
     RatchetEngine ratchet_{};
     RattleEngine rattle_{};
