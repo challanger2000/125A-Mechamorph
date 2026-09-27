@@ -352,7 +352,11 @@ float RattleEngine::process(const Parameters& p, const MechanicalState& state, D
 
 void Core::prepare(double sampleRate, std::size_t /*maxBlockSize*/) noexcept {
     sampleRate_ = std::max(sampleRate, 1.0);
-    rng_.seed(0x125A0001ULL);
+    rngAir_.seed(0x125A0001ULL);
+    rngFriction_.seed(0x125A0002ULL);
+    rngGear_.seed(0x125A0003ULL);
+    rngRatchet_.seed(0x125A0004ULL);
+    rngRattle_.seed(0x125A0005ULL);
     analyzer_.prepare(sampleRate_);
     drive_.prepare(sampleRate_);
     bodyL_.prepare(sampleRate_);
@@ -378,7 +382,11 @@ void Core::prepare(double sampleRate, std::size_t /*maxBlockSize*/) noexcept {
 
 void Core::reset() noexcept {
     state_ = {};
-    rng_.seed(0x125A0001ULL);
+    rngAir_.seed(0x125A0001ULL);
+    rngFriction_.seed(0x125A0002ULL);
+    rngGear_.seed(0x125A0003ULL);
+    rngRatchet_.seed(0x125A0004ULL);
+    rngRattle_.seed(0x125A0005ULL);
     analyzer_.reset();
     drive_.reset();
     bodyL_.reset();
@@ -424,11 +432,11 @@ void Core::processFrame(
     state_.load = std::clamp(state_.inputEnvelope * p.mechanize, 0.0f, 1.0f);
     drive_.process(p, state_);
 
-    const float gear = gear_.process(p, state_, rng_);
-    const float ratchet = ratchet_.process(p, state_, rng_);
-    const float rattle = rattle_.process(p, state_, rng_);
-    const float air = air_.process(p, state_, rng_);
-    const float friction = friction_.process(p, state_, rng_);
+    const float gear = gear_.process(p, state_, rngGear_);
+    const float ratchet = ratchet_.process(p, state_, rngRatchet_);
+    const float rattle = rattle_.process(p, state_, rngRattle_);
+    const float air = air_.process(p, state_, rngAir_);
+    const float friction = friction_.process(p, state_, rngFriction_);
 
     const float sharedMechanicalExcitation =
         gear + ratchet + rattle + air + friction;
