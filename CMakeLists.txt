@@ -147,6 +147,17 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
         smtg_enable_vst3_sdk()
     endif()
 
+    add_executable(measure_machine_space
+        tools/measure_machine_space.cpp
+        source-machine/MachineSpaceEngine.h
+        source-machine/MachineSpaceEngine.cpp
+    )
+    target_include_directories(measure_machine_space PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/source-machine"
+        "${MECHAMORPH_MACHINE_GENERATED_DIR}"
+    )
+    target_compile_features(measure_machine_space PRIVATE cxx_std_17)
+
     smtg_add_vst3plugin(MechamorphMachine
         source/version.h
         source-machine/ids.h
