@@ -1,10 +1,6 @@
 name: Build Machine Instrument VST3
 
 on:
-  push:
-    branches: [ "v0.1.0" ]
-    paths:
-      - "docs/MACHINE-VST-TRIGGER.md"
   workflow_dispatch:
 
 jobs:
