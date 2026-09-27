@@ -320,7 +320,7 @@ void Engine::updateMachineState() noexcept {
     // LOAD is a real continuous machine control. A loaded machine slows and
     // feels heavier even when no discrete LOAD gesture is currently playing.
     phaseSpeed *= 1.0 - 0.18 * continuousLoad;
-    phaseSpeed *= 1.0 + 0.035 * wear * std::sin(phase_);
+    phaseSpeed *= 1.0 + 0.010 * wear * std::sin(phase_);
 
     previousPhase_ = phase_;
     phase_ += kTwoPi * phaseSpeed / sampleRate_;
@@ -335,7 +335,7 @@ void Engine::updateMachineState() noexcept {
     const float scaleRate = 1.08f - 0.38f * scale;
     const double wearEccentricity =
         1.0 +
-        (0.010 + 0.040 * static_cast<double>(wear)) *
+        (0.004 + 0.012 * static_cast<double>(wear)) *
         static_cast<double>(wear) *
         std::sin(phase_);
     const double runRateScale =
@@ -359,7 +359,7 @@ void Engine::updateMachineState() noexcept {
         const float densityScale = 1.0f - 0.82f * scale;
         const int camsPerRev = std::max(
             1,
-            1 + static_cast<int>(std::floor(5.0f * actionAmount * densityScale)));
+            1 + static_cast<int>(std::floor(9.0f * actionAmount * densityScale)));
         const double sector = kTwoPi / static_cast<double>(camsPerRev);
         const int previousSector = static_cast<int>(previousPhase_ / sector);
         const int currentSector = static_cast<int>(phase_ / sector);
@@ -374,7 +374,7 @@ void Engine::updateMachineState() noexcept {
 
             float force =
                 (0.48f +
-                 0.28f * actionAmount +
+                 0.18f * actionAmount +
                  0.10f * loadAmount +
                  0.42f * scale) *
                 forceVariation;
