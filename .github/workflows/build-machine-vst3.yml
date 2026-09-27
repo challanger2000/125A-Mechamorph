@@ -1,6 +1,10 @@
 name: Build Machine Instrument VST3
 
 on:
+  push:
+    branches: [ "v0.1.0" ]
+    paths:
+      - "docs/MACHINE-VST-TRIGGER.md"
   workflow_dispatch:
 
 jobs:
@@ -68,6 +72,8 @@ jobs:
 
           python3 tools/generate_machine_variants.py \
             machine-set machine-set
+
+          python3 tools/check_machine_variety.py machine-set
 
           ls -lh machine-set
 
