@@ -114,6 +114,15 @@ private:
     float noiseState_ = 0.0f;
 };
 
+class GearEngine {
+public:
+    void reset() noexcept;
+    float process(const Parameters& p, const MechanicalState& state, DeterministicRng& rng) noexcept;
+
+private:
+    double previousPhase_ = 0.0;
+};
+
 class RatchetEngine {
 public:
     void reset() noexcept;
@@ -161,6 +170,7 @@ private:
     MechanicalDrive drive_{};
     ModalResonator body_{};
     AirEngine air_{};
+    GearEngine gear_{};
     RatchetEngine ratchet_{};
     RattleEngine rattle_{};
     double sampleRate_ = 48000.0;
