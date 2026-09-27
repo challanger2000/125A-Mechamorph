@@ -144,6 +144,11 @@ private:
 
     std::array<Voice, kMaxVoices> voices_ {};
     std::array<PendingEvent, kMaxPending> pending_ {};
+    std::array<std::size_t, 6> lastClipIndex_ {
+        static_cast<std::size_t>(-1), static_cast<std::size_t>(-1),
+        static_cast<std::size_t>(-1), static_cast<std::size_t>(-1),
+        static_cast<std::size_t>(-1), static_cast<std::size_t>(-1)
+    };
 
     double phase_ = 0.0;
     double previousPhase_ = 0.0;
