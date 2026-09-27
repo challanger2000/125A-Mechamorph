@@ -25,3 +25,5 @@ Build visible BODY + SPACE controls with measured character engine.
 Verify BODY stereo reduction and true 100 percent wet SPACE mapping.
 
 Build fictional archetypes with transformed anti-repeat material.
+
+Final anti-repeat archetype verification: independent STOP source and duplicate-free variant set.
