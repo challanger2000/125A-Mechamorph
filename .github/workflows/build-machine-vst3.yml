@@ -150,7 +150,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path space-lab | Out-Null
           $source = Get-ChildItem -Path machine-set -File | Where-Object { $_.Name -like "run__*.wav" } | Sort-Object Name | Select-Object -First 1
           if (-not $source) { Write-Error "No RUN sample available for BODY SPACE lab"; exit 1 }
-          & .\build-machine-vst\Release\measure_machine_space.exe $source.FullName space-lab | Tee-Object -FilePath space-lab\metrics.csv
+          & .\build-machine-vst\bin\Release\measure_machine_space.exe $source.FullName space-lab | Tee-Object -FilePath space-lab\metrics.csv
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Copy-Item machine-set\OPENAIR-ATTRIBUTION.txt space-lab\OPENAIR-ATTRIBUTION.txt
           Get-ChildItem space-lab
