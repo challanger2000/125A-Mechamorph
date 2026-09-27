@@ -77,7 +77,42 @@ int main() {
     for (std::size_t i = 0; i < a.size(); ++i)
         assert(a[i] == b[i]);
 
-    // 5) Sample-rate safety sweep.
+    // 5) Reduced friction engine: neutral at zero wear, active under loaded motion.
+    {
+        mechamorph::FrictionEngine friction;
+        mechamorph::DeterministicRng rng;
+        mechamorph::MechanicalState s;
+        friction.prepare(sr);
+        rng.seed(0x125AF001ULL);
+        s.activity = 1.0f;
+        s.speedHz = 2.0f;
+        s.load = 0.6f;
+
+        Parameters q;
+        q.wear = 0.0f;
+        double zeroEnergy = 0.0;
+        for (int i = 0; i < 4096; ++i) {
+            s.phase = std::fmod(s.phase + 2.0 * 3.14159265358979323846 * s.speedHz / sr,
+                                2.0 * 3.14159265358979323846);
+            zeroEnergy += std::fabs(friction.process(q, s, rng));
+        }
+        assert(zeroEnergy == 0.0);
+
+        friction.reset();
+        rng.seed(0x125AF001ULL);
+        q.wear = 1.0f;
+        double activeEnergy = 0.0;
+        for (int i = 0; i < 48000; ++i) {
+            s.phase = std::fmod(s.phase + 2.0 * 3.14159265358979323846 * s.speedHz / sr,
+                                2.0 * 3.14159265358979323846);
+            const float y = friction.process(q, s, rng);
+            assert(std::isfinite(y));
+            activeEnergy += std::fabs(y);
+        }
+        assert(activeEnergy > 0.01);
+    }
+
+    // 6) Sample-rate safety sweep.
     for (double testRate : {44100.0, 48000.0, 88200.0, 96000.0, 192000.0}) {
         Core rateCore;
         rateCore.prepare(testRate, 1024);
@@ -91,7 +126,7 @@ int main() {
         assert(peak < 8.0f);
     }
 
-    // 6) Regression guard against modal gain runaway under sustained/polyphonic material.
+    // 7) Regression guard against modal gain runaway under sustained/polyphonic material.
     {
         Core musicalCore;
         musicalCore.prepare(sr, 512);
@@ -121,7 +156,7 @@ int main() {
         assert(peak < 1.0f);
     }
 
-    // 7) Machine activity must decay back toward silence after excitation.
+    // 8) Machine activity must decay back toward silence after excitation.
     {
         Core tailCore;
         tailCore.prepare(sr, 512);
@@ -148,7 +183,7 @@ int main() {
         assert(finalPeak < 1.0e-3f);
     }
 
-    // 8) Sustained excitation must still decay within the advertised finite tail.
+    // 9) Sustained excitation must still decay within the advertised finite tail.
     {
         Core tailCore;
         tailCore.prepare(sr, 512);
