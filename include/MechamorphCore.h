@@ -138,6 +138,7 @@ private:
     };
     std::array<Event, kMaxEvents> events_{};
     double sampleRate_ = 48000.0;
+    bool transientLatched_ = false;
 };
 
 class Core {
