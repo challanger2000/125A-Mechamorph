@@ -27,6 +27,7 @@ Processor::Processor() {
     machineParams_.load = 0.20f;
     machineParams_.action = 0.48f;
     machineParams_.wear = 0.18f;
+    machineParams_.scale = 0.35f;
     machineParams_.clatter = 0.10f;
     machineParams_.body = 0.0f;
     machineParams_.pressure = 0.0f;
@@ -121,6 +122,9 @@ void Processor::applyParameter(ParamID id, float normalized) noexcept {
             // CLATTER remains an internal consequence of wear.
             machineParams_.clatter = 0.08f + 0.20f * v;
             break;
+        case kScale:
+            machineParams_.scale = v;
+            break;
         case kOutput:
             machineParams_.output = v;
             break;
@@ -184,7 +188,8 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
             case kLoad: return 2;
             case kAction: return 3;
             case kWear: return 4;
-            case kOutput: return 5;
+            case kScale: return 5;
+            case kOutput: return 6;
             default: return -1;
         }
     };
@@ -326,6 +331,7 @@ tresult PLUGIN_API Processor::setState(IBStream* state) {
     float load = 0.0f;
     float action = 0.0f;
     float wear = 0.0f;
+    float scale = 0.0f;
     float output = 0.0f;
 
     if (!s.readInt32(version) || version != kStateVersion ||
@@ -334,6 +340,7 @@ tresult PLUGIN_API Processor::setState(IBStream* state) {
         !s.readFloat(load) ||
         !s.readFloat(action) ||
         !s.readFloat(wear) ||
+        !s.readFloat(scale) ||
         !s.readFloat(output))
         return kResultFalse;
 
@@ -342,6 +349,7 @@ tresult PLUGIN_API Processor::setState(IBStream* state) {
     machineParams_.load = std::clamp(load, 0.0f, 1.0f);
     machineParams_.action = std::clamp(action, 0.0f, 1.0f);
     machineParams_.wear = std::clamp(wear, 0.0f, 1.0f);
+    machineParams_.scale = std::clamp(scale, 0.0f, 1.0f);
     machineParams_.clatter = 0.08f + 0.20f * machineParams_.wear;
     machineParams_.output = std::clamp(output, 0.0f, 1.0f);
 
@@ -361,6 +369,7 @@ tresult PLUGIN_API Processor::getState(IBStream* state) {
         !s.writeFloat(machineParams_.load) ||
         !s.writeFloat(machineParams_.action) ||
         !s.writeFloat(machineParams_.wear) ||
+        !s.writeFloat(machineParams_.scale) ||
         !s.writeFloat(machineParams_.output))
         return kResultFalse;
 
