@@ -29,15 +29,15 @@ public:
 private:
     void applyParameter(Steinberg::Vst::ParamID id, float normalized) noexcept;
     void updateEngineParameters() noexcept;
-    void applyMachineProfile(bool restartIfHeld) noexcept;
+    void applyMachineProfile(bool restartIfRunning) noexcept;
 
     MachineAssetBank assets_{};
     mechamorph::machine::Engine engine_{};
     mechamorph::machine::Parameters machineParams_{};
 
     int machineIndex_ = 0;
-    int heldNotes_ = 0;
     double sampleRate_ = 48000.0;
+    bool transportWasPlaying_ = false;
 };
 
 } // namespace MechamorphMachine
