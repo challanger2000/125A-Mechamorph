@@ -146,7 +146,7 @@ void MachineAssetBank::buildProfiles() noexcept {
         clip.loop = asset.role == static_cast<int>(mechamorph::machine::Role::Run);
         clip.name = asset.name.c_str();
 
-        for (int profileIndex = 0; profileIndex < 3; ++profileIndex) {
+        for (int profileIndex = 0; profileIndex < 6; ++profileIndex) {
             const int bit = 1 << profileIndex;
             if ((asset.profileMask & bit) != 0)
                 addClip(profiles_[static_cast<std::size_t>(profileIndex)], clip, asset.role);
@@ -155,7 +155,7 @@ void MachineAssetBank::buildProfiles() noexcept {
 }
 
 const mechamorph::machine::SampleSet* MachineAssetBank::profile(int index) const noexcept {
-    index = std::clamp(index, 0, 2);
+    index = std::clamp(index, 0, 5);
     return &profiles_[static_cast<std::size_t>(index)];
 }
 
