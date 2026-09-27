@@ -27,6 +27,11 @@ add_executable(mechamorph_smoke_render
 )
 target_link_libraries(mechamorph_smoke_render PRIVATE mechamorph_core)
 
+add_executable(mechamorph_control_measurements
+    tools/measure_controls.cpp
+)
+target_link_libraries(mechamorph_control_measurements PRIVATE mechamorph_core)
+
 option(MECHAMORPH_BUILD_VST3 "Build the VST3 prototype wrapper" OFF)
 
 if(MECHAMORPH_BUILD_VST3)
