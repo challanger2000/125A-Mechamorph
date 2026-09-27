@@ -200,7 +200,10 @@ int main() {
         stopEngine.stop();
         std::vector<float> half(static_cast<std::size_t>(0.55 * sr), 0.0f);
         stopEngine.process(half.data(), half.size());
-        assert(stopEngine.state() == State::Stopping);
+
+        // The drive is logically stopped after the run-bed fade, but the real
+        // mechanical stop gesture must continue as an acoustic tail.
+        assert(stopEngine.state() == State::Stopped);
 
         double halfEnergy = 0.0;
         for (float v : half) halfEnergy += static_cast<double>(v) * v;
@@ -208,6 +211,10 @@ int main() {
 
         std::vector<float> rest(static_cast<std::size_t>(1.00 * sr), 0.0f);
         stopEngine.process(rest.data(), rest.size());
+
+        double restEnergy = 0.0;
+        for (float v : rest) restEnergy += static_cast<double>(v) * v;
+        assert(restEnergy > 0.0);
         assert(stopEngine.state() == State::Stopped);
     }
 
