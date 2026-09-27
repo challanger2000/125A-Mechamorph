@@ -38,6 +38,7 @@ tresult PLUGIN_API Controller::initialize(FUnknown* context) {
     addPercent(STR16("Load"), kLoad, 0.20);
     addPercent(STR16("Action"), kAction, 0.48);
     addPercent(STR16("Wear"), kWear, 0.18);
+    addPercent(STR16("Scale"), kScale, 0.35);
 
     auto* output = new RangeParameter(
         STR16("Output"), kOutput, STR16("dB"), -12.0, 12.0, -2.88);
@@ -63,7 +64,7 @@ tresult PLUGIN_API Controller::setComponentState(IBStream* state) {
     }
 
     const ParamID ids[kParamCount] = {
-        kMachine, kSpeed, kLoad, kAction, kWear, kOutput
+        kMachine, kSpeed, kLoad, kAction, kWear, kScale, kOutput
     };
 
     for (int i = 0; i < kParamCount; ++i)
