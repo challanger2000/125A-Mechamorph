@@ -1,0 +1,24 @@
+internal_id,source_file,role,start_s,end_s,priority,notes
+winch_start,manual_winch_0902.wav,START,0.0,4.2,P0,Hand-crank engagement
+winch_run,manual_winch_0902.wav,RUN,4.0,13.5,P0,Manual crank drive
+winch_release,manual_winch_0902.wav,RELEASE,11.0,16.8,P1,Slower crank tail
+sewing_slow_run,sewing_slow_1115.wav,RUN,2.0,11.5,P0,Slow cyclic linkage
+sewing_slow_release,sewing_slow_1115.wav,RELEASE,14.0,21.0,P1,Slow mechanism state
+sewing_fast_run,sewing_fast_1116.wav,RUN,0.5,9.8,P0,Fast cyclic linkage
+ratchet_01,large_ratchet_0795.wav,ACTION,1.08,1.85,P0,Large pawl/ratchet
+ratchet_02,large_ratchet_0795.wav,ACTION,3.78,4.55,P0,Large pawl/ratchet
+ratchet_03,large_ratchet_0795.wav,ACTION,6.78,7.55,P0,Large pawl/ratchet
+ratchet_04,large_ratchet_0795.wav,ACTION,9.23,10.00,P0,Large pawl/ratchet
+spring_01,large_spring_0206.wav,RELEASE,6.87,7.69,P0,Spring return
+spring_02,large_spring_0206.wav,RELEASE,15.14,15.96,P0,Spring return
+spring_03,large_spring_0206.wav,RELEASE,23.18,24.00,P1,Spring return
+spring_04,large_spring_0206.wav,RELEASE,30.01,30.83,P1,Spring return
+chain_load_01,medium_chain_0619.wav,LOAD,15.7,18.1,P0,Chain/load movement
+chain_load_02,medium_chain_0619.wav,LOAD,23.3,25.2,P0,Chain/load movement
+air_release_01,air_burst_0138.wav,RELEASE,2.27,3.10,P1,Pressure release
+air_release_02,air_burst_0138.wav,RELEASE,6.37,7.20,P1,Pressure release
+stapler_contact_01,stapler_0009.wav,ACTION,0.88,1.26,P1,Compact hard contact
+stapler_contact_02,stapler_0009.wav,ACTION,1.74,2.12,P1,Compact hard contact
+stapler_contact_03,stapler_0009.wav,ACTION,3.10,3.48,P1,Compact hard contact
+roller_crank,roller_shutter_2469.wav,RUN,1.0,12.0,P1,Alternative crank/roller movement
+rattle_fast,ratchet_rattle_0923.wav,RUN,1.0,12.0,P1,Alternative dense ratchet texture
