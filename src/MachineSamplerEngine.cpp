@@ -116,6 +116,7 @@ void Engine::reset() noexcept {
     previousPhase_ = 0.0;
     activity_ = 0.0f;
     runBlend_ = 0.0f;
+    inertiaState_ = 0.0f;
     runLoopSpawned_ = false;
     loadActive_ = false;
     stopCountdown_ = 0;
@@ -166,6 +167,7 @@ void Engine::spawn(Role role, float force, bool preferLoop) noexcept {
 
     const float wear = clamp01(params_.wear);
     const float load = clamp01(params_.load);
+    const float scale = clamp01(params_.scale);
 
     float gain = std::clamp(force, 0.0f, 1.5f);
     float rate = 1.0f;
@@ -175,13 +177,16 @@ void Engine::spawn(Role role, float force, bool preferLoop) noexcept {
 
     if (role == Role::Run) {
         const float speed = clamp01(params_.speed);
-        rate = (0.65f + 0.85f * speed) * sampleRateRatio;
-        // Load should feel heavier/slower, not simply louder.
-        gain *= 0.62f - 0.10f * load;
+        const float scaleRate = 1.20f - 0.72f * scale;
+        rate = (0.65f + 0.85f * speed) * scaleRate * sampleRateRatio;
+        // Large machines are not simply louder; they are slower/heavier.
+        gain *= 0.58f + 0.10f * scale - 0.08f * load;
     } else {
-        rate *= sampleRateRatio;
+        const float scaleRate = 1.18f - 0.68f * scale;
+        rate *= sampleRateRatio * scaleRate;
         rate *= 1.0f + (0.006f + 0.055f * wear * wear) * rng_.bipolar();
-        gain *= 1.0f + (0.06f + 0.22f * wear * wear) * rng_.bipolar();
+        gain *= (0.88f + 0.22f * scale) *
+                (1.0f + (0.06f + 0.22f * wear * wear) * rng_.bipolar());
     }
 
     std::size_t startOffset = 0;
@@ -288,10 +293,22 @@ void Engine::updateMachineState() noexcept {
 
     const float speed = clamp01(params_.speed);
     const float wear = clamp01(params_.wear);
+    const float scale = clamp01(params_.scale);
 
     const float continuousLoad = clamp01(params_.load);
 
-    double phaseSpeed = 0.40 + 3.60 * speed;
+    // SCALE is physical mass/size, not a pitch macro.
+    // Larger machines accelerate more slowly and have lower natural cycle rate.
+    const float targetSpeed =
+        (0.40f + 3.60f * speed) *
+        (1.10f - 0.78f * scale);
+
+    const float inertiaSeconds = 0.03f + 1.20f * scale * scale;
+    const float inertiaCoeff =
+        static_cast<float>(1.0 - std::exp(-1.0 / (inertiaSeconds * sampleRate_)));
+    inertiaState_ += inertiaCoeff * (targetSpeed - inertiaState_);
+
+    double phaseSpeed = std::max(0.03f, inertiaState_);
     // LOAD is a real continuous machine control. A loaded machine slows and
     // feels heavier even when no discrete LOAD gesture is currently playing.
     phaseSpeed *= 1.0 - 0.18 * continuousLoad;
@@ -307,6 +324,7 @@ void Engine::updateMachineState() noexcept {
     // the running mechanism itself, not just future one-shot events.
     const float speedForRate = clamp01(params_.speed);
     const float loadForRate = continuousLoad;
+    const float scaleRate = 1.20f - 0.72f * scale;
     const double wearEccentricity =
         1.0 +
         (0.010 + 0.040 * static_cast<double>(wear)) *
@@ -314,6 +332,7 @@ void Engine::updateMachineState() noexcept {
         std::sin(phase_);
     const double runRateScale =
         (0.65 + 0.85 * speedForRate) *
+        static_cast<double>(scaleRate) *
         (1.0 - 0.18 * loadForRate) *
         wearEccentricity;
 
@@ -329,7 +348,10 @@ void Engine::updateMachineState() noexcept {
         state_ != State::Stopping &&
         state_ != State::Stopped) {
 
-        const int camsPerRev = 1 + static_cast<int>(std::floor(5.0f * actionAmount));
+        const float densityScale = 1.0f - 0.72f * scale;
+        const int camsPerRev = std::max(
+            1,
+            1 + static_cast<int>(std::floor(5.0f * actionAmount * densityScale)));
         const double sector = kTwoPi / static_cast<double>(camsPerRev);
         const int previousSector = static_cast<int>(previousPhase_ / sector);
         const int currentSector = static_cast<int>(phase_ / sector);
@@ -343,9 +365,10 @@ void Engine::updateMachineState() noexcept {
                 1.0f + (0.04f + 0.26f * wear * wear) * rng_.bipolar();
 
             float force =
-                (0.55f +
-                 0.35f * actionAmount +
-                 0.10f * loadAmount) *
+                (0.50f +
+                 0.30f * actionAmount +
+                 0.10f * loadAmount +
+                 0.28f * scale) *
                 forceVariation;
 
             force = std::clamp(force, 0.15f, 1.25f);
