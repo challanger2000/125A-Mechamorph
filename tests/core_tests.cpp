@@ -1,5 +1,6 @@
 #include "MechamorphCore.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -75,6 +76,20 @@ int main() {
     core.process(b.data(), nullptr, b.size());
     for (std::size_t i = 0; i < a.size(); ++i)
         assert(a[i] == b[i]);
+
+    // 5) Sample-rate safety sweep.
+    for (double testRate : {44100.0, 48000.0, 88200.0, 96000.0, 192000.0}) {
+        Core rateCore;
+        rateCore.prepare(testRate, 1024);
+        rateCore.setParameters(p);
+        std::vector<float> x(8192, 0.0f);
+        x[0] = 1.0f;
+        rateCore.process(x.data(), nullptr, x.size());
+        assert(finiteBuffer(x));
+        float peak = 0.0f;
+        for (float v : x) peak = std::max(peak, std::fabs(v));
+        assert(peak < 8.0f);
+    }
 
     std::cout << "Mechamorph core tests PASS\n";
     return 0;
