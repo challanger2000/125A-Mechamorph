@@ -220,56 +220,65 @@ void PipeEngine::prepare(double sampleRate) noexcept {
 }
 
 void PipeEngine::reset() noexcept {
-    delay_.fill(0.0f);
-    writeIndex_ = 0;
-    boreLowpass_ = 0.0f;
+    phase_ = 0.0;
+    amplitude_ = 0.0f;
     previousPressure_ = 0.0f;
     chiffEnv_ = 0.0f;
+    airState_ = 0.0f;
 }
 
 void PipeEngine::setFrequency(float frequencyHz) noexcept {
-    const float f = std::clamp(frequencyHz, 40.0f, static_cast<float>(0.20 * sampleRate_));
-    const std::size_t d = static_cast<std::size_t>(std::max(2.0, std::round(sampleRate_ / f)));
-    delaySamples_ = std::min<std::size_t>(kMaxDelay - 2, d);
+    frequencyHz_ = std::clamp(
+        frequencyHz,
+        40.0f,
+        static_cast<float>(0.20 * sampleRate_));
 }
 
 float PipeEngine::process(float pressure, float aperture, DeterministicRng& rng) noexcept {
     pressure = std::clamp(pressure, 0.0f, 1.0f);
     aperture = std::clamp(aperture, 0.0f, 1.0f);
 
-    const std::size_t readIndex =
-        (writeIndex_ + kMaxDelay - delaySamples_) % kMaxDelay;
-    const float bore = delay_[readIndex];
+    // A flue pipe has a pressure threshold: below it, no stable tone.
+    const float effectivePressure = pressure * aperture;
+    const float drive = std::max(0.0f, (effectivePressure - 0.10f) / 0.90f);
 
-    // Onset/chiff is driven by positive pressure change, not continuously.
-    const float rise = std::max(0.0f, pressure - previousPressure_);
-    chiffEnv_ = std::max(chiffEnv_ * 0.9965f, 4.0f * rise);
-    previousPressure_ = pressure;
+    // Pressure rise creates a short chiff; steady pressure does not.
+    const float rise = std::max(0.0f, effectivePressure - previousPressure_);
+    chiffEnv_ = std::max(chiffEnv_ * 0.9955f, 8.0f * rise);
+    previousPressure_ = effectivePressure;
 
-    const float thresholdedPressure =
-        std::max(0.0f, pressure * aperture - 0.08f);
-    const float jetNoise =
-        rng.bipolar() * chiffEnv_ * (0.010f + 0.020f * pressure);
+    // Finite pressure-controlled attack/release.
+    const float targetAmp = std::pow(drive, 0.70f);
+    const float attackCoeff = static_cast<float>(std::exp(-1.0 / (0.018 * sampleRate_)));
+    const float releaseCoeff = static_cast<float>(std::exp(-1.0 / (0.060 * sampleRate_)));
+    const float coeff = targetAmp > amplitude_ ? attackCoeff : releaseCoeff;
+    amplitude_ = coeff * amplitude_ + (1.0f - coeff) * targetAmp;
+    if (amplitude_ < 1.0e-6f) amplitude_ = 0.0f;
 
-    // Reduced jet/bore interaction. The nonlinearity injects energy while
-    // the delayed bore pressure supplies the acoustic feedback.
-    const float jet =
-        std::tanh(2.6f * thresholdedPressure - 1.15f * bore) +
-        jetNoise;
+    phase_ += kTwoPi * static_cast<double>(frequencyHz_) / sampleRate_;
+    if (phase_ >= kTwoPi) phase_ -= kTwoPi;
 
-    // Frequency-dependent bore loss proxy: one-pole low-pass in the loop.
-    boreLowpass_ += 0.18f * (bore - boreLowpass_);
-    const float feedback = 0.985f * boreLowpass_;
+    // Pressure changes the harmonic balance: low pressure is softer/fundamental,
+    // high pressure excites more upper partials, as in a real flue pipe.
+    const float h2 = 0.10f + 0.18f * drive;
+    const float h3 = 0.035f + 0.10f * drive;
+    const float h4 = 0.015f + 0.055f * drive;
 
-    const float excitation =
-        thresholdedPressure > 0.0f ? (0.020f * jet + feedback) : 0.985f * feedback;
+    const float periodic =
+        static_cast<float>(std::sin(phase_)) +
+        h2 * static_cast<float>(std::sin(2.0 * phase_)) +
+        h3 * static_cast<float>(std::sin(3.0 * phase_)) +
+        h4 * static_cast<float>(std::sin(4.0 * phase_));
 
-    delay_[writeIndex_] = sanitize(excitation);
-    writeIndex_ = (writeIndex_ + 1) % kMaxDelay;
+    const float white = rng.bipolar();
+    airState_ += 0.08f * (white - airState_);
+    if (std::fabs(airState_) < kTiny) airState_ = 0.0f;
 
-    // Radiation emphasizes the pressure difference rather than raw bore state.
-    const float radiated = 0.75f * (bore - boreLowpass_) + 0.25f * bore;
-    return sanitize(radiated * 0.65f);
+    const float chiff = airState_ * chiffEnv_ * 0.05f;
+    const float breath = airState_ * amplitude_ * (0.008f + 0.012f * drive);
+
+    // Radiation level remains conservative in the solo lab.
+    return sanitize(0.22f * amplitude_ * periodic + chiff + breath);
 }
 
 void ValveEngine::prepare(double sampleRate) noexcept {
