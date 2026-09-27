@@ -253,7 +253,7 @@ int main(int argc, char** argv) {
     p.output = 0.38f;
     engine.setParameters(p);
 
-    constexpr double duration = 30.0;
+    constexpr double duration = 40.0;
     std::vector<float> out(static_cast<std::size_t>(duration * sr), 0.0f);
     std::size_t pos = 0;
 
@@ -272,7 +272,7 @@ int main(int argc, char** argv) {
     p.wear = 0.30f;
     engine.setParameters(p);
     engine.setLoadActive(true);
-    renderBlock(engine, out, pos, 7.0, sr);
+    renderBlock(engine, out, pos, 17.0, sr);
 
     p.speed = 0.42f;
     p.load = 0.25f;
