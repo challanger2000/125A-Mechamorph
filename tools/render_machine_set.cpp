@@ -195,18 +195,22 @@ int main(int argc, char** argv) {
     std::vector<std::unique_ptr<OwnedClip>> owned;
     SampleSet set;
 
+    std::vector<fs::path> samplePaths;
     for (const auto& entry : fs::directory_iterator(sampleDir)) {
-        if (!entry.is_regular_file() || entry.path().extension() != ".wav")
-            continue;
+        if (entry.is_regular_file() && entry.path().extension() == ".wav")
+            samplePaths.push_back(entry.path());
+    }
+    std::sort(samplePaths.begin(), samplePaths.end());
 
+    for (const auto& samplePath : samplePaths) {
         auto clip = std::make_unique<OwnedClip>();
-        clip->name = entry.path().stem().string();
+        clip->name = samplePath.stem().string();
         clip->role = roleFromName(clip->name);
         clip->loop = clip->role == Role::Run;
 
         int fileRate = 0;
-        if (!loadPcm16MonoWav(entry.path(), clip->audio, fileRate)) {
-            std::cerr << "Could not load " << entry.path() << "\n";
+        if (!loadPcm16MonoWav(samplePath, clip->audio, fileRate)) {
+            std::cerr << "Could not load " << samplePath << "\n";
             return 3;
         }
 
