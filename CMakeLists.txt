@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(MechamorphCore LANGUAGES CXX)
+project(MechamorphCore VERSION 0.1.0 LANGUAGES CXX)
 
 add_library(mechamorph_core STATIC
     src/MechamorphCore.cpp
