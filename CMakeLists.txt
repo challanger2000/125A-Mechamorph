@@ -86,20 +86,13 @@ add_library(machine_sampler_core STATIC
     src/MachineSamplerEngine.cpp
 )
 
-add_library(machine_character_core STATIC
-    src/MachineCharacterEngine.cpp
-)
 target_include_directories(machine_sampler_core PUBLIC include)
 target_compile_features(machine_sampler_core PUBLIC cxx_std_17)
 
-target_include_directories(machine_character_core PUBLIC include)
-target_compile_features(machine_character_core PUBLIC cxx_std_17)
 if(MSVC)
     target_compile_options(machine_sampler_core PRIVATE /W4 /permissive-)
-    target_compile_options(machine_character_core PRIVATE /W4 /permissive-)
 else()
     target_compile_options(machine_sampler_core PRIVATE -Wall -Wextra -Wpedantic)
-    target_compile_options(machine_character_core PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 add_executable(machine_sampler_tests
@@ -119,12 +112,6 @@ add_executable(measure_machine_controls
 )
 target_link_libraries(measure_machine_controls PRIVATE machine_sampler_core)
 target_compile_features(measure_machine_controls PRIVATE cxx_std_17)
-
-add_executable(measure_machine_character
-    tools/measure_machine_character.cpp
-)
-target_link_libraries(measure_machine_character PRIVATE machine_character_core)
-target_compile_features(measure_machine_character PRIVATE cxx_std_17)
 
 
 option(MECHAMORPH_BUILD_MACHINE_VST3 "Build the standalone Machine sampler instrument" OFF)
