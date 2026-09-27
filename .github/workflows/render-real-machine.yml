@@ -83,7 +83,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p real-machine-output
-          for control in speed load action wear body; do
+          for control in wear; do
             for value in 0.0 0.5 1.0; do
               tag=${value/./}
               ./build/machine_real_render \
