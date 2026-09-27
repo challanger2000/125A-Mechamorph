@@ -214,8 +214,14 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
 
             if (e.type == Event::kNoteOnEvent) {
                 if (e.noteOn.velocity > 0.0f) {
-                    if (heldNotes_ == 0)
-                        engine_.start();
+                    // Every musical Note On is a real machine retrigger.
+                    // This is essential for loops/patterns: repeated notes must
+                    // restart START -> RUN rather than letting the previous
+                    // machine cycle continue indefinitely.
+                    engine_.reset();
+                    engine_.setSampleSet(assets_.profile(machineIndex_));
+                    updateEngineParameters();
+                    engine_.start();
                     ++heldNotes_;
                 } else {
                     if (heldNotes_ > 0) --heldNotes_;
