@@ -22,4 +22,4 @@ stapler_contact_02,stapler_0009.wav,ACTION,1.74,2.12,P1,Compact hard contact
 stapler_contact_03,stapler_0009.wav,ACTION,3.10,3.48,P1,Compact hard contact
 roller_crank,roller_shutter_2469.wav,RUN,1.0,12.0,P1,Alternative crank/roller movement
 rattle_fast,ratchet_rattle_0923.wav,RUN,1.0,12.0,P1,Alternative dense ratchet texture
-winch_stop,manual_winch_0902.wav,STOP,11.0,16.8,P0,Manual crank run-down / stop gesture
+winch_stop,manual_winch_0901.wav,STOP,4.2,8.8,P0,Independent manual crank run-down / stop gesture
