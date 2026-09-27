@@ -118,6 +118,28 @@ private:
     float noiseState_ = 0.0f;
 };
 
+class ContactClackEngine {
+public:
+    void prepare(double sampleRate) noexcept;
+    void reset() noexcept;
+    float trigger(float force, float hardness, float material, DeterministicRng& rng) noexcept;
+    float process() noexcept;
+
+private:
+    double sampleRate_ = 48000.0;
+    float envelope_ = 0.0f;
+    float envelopeDecay_ = 0.0f;
+    float reson1_ = 0.0f;
+    float reson2_ = 0.0f;
+    float reson1Prev_ = 0.0f;
+    float reson2Prev_ = 0.0f;
+    float reson1A1_ = 0.0f;
+    float reson1A2_ = 0.0f;
+    float reson2A1_ = 0.0f;
+    float reson2A2_ = 0.0f;
+    float excitation_ = 0.0f;
+};
+
 class FrictionEngine {
 public:
     void prepare(double sampleRate) noexcept;
@@ -193,6 +215,7 @@ private:
     DeterministicRng rngRattle_{};
     InputAnalyzer analyzer_{};
     MechanicalDrive drive_{};
+    ContactClackEngine clack_{};
     ModalResonator bodyL_{};
     ModalResonator bodyR_{};
     AirEngine air_{};
