@@ -191,6 +191,59 @@ float AirEngine::process(const Parameters& p, MechanicalState& state, Determinis
     return noiseState_ * state.pressure * air * 0.12f;
 }
 
+void FrictionEngine::prepare(double sampleRate) noexcept {
+    sampleRate_ = std::max(sampleRate, 1.0);
+    reset();
+}
+
+void FrictionEngine::reset() noexcept {
+    roughnessState_ = 0.0f;
+    slipState_ = 0.0f;
+}
+
+float FrictionEngine::process(
+    const Parameters& p,
+    const MechanicalState& state,
+    DeterministicRng& rng) noexcept {
+
+    const float wear = std::clamp(p.wear, 0.0f, 1.0f);
+    const float activity = std::clamp(state.activity, 0.0f, 1.0f);
+    if (wear <= 0.0f || activity <= 0.0f)
+        return 0.0f;
+
+    const float speedNorm = std::clamp(state.speedHz / 4.0f, 0.0f, 1.0f);
+    const float load = std::clamp(state.load, 0.0f, 1.0f);
+
+    // Reduced physically-informed prototype:
+    // rough contact noise follows speed while a slower nonlinear state
+    // approximates stick/slip transitions. Coefficients remain EMPIRICALLY TUNED.
+    const float white = rng.bipolar();
+    const float roughAlpha = std::clamp(
+        static_cast<float>((120.0 + 1600.0 * speedNorm) / sampleRate_),
+        0.001f, 0.25f);
+    roughnessState_ += roughAlpha * (white - roughnessState_);
+
+    const float contactDrive =
+        roughnessState_ +
+        0.20f * static_cast<float>(std::sin(3.0 * state.phase));
+    const float nonlinear = std::tanh((2.0f + 6.0f * wear) * contactDrive);
+
+    const float slipAlpha = std::clamp(
+        static_cast<float>((35.0 + 220.0 * speedNorm) / sampleRate_),
+        0.0005f, 0.08f);
+    slipState_ += slipAlpha * (nonlinear - slipState_);
+
+    if (std::fabs(roughnessState_) < kTiny) roughnessState_ = 0.0f;
+    if (std::fabs(slipState_) < kTiny) slipState_ = 0.0f;
+
+    const float pressure = 0.20f + 0.80f * load;
+    const float friction =
+        (0.70f * roughnessState_ + 0.30f * slipState_) *
+        wear * activity * pressure * 0.060f;
+
+    return sanitize(friction);
+}
+
 void GearEngine::reset() noexcept {
     previousPhase_ = 0.0;
 }
@@ -296,6 +349,7 @@ void Core::prepare(double sampleRate, std::size_t /*maxBlockSize*/) noexcept {
     drive_.prepare(sampleRate_);
     body_.prepare(sampleRate_);
     air_.prepare(sampleRate_);
+    friction_.prepare(sampleRate_);
     rattle_.prepare(sampleRate_);
 
     // Placeholder prototype body. All values are EMPIRICALLY TUNED and
@@ -319,6 +373,7 @@ void Core::reset() noexcept {
     drive_.reset();
     body_.reset();
     air_.reset();
+    friction_.reset();
     gear_.reset();
     ratchet_.reset();
     rattle_.reset();
@@ -349,10 +404,11 @@ float Core::processOne(float input) noexcept {
     const float ratchet = ratchet_.process(p, state_, rng_);
     const float rattle = rattle_.process(p, state_, rng_);
     const float air = air_.process(p, state_, rng_);
+    const float friction = friction_.process(p, state_, rng_);
 
     const float bodyExcitation =
         (0.18f * input * p.mechanize) +
-        gear + ratchet + rattle + air;
+        gear + ratchet + rattle + air + friction;
 
     const float body = body_.process(bodyExcitation) * p.body;
     const float machine =
@@ -360,7 +416,8 @@ float Core::processOne(float input) noexcept {
         0.16f * gear +
         0.20f * ratchet +
         0.28f * rattle +
-        air;
+        air +
+        0.35f * friction;
 
     // Exact dry at mechanize=0.
     const float wet = clamp01(p.mechanize);
