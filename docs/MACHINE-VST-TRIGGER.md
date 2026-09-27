@@ -11,3 +11,5 @@ Active-note gate build: every Note-On retriggers; only matching active Note-Off 
 Rebuild with visible SCALE parameter plus active-note retrigger gate.
 
 Final build with visible SCALE control, improved scale physics, and active-note retrigger/stop semantics.
+
+Run BODY/SPACE control-gate lab with OpenAIR fingerprints.
