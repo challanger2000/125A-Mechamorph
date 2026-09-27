@@ -13,3 +13,5 @@ Rebuild with visible SCALE parameter plus active-note retrigger gate.
 Final build with visible SCALE control, improved scale physics, and active-note retrigger/stop semantics.
 
 Run BODY/SPACE control-gate lab with OpenAIR fingerprints.
+
+Retry BODY/SPACE lab after Windows source discovery fix.
