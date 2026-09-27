@@ -79,13 +79,15 @@ private:
 class Voice {
 public:
     void reset() noexcept;
-    void start(const Clip& clip, float gain, float rate, std::size_t startOffset = 0) noexcept;
+    void start(const Clip& clip, Role role, float gain, float rate, std::size_t startOffset = 0) noexcept;
     float process() noexcept;
     bool active() const noexcept { return active_; }
     bool looping() const noexcept { return clip_.loop; }
+    Role role() const noexcept { return role_; }
 
 private:
     Clip clip_ {};
+    Role role_ = Role::Action;
     double position_ = 0.0;
     double rate_ = 1.0;
     float gain_ = 1.0f;
@@ -127,6 +129,7 @@ private:
     void schedule(Role role, int delaySamples, float force) noexcept;
     void updateMachineState() noexcept;
     float renderVoices() noexcept;
+    bool hasActiveRole(Role role) const noexcept;
     float outputGain() const noexcept;
 
     double sampleRate_ = 48000.0;
