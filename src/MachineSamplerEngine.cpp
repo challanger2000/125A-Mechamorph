@@ -290,6 +290,22 @@ void Engine::updateMachineState() noexcept {
     if (phase_ >= kTwoPi)
         phase_ = std::fmod(phase_, kTwoPi);
 
+    // Keep continuous RUN beds mechanically coupled to live speed/load.
+    // This is crucial: changing machine speed or engaging load must change
+    // the running mechanism itself, not just future one-shot events.
+    const float speedForRate = clamp01(params_.speed);
+    const float loadForRate = loadActive_ ? clamp01(params_.load) : 0.0f;
+    const double runRateScale =
+        (0.65 + 0.85 * speedForRate) *
+        (1.0 - 0.18 * loadForRate);
+
+    for (auto& v : voices_) {
+        if (v.active() && v.role() == Role::Run) {
+            const double sourceRatio = v.sourceSampleRate() / sampleRate_;
+            v.setRate(sourceRatio * runRateScale);
+        }
+    }
+
     const float actionAmount = clamp01(params_.action);
     if (actionAmount > 0.0f &&
         state_ != State::Stopping &&
