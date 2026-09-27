@@ -1,0 +1,22 @@
+parameter,module,value,unit,evidence_class,source,status,verification_needed
+drive_speed_min,MechanicalDrive,,Hz,ESTIMATED / APPROXIMATED,,open,measure crank/clockwork references
+drive_speed_max,MechanicalDrive,,Hz,ESTIMATED / APPROXIMATED,,open,measure crank/clockwork references
+drive_drift_depth,MechanicalDrive,,percent,ESTIMATED / APPROXIMATED,,open,measure cycle-to-cycle timing
+gear_event_density,GearEngine,,events_per_second,ESTIMATED / APPROXIMATED,,open,measure gear references
+ratchet_jitter,RatchetEngine,,ms,ESTIMATED / APPROXIMATED,,open,measure ratchet references
+rattle_cluster_min,RattleEngine,,events,ESTIMATED / APPROXIMATED,,open,measure washer/bolt references
+rattle_cluster_max,RattleEngine,,events,ESTIMATED / APPROXIMATED,,open,measure washer/bolt references
+rattle_cluster_duration,RattleEngine,,ms,ESTIMATED / APPROXIMATED,,open,measure metal rattle references
+bellows_cycle_rate,AirEngine,,Hz,ESTIMATED / APPROXIMATED,,open,measure bellows references
+bellows_pressure_attack,AirEngine,,ms,ESTIMATED / APPROXIMATED,,open,measure bellows envelope
+bellows_pressure_release,AirEngine,,ms,ESTIMATED / APPROXIMATED,,open,measure bellows envelope
+air_centroid,AirEngine,,Hz,ESTIMATED / APPROXIMATED,,open,measure airflow spectrum
+friction_modulation_rate,FrictionEngine,,Hz,ESTIMATED / APPROXIMATED,,open,measure bearing/hinge references
+friction_squeal_low,FrictionEngine,,Hz,ESTIMATED / APPROXIMATED,,open,measure resonant friction peaks
+friction_squeal_high,FrictionEngine,,Hz,ESTIMATED / APPROXIMATED,,open,measure resonant friction peaks
+wood_mode_1,BodyResonator,,Hz,ESTIMATED / APPROXIMATED,,open,measure wooden body/gear references
+wood_mode_2,BodyResonator,,Hz,ESTIMATED / APPROXIMATED,,open,measure wooden body/gear references
+wood_mode_3,BodyResonator,,Hz,ESTIMATED / APPROXIMATED,,open,measure wooden body/gear references
+wood_decay_short,BodyResonator,,ms,ESTIMATED / APPROXIMATED,,open,derive from impulse/impact decay
+wood_decay_long,BodyResonator,,ms,ESTIMATED / APPROXIMATED,,open,derive from impulse/impact decay
+metal_mode_density,BodyResonator,,modes_per_khz,ESTIMATED / APPROXIMATED,,open,measure thin-metal references
