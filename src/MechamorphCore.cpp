@@ -120,9 +120,11 @@ void ModalResonator::setModes(const ModalMode* modes, std::size_t count) noexcep
         auto& m = modes_[i];
         m.a1 = 2.0f * r * std::cos(theta);
         m.a2 = -(r * r);
-        // Mode gain is defined as direct impulse excitation strength.
-        // Final gains remain EMPIRICALLY TUNED until reference measurements exist.
-        m.b0 = modes[i].gain;
+        // Energy-normalized excitation keeps long-decay/high-Q modes from
+        // accumulating excessive gain under periodic input.
+        // Final modal gains remain EMPIRICALLY TUNED until measured references exist.
+        const float excitationNorm = std::sqrt(std::max(0.0f, 1.0f - r * r));
+        m.b0 = modes[i].gain * excitationNorm;
         m.z1 = 0.0f;
         m.z2 = 0.0f;
     }
