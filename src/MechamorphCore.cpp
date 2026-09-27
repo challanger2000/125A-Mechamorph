@@ -52,11 +52,15 @@ float OnePoleEnvelope::process(float x) noexcept {
 void InputAnalyzer::prepare(double sampleRate) noexcept {
     fast_.prepare(sampleRate, 2.0);
     slow_.prepare(sampleRate, 30.0);
+    const double sr = std::max(sampleRate, 1.0);
+    activityAttack_ = static_cast<float>(std::exp(-1.0 / (0.020 * sr)));
+    activityRelease_ = static_cast<float>(std::exp(-1.0 / (0.500 * sr)));
 }
 
 void InputAnalyzer::reset() noexcept {
     fast_.reset();
     slow_.reset();
+    activity_ = 0.0f;
 }
 
 void InputAnalyzer::process(float monoSample, MechanicalState& state) noexcept {
@@ -64,6 +68,14 @@ void InputAnalyzer::process(float monoSample, MechanicalState& state) noexcept {
     const float slow = slow_.process(monoSample);
     state.inputEnvelope = slow;
     state.transientStrength = std::max(0.0f, fast - slow);
+
+    const float target = std::clamp(
+        6.0f * slow + 10.0f * state.transientStrength,
+        0.0f, 1.0f);
+    const float coeff = target > activity_ ? activityAttack_ : activityRelease_;
+    activity_ = coeff * activity_ + (1.0f - coeff) * target;
+    if (std::fabs(activity_) < kTiny) activity_ = 0.0f;
+    state.activity = activity_;
 }
 
 void MechanicalDrive::prepare(double sampleRate) noexcept {
@@ -161,7 +173,7 @@ float AirEngine::process(const Parameters& p, MechanicalState& state, Determinis
     const float dt = static_cast<float>(1.0 / sampleRate_);
 
     // Prototype rates are expressed per second so behaviour remains sample-rate invariant.
-    const float inflowPerSecond = air * (0.35f + 1.15f * phasePump);
+    const float inflowPerSecond = air * state.activity * (0.35f + 1.15f * phasePump);
     const float leakPerSecond = 0.04f + 0.30f * state.wear;
     const float consumptionPerSecond = 0.20f * state.inputEnvelope * air;
 
@@ -198,7 +210,10 @@ float GearEngine::process(const Parameters& p, const MechanicalState& state, Det
     const float wear = std::clamp(p.wear, 0.0f, 1.0f);
     const float hardness = 0.75f + 0.25f * rng.uniform01();
     const float irregularity = 1.0f + (0.04f + 0.10f * wear) * rng.bipolar();
-    return 0.070f * std::clamp(p.mechanize, 0.0f, 1.0f) * hardness * irregularity;
+    return 0.070f *
+           std::clamp(p.mechanize, 0.0f, 1.0f) *
+           state.activity *
+           hardness * irregularity;
 }
 
 void RatchetEngine::reset() noexcept {
@@ -222,7 +237,10 @@ float RatchetEngine::process(const Parameters& p, const MechanicalState& state, 
 
     const float wear = std::clamp(p.wear, 0.0f, 1.0f);
     const float variation = 1.0f + 0.12f * wear * rng.bipolar();
-    return 0.12f * std::clamp(p.mechanize, 0.0f, 1.0f) * variation;
+    return 0.12f *
+           std::clamp(p.mechanize, 0.0f, 1.0f) *
+           state.activity *
+           variation;
 }
 
 void RattleEngine::prepare(double sampleRate) noexcept {
