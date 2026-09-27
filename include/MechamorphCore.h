@@ -72,7 +72,6 @@ public:
 
 private:
     double sampleRate_ = 48000.0;
-    float drift_ = 0.0f;
 };
 
 struct ModalMode {
