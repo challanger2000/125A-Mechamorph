@@ -1,0 +1,91 @@
+# Core Verification Log
+
+## Scope
+
+This log records only tests that were actually executed against a materialized copy of the `v0.1.0` DSP core.
+
+It is **not** a VST3 release qualification record.
+
+## Environment
+
+- OS: Linux container
+- Compiler: GCC 14.2.0
+- CMake build type: Release
+- C++ standard: C++17
+- Test framework: CTest + assert-based standalone test executable
+
+## Verified standalone core
+
+### Build / test pass
+
+The standalone core compiled successfully with:
+
+- `-Wall`
+- `-Wextra`
+- `-Wpedantic`
+
+CTest result:
+
+- 1/1 standalone core test target PASS
+
+Current test coverage includes:
+
+- exact neutral path at MECHANIZE=0 / unity output
+- finite output on silence at strong settings
+- impulse stress
+- deterministic reset / PRNG behaviour
+- sample-rate safety: 44.1 / 48 / 88.2 / 96 / 192 kHz
+- modal gain runaway regression
+- finite mechanical tail / return toward silence
+
+## Smoke render finding
+
+A deterministic 8-second synthetic fixture was rendered through the prototype.
+
+### Before modal normalization
+
+Measured:
+- peak: 5.71028
+- RMS: 1.45109
+
+Interpretation:
+- modal body accumulated excessive energy under periodic material
+- not acceptable
+
+Action:
+- changed modal excitation from direct raw gain to energy-normalized excitation based on `sqrt(1-r^2)`
+
+### After modal normalization
+
+Measured:
+- peak: approximately 0.659
+- RMS: approximately 0.0765
+
+After input-driven machine activity gating:
+- peak: approximately 0.653
+- RMS: approximately 0.0760
+
+Interpretation:
+- runaway removed
+- activity gating did not reintroduce level instability
+- values are test-fixture measurements, not product loudness targets
+
+Evidence class:
+- MEASURED
+
+## Important limitations
+
+Not yet verified:
+
+- Windows compiler
+- Steinberg VST3 build
+- Steinberg Validator
+- 125A Plugin Tester
+- host loading
+- automation correctness
+- state recall in host
+- realtime p95/p99/max
+- sound quality against real mechanical reference recordings
+- GUI lifecycle
+
+No VST3 PASS claim is allowed until those are actually tested.
