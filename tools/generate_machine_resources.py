@@ -15,38 +15,19 @@ ROLE_MAP = {
 
 def profile_mask(name: str, role: str) -> int:
     n = name.lower()
+    profiles = {
+        "tiny": 1 << 0,
+        "clockwork": 1 << 1,
+        "heavy": 1 << 2,
+        "colossal": 1 << 3,
+        "pneumatic": 1 << 4,
+        "broken": 1 << 5,
+    }
+
     mask = 0
-
-    # PROJECTOR = 1
-    ok = (
-        ("projector" in n and role in {"start", "run", "stop"}) or
-        (role == "action" and ("slide" in n or "switch" in n)) or
-        (role == "release" and "switch" in n)
-    )
-    if ok:
-        mask |= 1
-
-    # HANDCRANK = 2
-    ok = (
-        ("winch" in n and role in {"start", "run", "stop", "release"}) or
-        (role == "action" and ("ratchet" in n or "switch" in n)) or
-        (role == "load" and "chain" in n) or
-        (role == "release" and "spring" in n)
-    )
-    if ok:
-        mask |= 2
-
-    # INDUSTRIAL = 4
-    ok = (
-        ("winch" in n and role in {"start", "stop"}) or
-        (role == "run" and "press" in n) or
-        (role == "action" and ("calc" in n or "stapler" in n or "ratchet" in n)) or
-        (role == "load" and ("press" in n or "chain" in n)) or
-        (role == "release" and ("air" in n or "spring" in n))
-    )
-    if ok:
-        mask |= 4
-
+    for token, bit in profiles.items():
+        if f"__{token}__" in f"__{n}__":
+            mask |= bit
     return mask
 
 def main():
