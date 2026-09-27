@@ -138,6 +138,8 @@ float ModalResonator::process(float excitation) noexcept {
         const float out = m.b0 * excitation + m.a1 * m.z1 + m.a2 * m.z2;
         m.z2 = m.z1;
         m.z1 = sanitize(out);
+        if (std::fabs(m.z1) < kTiny) m.z1 = 0.0f;
+        if (std::fabs(m.z2) < kTiny) m.z2 = 0.0f;
         y += m.z1;
     }
     return sanitize(y);
@@ -171,6 +173,30 @@ float AirEngine::process(const Parameters& p, MechanicalState& state, Determinis
     noiseState_ += 0.05f * (white - noiseState_);
     if (std::fabs(noiseState_) < kTiny) noiseState_ = 0.0f;
     return noiseState_ * state.pressure * air * 0.12f;
+}
+
+void GearEngine::reset() noexcept {
+    previousPhase_ = 0.0;
+}
+
+float GearEngine::process(const Parameters& p, const MechanicalState& state, DeterministicRng& rng) noexcept {
+    constexpr int teeth = 24;
+    const double sector = kTwoPi / static_cast<double>(teeth);
+    const int prevIndex = static_cast<int>(previousPhase_ / sector);
+    const int currentIndex = static_cast<int>(state.phase / sector);
+    const double oldPhase = previousPhase_;
+    previousPhase_ = state.phase;
+
+    bool fired = currentIndex != prevIndex;
+    if (state.phase < sector && oldPhase > kTwoPi - sector)
+        fired = true;
+
+    if (!fired) return 0.0f;
+
+    const float wear = std::clamp(p.wear, 0.0f, 1.0f);
+    const float hardness = 0.75f + 0.25f * rng.uniform01();
+    const float irregularity = 1.0f + (0.04f + 0.10f * wear) * rng.bipolar();
+    return 0.070f * std::clamp(p.mechanize, 0.0f, 1.0f) * hardness * irregularity;
 }
 
 void RatchetEngine::reset() noexcept {
@@ -271,6 +297,7 @@ void Core::reset() noexcept {
     drive_.reset();
     body_.reset();
     air_.reset();
+    gear_.reset();
     ratchet_.reset();
     rattle_.reset();
 }
@@ -296,16 +323,22 @@ float Core::processOne(float input) noexcept {
     state_.load = std::clamp(state_.inputEnvelope * p.mechanize, 0.0f, 1.0f);
     drive_.process(p, state_);
 
+    const float gear = gear_.process(p, state_, rng_);
     const float ratchet = ratchet_.process(p, state_, rng_);
     const float rattle = rattle_.process(p, state_, rng_);
     const float air = air_.process(p, state_, rng_);
 
     const float bodyExcitation =
         (0.18f * input * p.mechanize) +
-        ratchet + rattle + air;
+        gear + ratchet + rattle + air;
 
     const float body = body_.process(bodyExcitation) * p.body;
-    const float machine = 0.55f * body + 0.22f * ratchet + 0.28f * rattle + air;
+    const float machine =
+        0.55f * body +
+        0.16f * gear +
+        0.20f * ratchet +
+        0.28f * rattle +
+        air;
 
     // Exact dry at mechanize=0.
     const float wet = clamp01(p.mechanize);
