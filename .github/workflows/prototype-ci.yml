@@ -1,6 +1,8 @@
 name: Prototype CI
 
 on:
+  push:
+    branches: [ "v0.1.0" ]
   workflow_dispatch:
 
 jobs:
