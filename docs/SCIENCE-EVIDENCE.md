@@ -431,3 +431,142 @@ INPUT -> SOURCE TRANSFORM -> SHARED BODY -> OUTPUT
 ```
 
 The shared body and mechanical state are mandatory architectural concepts for the proof of concept.
+
+
+---
+
+## 12. Gear / backlash / rattling evidence
+
+### Idle gear impact and backlash
+
+**Gear impacts and idle gear noise: Experimental study and non-linear dynamic model**  
+Mechanical Systems and Signal Processing, 2009.
+
+Key evidence:
+- loose/unloaded gear pairs can generate repeated impacts;
+- backlash and intermittent contact are central to rattle;
+- impact energy depends on excitation kinematics;
+- a reduced nonlinear SDOF contact model can capture useful behaviour.
+
+Mechamorph implication:
+- WEAR should increase more than random jitter;
+- it should alter:
+  - backlash window
+  - missed contact / re-contact
+  - secondary impact probability
+  - impact energy distribution
+- "rattle" should be mechanically related to load and drive speed.
+
+Reference:
+https://www.sciencedirect.com/science/article/pii/S0888327009001459
+
+Evidence class:
+- PUBLISHED / PEER-REVIEWED
+
+### Gear mesh excitation
+
+Gear-noise literature identifies:
+- tooth engagement/disengagement
+- time-varying mesh stiffness
+- pitch/runout errors
+- structural transmission to the housing
+
+as major contributors to emitted gear noise.
+
+Mechamorph implication:
+The gear generator should contain at least two perceptual layers:
+
+1. **mesh periodicity**
+2. **impact / irregularity layer**
+
+The BODY stage should receive gear excitation because real emitted sound is strongly shaped by the surrounding structure/housing.
+
+References:
+https://www.geartechnology.com/transmission-error-and-noise-emission-of-spur-gears
+https://link.springer.com/article/10.1007/s10010-023-00685-4
+
+Evidence class:
+- PUBLISHED / DOCUMENTED ENGINEERING
+
+---
+
+## 13. Ratchet as speed-driven impact density
+
+Research on tangible ratcheted-wheel sound synthesis describes a useful perceptual relationship:
+
+- wheel speed controls impact density;
+- individual impacts convey pawl/wheel material;
+- ratchet sound communicates rotational interaction.
+
+Mechamorph implication:
+Ratchet timing should be **phase/speed derived**, while material/hardness affects the individual event spectrum.
+
+This supports our rule that ratchet events must not be random independent clicks.
+
+Reference:
+https://www.sciencedirect.com/science/article/pii/S1071581909000901
+
+Evidence class:
+- PUBLISHED / PEER-REVIEWED
+
+---
+
+## 14. Bellows pressure as primary expressive state
+
+Roland's documented accordion behaviour modelling links bellows pressure to:
+
+- amplitude
+- tone colour
+- pitch
+- onset/hysteresis behaviour
+
+Academic harmonium modelling likewise uses bellows pressure as a key playing/control variable, with a reed chamber and enclosure response.
+
+Mechamorph implication:
+Even if v0.1.0 does not implement a free reed, AIR/PRESSURE can legitimately control several linked perceptual dimensions:
+
+- airflow level
+- attack strength
+- filtered brightness
+- subtle instability
+- valve/chuff strength
+
+This is better than using independent random modulators.
+
+References:
+https://www.rolandus.com/go/v-accordion/technology.html
+https://www.dafx.de/paper-archive/2023/DAFx23_paper_47.pdf
+
+Evidence class:
+- DOCUMENTED / PUBLISHED
+
+---
+
+## 15. PRNG candidate
+
+### xoshiro256++ / xoshiro256**
+
+The xoshiro family is designed for very fast deterministic pseudorandom generation with compact state.
+
+Potential Mechamorph use:
+- microvariation
+- rattle-cluster timing
+- hardness variation
+- wear irregularity
+- deterministic seeded offline regression
+
+Candidate implementation/reference:
+https://github.com/nessan/xoshiro
+
+Alternative small MIT wrapper:
+https://github.com/Reputeless/Xoshiro-cpp
+
+Policy:
+Prefer either:
+- independently implement the published xoshiro algorithm with correct attribution to the authors/public reference, or
+- use a small MIT implementation with provenance recorded.
+
+Do not use cryptographic randomness; deterministic bounded-cost behaviour is preferred for realtime audio.
+
+Evidence class:
+- DOCUMENTED IMPLEMENTATION
