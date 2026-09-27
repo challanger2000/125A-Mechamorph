@@ -105,6 +105,12 @@ add_executable(machine_real_render
 target_link_libraries(machine_real_render PRIVATE machine_sampler_core)
 target_compile_features(machine_real_render PRIVATE cxx_std_17)
 
+add_executable(measure_machine_controls
+    tools/measure_machine_controls.cpp
+)
+target_link_libraries(measure_machine_controls PRIVATE machine_sampler_core)
+target_compile_features(measure_machine_controls PRIVATE cxx_std_17)
+
 
 option(MECHAMORPH_BUILD_MACHINE_VST3 "Build the standalone Machine sampler instrument" OFF)
 set(MECHAMORPH_MACHINE_GENERATED_DIR "" CACHE PATH "Directory containing generated machine_assets_generated.h/.rc")
