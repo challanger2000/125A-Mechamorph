@@ -1,0 +1,85 @@
+name: Fetch CC0 Machine Research Audio
+
+on:
+  push:
+    branches: [ "v0.1.0" ]
+
+jobs:
+  fetch-cc0:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch public CC0 machine sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p research-fetch/mp3 research-fetch/wav
+
+          declare -A files=(
+            [projector35mm_0071]="https://bigsoundbank.com/UPLOAD/mp3/0071.mp3"
+            [heidelberg_press_3409]="https://bigsoundbank.com/UPLOAD/mp3/3409.mp3"
+            [calculator_printer_3553]="https://bigsoundbank.com/UPLOAD/mp3/3553.mp3"
+            [old_switch_0540]="https://bigsoundbank.com/UPLOAD/mp3/0540.mp3"
+            [slide_projector_0867]="https://bigsoundbank.com/UPLOAD/mp3/0867.mp3"
+          )
+
+          for name in "${!files[@]}"; do
+            url="${files[$name]}"
+            echo "Fetching $name from $url"
+            curl --fail --location --retry 2 --connect-timeout 20 \
+              "$url" -o "research-fetch/mp3/$name.mp3"
+            test -s "research-fetch/mp3/$name.mp3"
+            file "research-fetch/mp3/$name.mp3"
+          done
+
+      - name: Convert to analysis WAV
+        shell: bash
+        run: |
+          set -euo pipefail
+          ffmpeg -version | head -n 1
+          for src in research-fetch/mp3/*.mp3; do
+            name="$(basename "$src" .mp3)"
+            ffmpeg -hide_banner -loglevel error -y -i "$src" \
+              -ac 1 -ar 48000 -c:a pcm_s24le "research-fetch/wav/$name.wav"
+          done
+          ls -lh research-fetch/wav
+
+      - name: Write provenance
+        shell: bash
+        run: |
+          cat > research-fetch/PROVENANCE.txt <<'EOF'
+          BigSoundBank / La Sonothèque sources.
+          Each selected source page identifies the file as CC0/public-domain equivalent
+          and permits editing, commercial use, and redistribution.
+
+          projector35mm_0071
+          Page: https://bigsoundbank.com/35mm-cinema-projector-7-s0071.html
+
+          heidelberg_press_3409
+          Page: https://bigsoundbank.com/heidelberg-printing-press-6-s3409.html
+
+          calculator_printer_3553
+          Page: https://bigsoundbank.com/calculator-printer-1-s3553.html
+
+          old_switch_0540
+          Page: https://bigsoundbank.com/old-switch-s0540.html
+
+          slide_projector_0867
+          Page: https://bigsoundbank.com/slide-projector-s0867.html
+
+          Research conversion: mono 48 kHz / 24-bit PCM WAV.
+          Original MP3 downloads are also retained in this research artifact.
+          EOF
+          sha256sum research-fetch/mp3/* research-fetch/wav/* > research-fetch/SHA256SUMS.txt
+
+      - name: Upload research pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mechamorph-CC0-Machine-Research-Pack-01
+          path: research-fetch/
+          if-no-files-found: error
+          retention-days: 7
