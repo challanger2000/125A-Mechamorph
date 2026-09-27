@@ -17,7 +17,7 @@ using namespace Steinberg::Vst;
 
 namespace MechamorphMachine {
 namespace {
-constexpr int32 kStateVersion = 2;
+constexpr int32 kStateVersion = 3;
 }
 
 Processor::Processor() {
@@ -32,6 +32,7 @@ Processor::Processor() {
     machineParams_.body = 0.0f;
     machineParams_.pressure = 0.0f;
     machineParams_.output = 0.38f;
+    bodyAmount_ = 0.28f;
     spaceAmount_ = 0.18f;
 }
 
@@ -131,6 +132,9 @@ void Processor::applyParameter(ParamID id, float normalized) noexcept {
         case kSpace:
             spaceAmount_ = v;
             break;
+        case kBody:
+            bodyAmount_ = v;
+            break;
         case kOutput:
             machineParams_.output = v;
             break;
@@ -142,12 +146,14 @@ void Processor::applyParameter(ParamID id, float normalized) noexcept {
 void Processor::updateEngineParameters() noexcept {
     engine_.setParameters(machineParams_);
 
-    // BODY stays internal for now and follows physical scale.
-    // Small mechanisms stay compact; colossal machines excite more structure.
-    const float bodyAmount =
-        std::clamp(0.18f + 0.42f * machineParams_.scale, 0.0f, 0.72f);
+    // BODY is now a true independent control.
+    // SCALE only changes how strongly the same cabinet/body is excited.
+    const float scaleBodyCoupling =
+        0.88f + 0.24f * machineParams_.scale;
+    const float effectiveBody =
+        std::clamp(bodyAmount_ * scaleBodyCoupling, 0.0f, 1.0f);
 
-    spaceEngine_.setBody(bodyAmount);
+    spaceEngine_.setBody(effectiveBody);
     spaceEngine_.setSpace(spaceAmount_);
     spaceEngine_.setScale(machineParams_.scale);
 }
@@ -206,6 +212,7 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
             case kScale: return 5;
             case kSpace: return 6;
             case kOutput: return 7;
+            case kBody: return 8;
             default: return -1;
         }
     };
@@ -357,6 +364,7 @@ tresult PLUGIN_API Processor::setState(IBStream* state) {
     float action = 0.48f;
     float wear = 0.18f;
     float scale = 0.35f;
+    float body = 0.28f;
     float space = 0.18f;
     float output = 0.38f;
 
@@ -369,6 +377,16 @@ tresult PLUGIN_API Processor::setState(IBStream* state) {
             !s.readFloat(scale) ||
             !s.readFloat(output))
             return kResultFalse;
+    } else if (version == 2) {
+        if (!s.readFloat(machine) ||
+            !s.readFloat(speed) ||
+            !s.readFloat(load) ||
+            !s.readFloat(action) ||
+            !s.readFloat(wear) ||
+            !s.readFloat(scale) ||
+            !s.readFloat(space) ||
+            !s.readFloat(output))
+            return kResultFalse;
     } else if (version == kStateVersion) {
         if (!s.readFloat(machine) ||
             !s.readFloat(speed) ||
@@ -376,6 +394,7 @@ tresult PLUGIN_API Processor::setState(IBStream* state) {
             !s.readFloat(action) ||
             !s.readFloat(wear) ||
             !s.readFloat(scale) ||
+            !s.readFloat(body) ||
             !s.readFloat(space) ||
             !s.readFloat(output))
             return kResultFalse;
@@ -393,6 +412,7 @@ tresult PLUGIN_API Processor::setState(IBStream* state) {
     machineParams_.wear = std::clamp(wear, 0.0f, 1.0f);
     machineParams_.scale = std::clamp(scale, 0.0f, 1.0f);
     machineParams_.clatter = 0.08f + 0.20f * machineParams_.wear;
+    bodyAmount_ = std::clamp(body, 0.0f, 1.0f);
     spaceAmount_ = std::clamp(space, 0.0f, 1.0f);
     machineParams_.output = std::clamp(output, 0.0f, 1.0f);
 
@@ -414,6 +434,7 @@ tresult PLUGIN_API Processor::getState(IBStream* state) {
         !s.writeFloat(machineParams_.action) ||
         !s.writeFloat(machineParams_.wear) ||
         !s.writeFloat(machineParams_.scale) ||
+        !s.writeFloat(bodyAmount_) ||
         !s.writeFloat(spaceAmount_) ||
         !s.writeFloat(machineParams_.output))
         return kResultFalse;
