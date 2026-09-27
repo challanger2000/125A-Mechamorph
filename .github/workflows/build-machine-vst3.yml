@@ -70,6 +70,32 @@ jobs:
             research-sources/wav machine-set
           ls -lh machine-set
 
+      - name: Download OpenAIR BODY SPACE references
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p space-ir
+
+          curl --fail --location --retry 2             "https://raw.githubusercontent.com/DatanoiseTV/doobie/main/external/openair-irs/Typing%20Room.wav"             -o "space-ir/Typing Room.wav"
+
+          curl --fail --location --retry 2             "https://raw.githubusercontent.com/DatanoiseTV/doobie/main/external/openair-irs/Terrys%20Warehouse.wav"             -o "space-ir/Terrys Warehouse.wav"
+
+          curl --fail --location --retry 2             "https://raw.githubusercontent.com/DatanoiseTV/doobie/main/external/openair-irs/R1%20Reactor%20Hall.wav"             -o "space-ir/R1 Reactor Hall.wav"
+
+          python3 tools/generate_machine_space_ir.py             --body "space-ir/Typing Room.wav"             --warehouse "space-ir/Terrys Warehouse.wav"             --reactor "space-ir/R1 Reactor Hall.wav"             --output machine-set/machine_space_ir_generated.h
+
+          cat > machine-set/OPENAIR-ATTRIBUTION.txt <<'EOF'
+          OpenAIR impulse-response fingerprints used for BODY/SPACE research.
+          Source library: OpenAIR, Audiolab, University of York.
+          Files:
+          - Typing Room
+          - Terry's Warehouse
+          - R1 Nuclear Reactor Hall
+          License: Creative Commons Attribution 4.0 International (CC BY 4.0).
+          Reference:
+          https://github.com/DatanoiseTV/doobie/tree/main/external/openair-irs
+          EOF
+
       - name: Upload machine sample set
         uses: actions/upload-artifact@v4
         with:
