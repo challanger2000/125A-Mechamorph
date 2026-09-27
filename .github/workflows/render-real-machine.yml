@@ -72,12 +72,17 @@ jobs:
           cp docs/MACHINE-SAMPLE-MANIFEST-02.csv machine-set/
           ls -lh machine-set
 
-      - name: Build machine core renderer
+      - name: Build machine core renderer and control meter
         shell: bash
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --config Release --target machine_sampler_tests machine_real_render --parallel 2
+          cmake --build build --config Release --target machine_sampler_tests machine_real_render measure_machine_controls --parallel 2
           ctest --test-dir build -R machine_sampler_tests --output-on-failure
+
+      - name: Measure ACTION and WEAR
+        shell: bash
+        run: |
+          ./build/measure_machine_controls | tee control-measurements.csv
 
       - name: Render scale auditions
         shell: bash
