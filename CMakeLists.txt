@@ -104,3 +104,67 @@ add_executable(machine_real_render
 )
 target_link_libraries(machine_real_render PRIVATE machine_sampler_core)
 target_compile_features(machine_real_render PRIVATE cxx_std_17)
+
+
+option(MECHAMORPH_BUILD_MACHINE_VST3 "Build the standalone Machine sampler instrument" OFF)
+set(MECHAMORPH_MACHINE_GENERATED_DIR "" CACHE PATH "Directory containing generated machine_assets_generated.h/.rc")
+
+if(MECHAMORPH_BUILD_MACHINE_VST3)
+    if(NOT WIN32)
+        message(FATAL_ERROR "MechamorphMachine prototype currently embeds samples with Windows resources")
+    endif()
+
+    if(MECHAMORPH_MACHINE_GENERATED_DIR STREQUAL "")
+        message(FATAL_ERROR "Set MECHAMORPH_MACHINE_GENERATED_DIR to generated machine resource directory")
+    endif()
+
+    if(NOT EXISTS "${MECHAMORPH_MACHINE_GENERATED_DIR}/machine_assets_generated.h")
+        message(FATAL_ERROR "machine_assets_generated.h missing")
+    endif()
+    if(NOT EXISTS "${MECHAMORPH_MACHINE_GENERATED_DIR}/machine_assets_generated.rc")
+        message(FATAL_ERROR "machine_assets_generated.rc missing")
+    endif()
+
+    if(NOT TARGET sdk)
+        include(FetchContent)
+        set(SMTG_ENABLE_VSTGUI_SUPPORT OFF CACHE BOOL "" FORCE)
+        set(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES OFF CACHE BOOL "" FORCE)
+        set(SMTG_ENABLE_VST3_HOSTING_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+        FetchContent_Declare(
+            vst3sdk_machine
+            GIT_REPOSITORY https://github.com/steinbergmedia/vst3sdk.git
+            GIT_TAG 3cdf9ca5d1f5b1b21e0a86832aa4abe55607bd96
+            GIT_SHALLOW FALSE
+        )
+        FetchContent_MakeAvailable(vst3sdk_machine)
+        smtg_enable_vst3_sdk()
+    endif()
+
+    smtg_add_vst3plugin(MechamorphMachine
+        source/version.h
+        source-machine/ids.h
+        source-machine/parameters.h
+        source-machine/MachineAssetBank.h
+        source-machine/MachineAssetBank.cpp
+        source-machine/processor.h
+        source-machine/processor.cpp
+        source-machine/controller.h
+        source-machine/controller.cpp
+        source-machine/entry.cpp
+        include/MachineSamplerEngine.h
+        src/MachineSamplerEngine.cpp
+        "${MECHAMORPH_MACHINE_GENERATED_DIR}/machine_assets_generated.rc"
+    )
+
+    target_include_directories(MechamorphMachine PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source-machine"
+        "${MECHAMORPH_MACHINE_GENERATED_DIR}"
+    )
+
+    target_link_libraries(MechamorphMachine PRIVATE sdk)
+    target_compile_features(MechamorphMachine PRIVATE cxx_std_17)
+    smtg_target_configure_version_file(MechamorphMachine)
+endif()
