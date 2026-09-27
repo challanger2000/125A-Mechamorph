@@ -104,7 +104,35 @@ int main(int argc, char** argv) {
         for (auto& s:x) s=clack.process();
 
         const auto m=analyze(x,sr);
-        std::cout<<v.name<<','<<m.peak<<','<<m.rms<<','<<m.centroid<<','<<m.t60ms<<"\n";
+
+        auto windowRms = [&](std::size_t a, std::size_t b) {
+            a = std::min(a,x.size());
+            b = std::min(b,x.size());
+            if (b<=a) return 0.0;
+            double ss=0.0;
+            for (std::size_t i=a;i<b;++i) ss += static_cast<double>(x[i])*x[i];
+            return std::sqrt(ss/static_cast<double>(b-a));
+        };
+
+        const std::size_t openEnd =
+            std::min(x.size(), openAt + static_cast<std::size_t>(0.030*sr));
+        const std::size_t holdStart =
+            std::min(x.size(), openAt + static_cast<std::size_t>(0.050*sr));
+        const std::size_t holdEnd =
+            closeAt > static_cast<std::size_t>(0.020*sr)
+                ? closeAt - static_cast<std::size_t>(0.020*sr)
+                : closeAt;
+        const std::size_t closeEnd =
+            std::min(x.size(), closeAt + static_cast<std::size_t>(0.030*sr));
+
+        const double openRms=windowRms(openAt,openEnd);
+        const double holdRms=windowRms(holdStart,holdEnd);
+        const double closeRms=windowRms(closeAt,closeEnd);
+
+        std::cout<<v.name<<','<<m.peak<<','<<m.rms<<','<<m.centroid<<','<<m.t60ms
+                 <<",open_rms="<<openRms
+                 <<",hold_rms="<<holdRms
+                 <<",close_rms="<<closeRms<<"\n";
 
         if (!writeFloatWav(prefix+std::string("-")+v.name+".wav",x,static_cast<std::uint32_t>(sr)))
             return 2;
