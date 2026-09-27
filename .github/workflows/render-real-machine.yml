@@ -1,6 +1,10 @@
 name: Render Real CC0 Machine Core
 
 on:
+  push:
+    branches: [ "v0.1.0" ]
+    paths:
+      - "docs/CONTROL-AUDITION-TRIGGER.md"
   workflow_dispatch:
 
 jobs:
@@ -75,25 +79,19 @@ jobs:
           cmake --build build --config Release --target machine_sampler_tests machine_real_render --parallel 2
           ctest --test-dir build -R machine_sampler_tests --output-on-failure
 
-      - name: Render actual C++ machine profiles
+      - name: Render real-sample control auditions
         shell: bash
         run: |
           mkdir -p real-machine-output
-
-          ./build/machine_real_render \
-            machine-set \
-            real-machine-output/Mechamorph_PROJECTOR_CC0_v0.1.wav \
-            projector
-
-          ./build/machine_real_render \
-            machine-set \
-            real-machine-output/Mechamorph_HANDCRANK_CC0_v0.1.wav \
-            handcrank
-
-          ./build/machine_real_render \
-            machine-set \
-            real-machine-output/Mechamorph_INDUSTRIAL_CC0_v0.1.wav \
-            industrial
+          for control in speed load action wear body; do
+            for value in 0.0 0.5 1.0; do
+              tag=${value/./}
+              ./build/machine_real_render \
+                machine-set \
+                real-machine-output/INDUSTRIAL_${control}_${tag}.wav \
+                industrial ${control} ${value}
+            done
+          done
 
           cp machine-set/machine_sample_set.json real-machine-output/ || true
           sha256sum real-machine-output/* > real-machine-output/SHA256SUMS.txt
@@ -102,7 +100,7 @@ jobs:
       - name: Upload C++ machine render
         uses: actions/upload-artifact@v4
         with:
-          name: Mechamorph-Machine-Profiles-CC0-v0.1
+          name: Mechamorph-Control-Auditions-CC0-v0.1
           path: |
             real-machine-output/
             machine-set/
