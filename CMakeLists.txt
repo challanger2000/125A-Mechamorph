@@ -21,3 +21,8 @@ target_link_libraries(mechamorph_core_tests PRIVATE mechamorph_core)
 
 enable_testing()
 add_test(NAME mechamorph_core_tests COMMAND mechamorph_core_tests)
+
+add_executable(mechamorph_smoke_render
+    tools/render_smoke.cpp
+)
+target_link_libraries(mechamorph_smoke_render PRIVATE mechamorph_core)
