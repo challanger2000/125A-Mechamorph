@@ -213,6 +213,72 @@ float AirEngine::process(const Parameters& p, MechanicalState& state, Determinis
     return noiseState_ * state.pressure * air * 0.12f;
 }
 
+void ValveEngine::prepare(double sampleRate) noexcept {
+    sampleRate_ = std::max(sampleRate, 1.0);
+    // Fast but finite mechanical opening/closing.
+    apertureAttack_ = static_cast<float>(std::exp(-1.0 / (0.0035 * sampleRate_)));
+    apertureRelease_ = static_cast<float>(std::exp(-1.0 / (0.0055 * sampleRate_)));
+    reset();
+}
+
+void ValveEngine::reset() noexcept {
+    open_ = false;
+    aperture_ = 0.0f;
+    targetAperture_ = 0.0f;
+    chuffEnv_ = 0.0f;
+    clickEnv_ = 0.0f;
+    noiseState_ = 0.0f;
+    clickPolarity_ = 1.0f;
+    chuffDecay_ = static_cast<float>(std::exp(-1.0 / (0.018 * sampleRate_)));
+    clickDecay_ = static_cast<float>(std::exp(-1.0 / (0.0012 * sampleRate_)));
+}
+
+void ValveEngine::open(float pressure, float force, DeterministicRng& rng) noexcept {
+    open_ = true;
+    targetAperture_ = std::clamp(0.65f + 0.35f * force, 0.0f, 1.0f);
+    chuffEnv_ = std::clamp(pressure, 0.0f, 1.0f) * (0.55f + 0.45f * force);
+    clickEnv_ = 0.55f + 0.35f * force;
+    clickPolarity_ = rng.uniform01() < 0.5f ? -1.0f : 1.0f;
+}
+
+void ValveEngine::close(float pressure, float force, DeterministicRng& rng) noexcept {
+    open_ = false;
+    targetAperture_ = 0.0f;
+    chuffEnv_ = std::max(chuffEnv_, 0.25f * std::clamp(pressure, 0.0f, 1.0f));
+    clickEnv_ = 0.45f + 0.30f * force;
+    clickPolarity_ = rng.uniform01() < 0.5f ? -1.0f : 1.0f;
+}
+
+float ValveEngine::process(float pressure, DeterministicRng& rng) noexcept {
+    pressure = std::clamp(pressure, 0.0f, 1.0f);
+
+    const float coeff = targetAperture_ > aperture_ ? apertureAttack_ : apertureRelease_;
+    aperture_ = coeff * aperture_ + (1.0f - coeff) * targetAperture_;
+    if (std::fabs(aperture_) < kTiny) aperture_ = 0.0f;
+
+    const float white = rng.bipolar();
+    // Air path: low/mid turbulent component rather than full-band hiss.
+    noiseState_ += 0.10f * (white - noiseState_);
+    if (std::fabs(noiseState_) < kTiny) noiseState_ = 0.0f;
+
+    const float chuff = noiseState_ * chuffEnv_ * 0.16f;
+    chuffEnv_ *= chuffDecay_;
+    if (chuffEnv_ < 1.0e-6f) chuffEnv_ = 0.0f;
+
+    // Opening/closing contact: very short click with a small opposite-polarity
+    // recoil on the following sample through the envelope decay.
+    const float click = clickPolarity_ * clickEnv_ * 0.14f;
+    clickEnv_ *= clickDecay_;
+    if (clickEnv_ < 1.0e-6f) clickEnv_ = 0.0f;
+
+    // Sustained air flow while the valve is open. This is deliberately quiet;
+    // the sounding element (pipe/reed) should be driven by pressure/aperture,
+    // while this remains the audible valve/air mechanism itself.
+    const float flow = noiseState_ * aperture_ * pressure * 0.035f;
+
+    return sanitize(click + chuff + flow);
+}
+
 void ContactClackEngine::prepare(double sampleRate) noexcept {
     sampleRate_ = std::max(sampleRate, 1.0);
     reset();
