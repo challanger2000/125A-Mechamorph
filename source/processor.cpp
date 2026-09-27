@@ -73,7 +73,13 @@ void Processor::applyParameter(ParamID id, float normalized) {
         case kBody: coreParams_.body = v; break;
         case kWear: coreParams_.wear = v; break;
         case kOutput: coreParams_.output = v; break;
-        case kBypass: bypass_ = v >= 0.5f; break;
+        case kBypass: {
+            const bool nextBypass = v >= 0.5f;
+            if (nextBypass && !bypass_)
+                core_.reset();
+            bypass_ = nextBypass;
+            break;
+        }
         default: break;
     }
 }
@@ -201,6 +207,10 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
 
     // Preserve any legal point exactly at the block end for the next block.
     applyPointsAt(data.numSamples);
+
+    // Conservative VST3 silence reporting. While processing we do not claim
+    // silence without scanning/proving it. Hard bypass may safely mirror input.
+    out.silenceFlags = bypass_ ? in.silenceFlags : 0;
     return kResultOk;
 }
 
