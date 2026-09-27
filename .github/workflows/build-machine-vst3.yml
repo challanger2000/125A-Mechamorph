@@ -179,12 +179,14 @@ jobs:
             "",
             "MIDI: Any Note On starts the machine. It stops when all held notes are released.",
             "",
-            "Parameters: Machine, Speed, Load, Action, Wear, Scale, Output.",
+            "Parameters: Machine, Speed, Load, Action, Wear, Scale, Space, Output.",
             "",
-            "BODY is intentionally not exposed because it has not passed the control-gate test.",
-            "Embedded sample material uses CC0 sources documented in the repository manifests."
+            "BODY is internal and follows Scale.",
+            "SPACE uses real OpenAIR-derived reflection fingerprints plus a lightweight diffuse tail.",
+            "Embedded machine sample material uses CC0 sources documented in the repository manifests."
           )
           $notes | Set-Content -Encoding UTF8 packaged/README-PROTOTYPE.txt
+          Copy-Item machine-set\OPENAIR-ATTRIBUTION.txt packaged\OPENAIR-ATTRIBUTION.txt
 
       - name: Upload BODY SPACE lab
         uses: actions/upload-artifact@v4
