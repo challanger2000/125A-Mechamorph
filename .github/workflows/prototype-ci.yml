@@ -1,0 +1,24 @@
+name: Prototype CI
+
+on:
+  push:
+    branches: [ "v0.1.0" ]
+  workflow_dispatch:
+
+jobs:
+  windows-vst3:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -DMECHAMORPH_BUILD_VST3=ON -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel 2
+
+      - name: Test standalone core
+        run: ctest --test-dir build -C Release --output-on-failure
