@@ -3,6 +3,7 @@
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include "MachineSamplerEngine.h"
 #include "MachineAssetBank.h"
+#include "MachineSpaceEngine.h"
 
 namespace MechamorphMachine {
 
@@ -34,6 +35,8 @@ private:
     MachineAssetBank assets_{};
     mechamorph::machine::Engine engine_{};
     mechamorph::machine::Parameters machineParams_{};
+    MachineSpaceEngine spaceEngine_{};
+    float spaceAmount_ = 0.18f;
 
     int machineIndex_ = 0;
     Steinberg::int32 activeNoteId_ = -1;
