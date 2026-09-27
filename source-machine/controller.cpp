@@ -12,7 +12,7 @@ using namespace Steinberg::Vst;
 
 namespace MechamorphMachine {
 namespace {
-constexpr int32 kStateVersion = 1;
+constexpr int32 kStateVersion = 2;
 }
 
 tresult PLUGIN_API Controller::initialize(FUnknown* context) {
@@ -39,6 +39,7 @@ tresult PLUGIN_API Controller::initialize(FUnknown* context) {
     addPercent(STR16("Action"), kAction, 0.48);
     addPercent(STR16("Wear"), kWear, 0.18);
     addPercent(STR16("Scale"), kScale, 0.35);
+    addPercent(STR16("Space"), kSpace, 0.18);
 
     auto* output = new RangeParameter(
         STR16("Output"), kOutput, STR16("dB"), -12.0, 12.0, -2.88);
@@ -53,22 +54,43 @@ tresult PLUGIN_API Controller::setComponentState(IBStream* state) {
 
     IBStreamer s(state, kLittleEndian);
     int32 version = 0;
-    float values[kParamCount]{};
-
-    if (!s.readInt32(version) || version != kStateVersion)
+    if (!s.readInt32(version))
         return kResultFalse;
 
-    for (float& v : values) {
-        if (!s.readFloat(v))
+    float machine=0.0f, speed=0.32f, load=0.20f, action=0.48f;
+    float wear=0.18f, scale=0.35f, space=0.18f, output=0.38f;
+
+    if (version == 1) {
+        if (!s.readFloat(machine) ||
+            !s.readFloat(speed) ||
+            !s.readFloat(load) ||
+            !s.readFloat(action) ||
+            !s.readFloat(wear) ||
+            !s.readFloat(scale) ||
+            !s.readFloat(output))
             return kResultFalse;
+    } else if (version == kStateVersion) {
+        if (!s.readFloat(machine) ||
+            !s.readFloat(speed) ||
+            !s.readFloat(load) ||
+            !s.readFloat(action) ||
+            !s.readFloat(wear) ||
+            !s.readFloat(scale) ||
+            !s.readFloat(space) ||
+            !s.readFloat(output))
+            return kResultFalse;
+    } else {
+        return kResultFalse;
     }
 
-    const ParamID ids[kParamCount] = {
-        kMachine, kSpeed, kLoad, kAction, kWear, kScale, kOutput
-    };
-
-    for (int i = 0; i < kParamCount; ++i)
-        setParamNormalized(ids[i], std::clamp<double>(values[i], 0.0, 1.0));
+    setParamNormalized(kMachine, std::clamp<double>(machine,0.0,1.0));
+    setParamNormalized(kSpeed, std::clamp<double>(speed,0.0,1.0));
+    setParamNormalized(kLoad, std::clamp<double>(load,0.0,1.0));
+    setParamNormalized(kAction, std::clamp<double>(action,0.0,1.0));
+    setParamNormalized(kWear, std::clamp<double>(wear,0.0,1.0));
+    setParamNormalized(kScale, std::clamp<double>(scale,0.0,1.0));
+    setParamNormalized(kSpace, std::clamp<double>(space,0.0,1.0));
+    setParamNormalized(kOutput, std::clamp<double>(output,0.0,1.0));
 
     return kResultOk;
 }
