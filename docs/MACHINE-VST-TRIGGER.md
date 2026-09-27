@@ -21,3 +21,5 @@ Retry BODY/SPACE lab after executable-path fix.
 Build Machine instrument with validated SPACE and internal SCALE-linked BODY.
 
 Build visible BODY + SPACE controls with measured character engine.
+
+Verify BODY stereo reduction and true 100 percent wet SPACE mapping.
