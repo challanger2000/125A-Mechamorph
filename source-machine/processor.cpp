@@ -62,7 +62,7 @@ tresult PLUGIN_API Processor::setupProcessing(ProcessSetup& setup) {
 
 tresult PLUGIN_API Processor::setActive(TBool state) {
     if (state) {
-        heldNotes_ = 0;
+        transportWasPlaying_ = false;
         engine_.reset();
         engine_.setSampleSet(assets_.profile(machineIndex_));
         updateEngineParameters();
@@ -84,11 +84,12 @@ tresult PLUGIN_API Processor::setBusArrangements(
     return AudioEffect::setBusArrangements(inputs, numIns, outputs, numOuts);
 }
 
-void Processor::applyMachineProfile(bool restartIfHeld) noexcept {
+void Processor::applyMachineProfile(bool restartIfRunning) noexcept {
+    const bool wasRunning = engine_.state() != mechamorph::machine::State::Stopped;
     engine_.reset();
     engine_.setSampleSet(assets_.profile(machineIndex_));
     updateEngineParameters();
-    if (restartIfHeld && heldNotes_ > 0)
+    if (restartIfRunning && wasRunning)
         engine_.start();
 }
 
@@ -212,24 +213,15 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
             if (offset > sampleOffset)
                 break;
 
-            if (e.type == Event::kNoteOnEvent) {
-                if (e.noteOn.velocity > 0.0f) {
-                    // Every musical Note On is a real machine retrigger.
-                    // This is essential for loops/patterns: repeated notes must
-                    // restart START -> RUN rather than letting the previous
-                    // machine cycle continue indefinitely.
-                    engine_.reset();
-                    engine_.setSampleSet(assets_.profile(machineIndex_));
-                    updateEngineParameters();
-                    engine_.start();
-                    ++heldNotes_;
-                } else {
-                    if (heldNotes_ > 0) --heldNotes_;
-                    if (heldNotes_ == 0) engine_.stop();
-                }
-            } else if (e.type == Event::kNoteOffEvent) {
-                if (heldNotes_ > 0) --heldNotes_;
-                if (heldNotes_ == 0) engine_.stop();
+            if (e.type == Event::kNoteOnEvent && e.noteOn.velocity > 0.0f) {
+                // Trigger mode, not gate mode:
+                // every MIDI Note On restarts the complete machine cycle.
+                // Note Off is intentionally ignored so short sequencer notes
+                // do not abort a running machine/loop.
+                engine_.reset();
+                engine_.setSampleSet(assets_.profile(machineIndex_));
+                updateEngineParameters();
+                engine_.start();
             }
 
             ++eventIndex;
@@ -259,6 +251,24 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
         if (changed)
             updateEngineParameters();
     };
+
+    // DAW transport owns the global stop condition. This keeps short MIDI
+    // trigger notes independent from machine lifetime, while transport stop
+    // reliably silences/reset the machine.
+    bool transportPlaying = transportWasPlaying_;
+    if (data.processContext &&
+        (data.processContext->state & ProcessContext::kPlaying) != 0) {
+        transportPlaying = true;
+    } else if (data.processContext) {
+        transportPlaying = false;
+    }
+
+    if (transportWasPlaying_ && !transportPlaying) {
+        engine_.reset();
+        engine_.setSampleSet(assets_.profile(machineIndex_));
+        updateEngineParameters();
+    }
+    transportWasPlaying_ = transportPlaying;
 
     float peak = 0.0f;
     for (int32 i = 0; i < data.numSamples; ++i) {
@@ -308,7 +318,7 @@ tresult PLUGIN_API Processor::setState(IBStream* state) {
     machineParams_.clatter = 0.08f + 0.20f * machineParams_.wear;
     machineParams_.output = std::clamp(output, 0.0f, 1.0f);
 
-    applyMachineProfile(heldNotes_ > 0);
+    applyMachineProfile(false);
     return kResultOk;
 }
 
