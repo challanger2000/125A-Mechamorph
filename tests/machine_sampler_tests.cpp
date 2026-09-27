@@ -218,6 +218,41 @@ int main() {
         assert(stopEngine.state() == State::Stopped);
     }
 
+    // CLATTER regression: secondary contacts must stay in ACTION material.
+    // A very loud RELEASE sample must never be triggered by clatter alone.
+    {
+        std::vector<float> quietAction(256, 0.0f);
+        std::vector<float> loudRelease(256, 0.0f);
+        quietAction[0] = 0.10f;
+        loudRelease[0] = 1.0f;
+
+        SampleSet clatterSet;
+        assert(clatterSet.action.add({
+            quietAction.data(), quietAction.size(), sr, false, "quiet_action"}));
+        assert(clatterSet.release.add({
+            loudRelease.data(), loudRelease.size(), sr, false, "loud_release"}));
+
+        Engine clatterEngine;
+        clatterEngine.prepare(sr);
+        clatterEngine.setSampleSet(&clatterSet);
+
+        Parameters cp;
+        cp.action = 0.0f;
+        cp.clatter = 1.0f;
+        cp.wear = 1.0f;
+        cp.output = 0.5f;
+        clatterEngine.setParameters(cp);
+        clatterEngine.start();
+        clatterEngine.triggerAction(1.0f);
+
+        std::vector<float> y(static_cast<std::size_t>(0.20 * sr), 0.0f);
+        clatterEngine.process(y.data(), y.size());
+
+        float peak = 0.0f;
+        for (float v : y) peak = std::max(peak, std::fabs(v));
+        assert(peak < 0.25f);
+    }
+
     std::cout << "Machine sampler engine tests PASS\n";
     return 0;
 }
