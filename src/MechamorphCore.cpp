@@ -241,11 +241,15 @@ float ContactClackEngine::trigger(
         std::exp(-1.0 / (std::max(0.0002f, decayMs * 0.001f) * sampleRate_)));
     envelope_ = force;
 
-    // Two short material resonances. material=0 -> woodier/lower, 1 -> metalier/higher.
-    const float f1 = 650.0f + 1450.0f * material;
-    const float f2 = 1800.0f + 4200.0f * material;
-    const float r1 = static_cast<float>(std::exp(-1.0 / ((0.010f + 0.020f * (1.0f - material)) * sampleRate_)));
-    const float r2 = static_cast<float>(std::exp(-1.0 / ((0.004f + 0.010f * material) * sampleRate_)));
+    // Two deliberately short contact/body resonances.
+    // A small pawl/lever clack should decay in tens of milliseconds, not ring
+    // like a struck musical resonator.
+    const float f1 = 700.0f + 1500.0f * material;
+    const float f2 = 1900.0f + 4300.0f * material;
+    const float d1 = 0.006f + 0.006f * material;
+    const float d2 = 0.0025f + 0.0045f * material;
+    const float r1 = static_cast<float>(std::exp(-1.0 / (d1 * sampleRate_)));
+    const float r2 = static_cast<float>(std::exp(-1.0 / (d2 * sampleRate_)));
 
     reson1A1_ = 2.0f * r1 * std::cos(static_cast<float>(kTwoPi * f1 / sampleRate_));
     reson1A2_ = -(r1 * r1);
@@ -265,18 +269,18 @@ float ContactClackEngine::process() noexcept {
     envelope_ *= envelopeDecay_;
     if (envelope_ < 1.0e-6f) envelope_ = 0.0f;
 
-    const float y1 = 0.10f * contact + reson1A1_ * reson1_ + reson1A2_ * reson1Prev_;
+    const float y1 = 0.018f * contact + reson1A1_ * reson1_ + reson1A2_ * reson1Prev_;
     reson1Prev_ = reson1_;
     reson1_ = sanitize(y1);
 
-    const float y2 = 0.055f * contact + reson2A1_ * reson2_ + reson2A2_ * reson2Prev_;
+    const float y2 = 0.010f * contact + reson2A1_ * reson2_ + reson2A2_ * reson2Prev_;
     reson2Prev_ = reson2_;
     reson2_ = sanitize(y2);
 
     if (std::fabs(reson1_) < kTiny) reson1_ = 0.0f;
     if (std::fabs(reson2_) < kTiny) reson2_ = 0.0f;
 
-    return sanitize(0.55f * contact + reson1_ + 0.8f * reson2_);
+    return sanitize(0.22f * contact + 0.55f * reson1_ + 0.40f * reson2_);
 }
 
 void FrictionEngine::prepare(double sampleRate) noexcept {
