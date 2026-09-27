@@ -83,6 +83,75 @@ int main() {
     assert(peak < 2.0f);
     assert(energy > 0.0);
 
+    // Restart must not revive stale loop voices or duplicate the old run bed.
+    engine.start();
+    std::vector<float> restart(static_cast<std::size_t>(0.60 * sr), 0.0f);
+    engine.process(restart.data(), restart.size());
+    assert(engine.state() == State::Running || engine.state() == State::Loaded);
+    float restartPeak = 0.0f;
+    for (float v : restart) restartPeak = std::max(restartPeak, std::fabs(v));
+    assert(restartPeak > 0.0f);
+    assert(restartPeak < 2.0f);
+
+    engine.stop();
+    std::vector<float> restartStop(static_cast<std::size_t>(0.60 * sr), 0.0f);
+    engine.process(restartStop.data(), restartStop.size());
+    assert(engine.state() == State::Stopped);
+
+    // Autonomous cam/action behaviour: action amount > 0 must create
+    // deterministic action events while the machine runs.
+    SampleSet autoSet = set;
+    Engine autoEngine;
+    autoEngine.prepare(sr);
+    autoEngine.setSampleSet(&autoSet);
+
+    Parameters autoP = p;
+    autoP.action = 1.0f;
+    autoP.speed = 0.7f;
+    autoP.clatter = 0.0f;
+    autoEngine.setParameters(autoP);
+
+    std::vector<float> autonomous(static_cast<std::size_t>(1.20 * sr), 0.0f);
+    autoEngine.start();
+    autoEngine.process(autonomous.data(), autonomous.size());
+
+    // Remove expected continuous run-bed energy by checking for peaks larger
+    // than the small run-loop amplitude.
+    int actionLikePeaks = 0;
+    bool above = false;
+    for (float v : autonomous) {
+        const bool now = std::fabs(v) > 0.20f;
+        if (now && !above) ++actionLikePeaks;
+        above = now;
+    }
+    assert(actionLikePeaks >= 2);
+
+    // Clip sample-rate conversion: a 24 kHz clip rendered at 48 kHz must last
+    // approximately twice as many output frames at rate=1.
+    std::vector<float> halfRateClip(2400, 0.1f);
+    SampleSet rateSet;
+    assert(rateSet.start.add({
+        halfRateClip.data(), halfRateClip.size(), 24000.0, false, "24k_start"}));
+
+    Engine rateEngine;
+    rateEngine.prepare(sr);
+    rateEngine.setSampleSet(&rateSet);
+    Parameters rateP;
+    rateP.output = 0.5f;
+    rateEngine.setParameters(rateP);
+    rateEngine.start();
+
+    std::vector<float> rateOut(6000, 0.0f);
+    rateEngine.process(rateOut.data(), rateOut.size());
+
+    std::size_t nonZeroFrames = 0;
+    for (float v : rateOut)
+        if (std::fabs(v) > 1.0e-6f) ++nonZeroFrames;
+
+    // 2400 source frames at 24 kHz -> about 4800 frames at 48 kHz.
+    assert(nonZeroFrames > 4500);
+    assert(nonZeroFrames < 5100);
+
     std::cout << "Machine sampler engine tests PASS\n";
     return 0;
 }
