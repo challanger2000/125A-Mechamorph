@@ -29,6 +29,7 @@ struct MechanicalState {
     float leak = 0.0f;
     float inputEnvelope = 0.0f;
     float transientStrength = 0.0f;
+    float activity = 0.0f;
 };
 
 class DeterministicRng {
@@ -62,6 +63,9 @@ public:
 private:
     OnePoleEnvelope fast_;
     OnePoleEnvelope slow_;
+    float activity_ = 0.0f;
+    float activityAttack_ = 0.0f;
+    float activityRelease_ = 0.0f;
 };
 
 class MechanicalDrive {
