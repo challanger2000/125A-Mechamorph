@@ -121,6 +121,33 @@ int main() {
         assert(peak < 1.0f);
     }
 
+    // 7) Machine activity must decay back toward silence after excitation.
+    {
+        Core tailCore;
+        tailCore.prepare(sr, 512);
+        Parameters q;
+        q.mechanize = 1.0f;
+        q.crank = 0.8f;
+        q.clatter = 0.8f;
+        q.wobble = 0.5f;
+        q.air = 0.8f;
+        q.body = 0.8f;
+        q.wear = 0.5f;
+        q.output = 0.5f;
+        tailCore.setParameters(q);
+
+        std::vector<float> x(static_cast<std::size_t>(6.0 * sr), 0.0f);
+        x[0] = 1.0f;
+        tailCore.process(x.data(), nullptr, x.size());
+        assert(finiteBuffer(x));
+
+        float finalPeak = 0.0f;
+        const std::size_t start = static_cast<std::size_t>(5.0 * sr);
+        for (std::size_t i = start; i < x.size(); ++i)
+            finalPeak = std::max(finalPeak, std::fabs(x[i]));
+        assert(finalPeak < 1.0e-3f);
+    }
+
     std::cout << "Mechamorph core tests PASS\n";
     return 0;
 }
