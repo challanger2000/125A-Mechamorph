@@ -1,0 +1,157 @@
+name: Build Machine Instrument VST3
+
+on:
+  push:
+    branches: [ "v0.1.0" ]
+    paths:
+      - "docs/MACHINE-VST-TRIGGER.md"
+  workflow_dispatch:
+
+jobs:
+  prepare-samples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install sample tools
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg python3-numpy python3-scipy
+
+      - name: Download verified CC0 sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p research-sources/mp3 research-sources/wav
+
+          declare -A files=(
+            [projector35mm_0071]="0071"
+            [heidelberg_press_3409]="3409"
+            [calculator_printer_3553]="3553"
+            [old_switch_0540]="0540"
+            [slide_projector_0867]="0867"
+            [manual_winch_0902]="0902"
+            [large_ratchet_0795]="0795"
+            [sewing_slow_1115]="1115"
+            [sewing_fast_1116]="1116"
+            [large_spring_0206]="0206"
+            [medium_chain_0619]="0619"
+            [air_burst_0138]="0138"
+            [ratchet_rattle_0923]="0923"
+            [roller_shutter_2469]="2469"
+            [stapler_0009]="0009"
+          )
+
+          for name in "${!files[@]}"; do
+            id="${files[$name]}"
+            curl --fail --location --retry 2 --connect-timeout 20 \
+              "https://bigsoundbank.com/UPLOAD/mp3/$id.mp3" \
+              -o "research-sources/mp3/$name.mp3"
+            ffmpeg -hide_banner -loglevel error -y \
+              -i "research-sources/mp3/$name.mp3" \
+              -ac 1 -ar 48000 -c:a pcm_s16le \
+              "research-sources/wav/$name.wav"
+          done
+
+      - name: Build curated sample set
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p machine-set
+          python3 tools/build_machine_sample_set.py \
+            docs/MACHINE-SAMPLE-MANIFEST-01.csv \
+            research-sources/wav machine-set
+          python3 tools/build_machine_sample_set.py \
+            docs/MACHINE-SAMPLE-MANIFEST-02.csv \
+            research-sources/wav machine-set
+          ls -lh machine-set
+
+      - name: Upload machine sample set
+        uses: actions/upload-artifact@v4
+        with:
+          name: machine-set
+          path: machine-set/
+          if-no-files-found: error
+          retention-days: 1
+
+  windows-vst3:
+    needs: prepare-samples
+    runs-on: windows-2025
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download machine sample set
+        uses: actions/download-artifact@v4
+        with:
+          name: machine-set
+          path: machine-set
+
+      - name: Generate embedded Windows resources
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path generated-machine | Out-Null
+          python tools/generate_machine_resources.py machine-set generated-machine
+          Get-ChildItem generated-machine
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          cmake --version
+          $generated = (Resolve-Path generated-machine).Path
+          cmake -S . -B build-machine-vst -G "Visual Studio 18 2026" -A x64 -DMECHAMORPH_BUILD_VST3=OFF -DMECHAMORPH_BUILD_MACHINE_VST3=ON "-DMECHAMORPH_MACHINE_GENERATED_DIR=$generated"
+
+      - name: Build instrument, tests and validator
+        shell: pwsh
+        run: |
+          cmake --build build-machine-vst --config Release --target MechamorphMachine machine_sampler_tests validator --parallel 2
+
+      - name: Test machine engine
+        shell: pwsh
+        run: |
+          ctest --test-dir build-machine-vst -C Release -R machine_sampler_tests --output-on-failure
+
+      - name: Locate and validate VST3
+        shell: pwsh
+        run: |
+          $plugin = Get-ChildItem -Path build-machine-vst -Recurse -Directory -Filter "MechamorphMachine.vst3" | Select-Object -First 1
+          $validator = Get-ChildItem -Path build-machine-vst -Recurse -File -Filter "validator.exe" | Select-Object -First 1
+          if (-not $plugin) { Write-Error "MechamorphMachine.vst3 not found"; exit 1 }
+          if (-not $validator) { Write-Error "validator.exe not found"; exit 1 }
+          Write-Host "Plugin:    $($plugin.FullName)"
+          Write-Host "Validator: $($validator.FullName)"
+          & $validator.FullName $plugin.FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force -Path packaged | Out-Null
+          Copy-Item -Path $plugin.FullName -Destination packaged -Recurse -Force
+
+      - name: Add prototype notes
+        shell: pwsh
+        run: |
+          $notes = @(
+            "125A Mechamorph Machine v0.1.0 PROTOTYPE",
+            "",
+            "Instrument prototype - no audio input required.",
+            "",
+            "MIDI: Any Note On starts the machine. It stops when all held notes are released.",
+            "",
+            "Parameters: Machine, Speed, Load, Action, Wear, Output.",
+            "",
+            "BODY is intentionally not exposed because it has not passed the control-gate test.",
+            "Embedded sample material uses CC0 sources documented in the repository manifests."
+          )
+          $notes | Set-Content -Encoding UTF8 packaged/README-PROTOTYPE.txt
+
+      - name: Upload validated instrument
+        uses: actions/upload-artifact@v4
+        with:
+          name: 125A-Mechamorph-Machine-v0.1.0-Windows-x64-PROTOTYPE
+          path: packaged/
+          if-no-files-found: error
+          retention-days: 7
