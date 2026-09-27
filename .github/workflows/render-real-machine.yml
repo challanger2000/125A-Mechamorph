@@ -1,8 +1,7 @@
 name: Render Real CC0 Machine Core
 
 on:
-  push:
-    branches: [ "v0.1.0" ]
+  workflow_dispatch:
 
 jobs:
   render-real-machine:
