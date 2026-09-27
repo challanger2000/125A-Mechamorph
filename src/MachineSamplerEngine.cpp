@@ -123,6 +123,7 @@ void Engine::reset() noexcept {
     rng_.seed(0x125A4D414348494EULL);
     for (auto& v : voices_) v.reset();
     for (auto& e : pending_) e = {};
+    lastClipIndex_.fill(static_cast<std::size_t>(-1));
 }
 
 const Pool* Engine::poolFor(Role role) const noexcept {
@@ -143,10 +144,21 @@ const Clip* Engine::chooseClip(Role role) noexcept {
     if (!pool || pool->count == 0)
         return nullptr;
 
-    const std::size_t index = std::min<std::size_t>(
+    const auto roleIndex = static_cast<std::size_t>(role);
+
+    std::size_t index = std::min<std::size_t>(
         pool->count - 1,
         static_cast<std::size_t>(rng_.uniform01() * static_cast<float>(pool->count)));
 
+    // Never choose the same variant twice in a row when alternatives exist.
+    if (pool->count > 1 && index == lastClipIndex_[roleIndex]) {
+        const std::size_t step =
+            1 + static_cast<std::size_t>(
+                rng_.uniform01() * static_cast<float>(pool->count - 1));
+        index = (index + step) % pool->count;
+    }
+
+    lastClipIndex_[roleIndex] = index;
     return &pool->clips[index];
 }
 
