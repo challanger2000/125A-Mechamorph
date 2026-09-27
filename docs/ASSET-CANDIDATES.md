@@ -145,3 +145,118 @@ Before any third-party asset enters a release package, record:
 - internal processing performed
 
 CC0 is strongly preferred for embedded source assets.
+
+
+## Priority machine-identity sources — selected after architecture pivot
+
+These are especially valuable because the raw recordings already contain **recognizable real mechanical identity**, not merely generic impacts.
+
+### P0 — core machine movement
+
+- **Turn crank_Old_Metal_Machine_Loop.wav — AslakHostaker**
+  - CC0
+  - 48 kHz / 24-bit / mono
+  - real rusty hand-cranked old machine
+  - contains crank, cogs, rhythmic machinery movement
+  - use: DRIVE / CRANK base identity, cycle analysis, segmentation into micro-loops
+  - https://freesound.org/people/AslakHostaker/sounds/395042/
+
+- **Turn crank_Squeak_Old_Metal_Machine_Loop.wav — AslakHostaker**
+  - CC0
+  - 48 kHz / 24-bit / mono
+  - same style with stronger squeak/friction
+  - use: WORN DRIVE / FRICTION layer
+  - https://freesound.org/people/AslakHostaker/sounds/395041/
+
+- **Turnstile_RX.wav — strikingtwice**
+  - CC0
+  - 48 kHz / 24-bit / mono
+  - real old turnstile with metallic ratcheting and clunking
+  - use: RATCHET / PAWL / CLUNK / BACKLASH identity
+  - https://freesound.org/people/strikingtwice/sounds/260208/
+
+- **old adding machine mechanism ratchet click... — kyles**
+  - CC0
+  - 48 kHz / 24-bit / mono
+  - long real old adding-machine ratchet/knob mechanism
+  - use: slow/medium ratchet cadence, cam/selector feel, repetitive mechanism variation
+  - https://freesound.org/people/kyles/sounds/637737/
+
+### P0 — pressure / steam / valve machine events
+
+- **valve and steam release sounds — pnwheeler**
+  - CC0
+  - 44.1 kHz / 16-bit / stereo
+  - real escape valve under a Victorian steam-driven beam engine
+  - random rattly clunking + real steam jets
+  - use: PRESSURE RELEASE / VALVE / STEAM identity reference or micro-events
+  - https://freesound.org/people/pnwheeler/sounds/832100/
+
+- **chain being pulled on ratchet pulley — pnwheeler**
+  - CC0
+  - 44.1 kHz / 16-bit / stereo
+  - recorded beneath a steam-driven beam engine
+  - chain + ratchet pulley + rhythmic steam escape valve clunks
+  - use: coupled CHAIN / RATCHET / STEAM mechanical scene
+  - https://freesound.org/people/pnwheeler/sounds/832096/
+
+### P1 — lever / latch / spring detail
+
+- **Old SLR film camera film advance lever and shutter button click — khenshom**
+  - CC0
+  - 48 kHz / 24-bit / mono
+  - real old mechanical camera lever/shutter
+  - use: LEVER / SPRING-LOADED CONTACT / RETURN identity
+  - https://freesound.org/people/khenshom/sounds/516486/
+
+- **Lock Clicking — QuartzMMN**
+  - CC0
+  - 48 kHz stereo
+  - real lock mechanism with clicks, clangs, rattles and spring twang
+  - use: LOCK / PAWL / SPRING / SMALL HARDWARE identity
+  - https://freesound.org/people/QuartzMMN/sounds/555322/
+
+- **Spring sounds — OpenGameArt / bart**
+  - CC0
+  - real door spring recordings
+  - use: SPRING RETURN / RECOIL identity
+  - https://opengameart.org/content/spring-sounds
+
+### P1 — compact mechanism pools
+
+- **Mechanical Sounds — BMacZero**
+  - CC0
+  - clanks, light clunks, rattle, squeaky clicks, mechanical variants
+  - use: fallback micro-events for lever/contact/rattle families
+  - https://opengameart.org/content/mechanical-sounds
+
+- **Mechanism Activation Sequence — qubodup**
+  - CC0
+  - 48 kHz / 16-bit / mono FLAC
+  - compact real mechanism sequence with clack/click/lever/spring character
+  - use: sequence decomposition / cam-lever timing reference
+  - https://freesound.org/people/qubodup/sounds/752067/
+
+## New sample strategy
+
+For core machine identity, prefer **real CC0 micro-events or short cycles** where the component's identity is difficult to synthesize convincingly.
+
+Candidate hybrid:
+
+```
+virtual shared drive/state
+    -> schedules and scales
+    -> real CC0 micro-events
+    -> shared body / load / wear processing
+```
+
+The sample is not allowed to free-run independently.
+
+Examples:
+- crank sample is phase-locked / segmented to virtual crank cycle;
+- ratchet event is selected only at tooth/pawl contact;
+- spring return is triggered by lever release;
+- pressure release occurs only when virtual pressure/load threshold is reached;
+- wear changes event choice, timing, friction and secondary contacts.
+
+This preserves causal machine behaviour while using authentic mechanical identity.
