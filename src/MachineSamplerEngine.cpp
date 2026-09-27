@@ -191,15 +191,11 @@ void Engine::spawn(Role role, float force, bool preferLoop) noexcept {
                 (1.0f + (0.06f + 0.22f * wear * wear) * rng_.bipolar());
     }
 
-    std::size_t startOffset = 0;
-    if (!preferLoop && clip->frames > 64) {
-        const std::size_t maxOffset = static_cast<std::size_t>(
-            0.003 * sampleRate_ * wear);
-        if (maxOffset > 0)
-            startOffset = std::min<std::size_t>(
-                clip->frames - 1,
-                static_cast<std::size_t>(rng_.uniform01() * maxOffset));
-    }
+    // Never simulate wear by entering a one-shot part-way through its sample.
+    // That can erase the defining contact transient and makes "wear" behave
+    // like accidental transient trimming. Timing variation belongs to event
+    // scheduling / backlash, while the physical recorded gesture stays intact.
+    const std::size_t startOffset = 0;
 
     target->start(*clip, role, gain, rate, startOffset);
 }
