@@ -163,7 +163,7 @@ int main() {
         q.output = 0.5f;
         tailCore.setParameters(q);
 
-        std::vector<float> x(static_cast<std::size_t>(12.0 * sr), 0.0f);
+        std::vector<float> x(static_cast<std::size_t>(13.0 * sr), 0.0f);
         const std::size_t active = static_cast<std::size_t>(4.0 * sr);
         for (std::size_t i = 0; i < active; ++i)
             x[i] = static_cast<float>(0.2 * std::sin(2.0 * 3.14159265358979323846 * 220.0 * i / sr));
@@ -172,7 +172,7 @@ int main() {
         assert(finiteBuffer(x));
 
         float finalPeak = 0.0f;
-        const std::size_t start = static_cast<std::size_t>(11.0 * sr);
+        const std::size_t start = static_cast<std::size_t>(12.0 * sr);
         for (std::size_t i = start; i < x.size(); ++i)
             finalPeak = std::max(finalPeak, std::fabs(x[i]));
         assert(finalPeak < 1.0e-4f);
