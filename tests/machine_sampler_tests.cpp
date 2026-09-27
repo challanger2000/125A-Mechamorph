@@ -152,6 +152,65 @@ int main() {
     assert(nonZeroFrames > 4500);
     assert(nonZeroFrames < 5100);
 
+    // START must remain audible immediately; no global fade may hide the
+    // physical engagement transient.
+    {
+        SampleSet startSet;
+        std::vector<float> startOnly(4800, 0.0f);
+        startOnly[0] = 0.8f;
+        assert(startSet.start.add({
+            startOnly.data(), startOnly.size(), sr, false, "start_only"}));
+
+        Engine startEngine;
+        startEngine.prepare(sr);
+        startEngine.setSampleSet(&startSet);
+        Parameters sp;
+        sp.output = 0.5f;
+        startEngine.setParameters(sp);
+        startEngine.start();
+
+        std::vector<float> y(16, 0.0f);
+        startEngine.process(y.data(), y.size());
+        assert(std::fabs(y[0]) > 0.5f);
+    }
+
+    // STOP is a real state/gesture, not a 350 ms fade. A long stop clip must
+    // remain audible and keep the engine in Stopping until it has completed.
+    {
+        std::vector<float> runLong(4800, 0.03f);
+        std::vector<float> stopLong(static_cast<std::size_t>(1.20 * sr), 0.08f);
+
+        SampleSet stopSet;
+        assert(stopSet.run.add({
+            runLong.data(), runLong.size(), sr, true, "run_long"}));
+        assert(stopSet.stop.add({
+            stopLong.data(), stopLong.size(), sr, false, "stop_long"}));
+
+        Engine stopEngine;
+        stopEngine.prepare(sr);
+        stopEngine.setSampleSet(&stopSet);
+        Parameters stopP;
+        stopP.output = 0.5f;
+        stopEngine.setParameters(stopP);
+
+        stopEngine.start();
+        std::vector<float> pre(static_cast<std::size_t>(0.30 * sr), 0.0f);
+        stopEngine.process(pre.data(), pre.size());
+
+        stopEngine.stop();
+        std::vector<float> half(static_cast<std::size_t>(0.55 * sr), 0.0f);
+        stopEngine.process(half.data(), half.size());
+        assert(stopEngine.state() == State::Stopping);
+
+        double halfEnergy = 0.0;
+        for (float v : half) halfEnergy += static_cast<double>(v) * v;
+        assert(halfEnergy > 0.0);
+
+        std::vector<float> rest(static_cast<std::size_t>(1.00 * sr), 0.0f);
+        stopEngine.process(rest.data(), rest.size());
+        assert(stopEngine.state() == State::Stopped);
+    }
+
     std::cout << "Machine sampler engine tests PASS\n";
     return 0;
 }
