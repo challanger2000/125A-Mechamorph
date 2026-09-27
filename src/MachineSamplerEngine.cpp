@@ -44,11 +44,13 @@ void Voice::reset() noexcept {
 
 void Voice::start(
     const Clip& clip,
+    Role role,
     float gain,
     float rate,
     std::size_t startOffset) noexcept {
 
     clip_ = clip;
+    role_ = role;
     gain_ = gain;
     rate_ = std::clamp<double>(rate, 0.25, 4.0);
     position_ = static_cast<double>(std::min(startOffset, clip.frames - 1));
@@ -190,7 +192,7 @@ void Engine::spawn(Role role, float force, bool preferLoop) noexcept {
                 static_cast<std::size_t>(rng_.uniform01() * maxOffset));
     }
 
-    target->start(*clip, gain, rate, startOffset);
+    target->start(*clip, role, gain, rate, startOffset);
 }
 
 void Engine::schedule(Role role, int delaySamples, float force) noexcept {
@@ -314,7 +316,9 @@ void Engine::updateMachineState() noexcept {
     if (state_ == State::Stopping) {
         if (stopCountdown_ > 0)
             --stopCountdown_;
-        if (stopCountdown_ <= 0 && activity_ <= 0.0f) {
+        if (stopCountdown_ <= 0 &&
+            activity_ <= 0.0f &&
+            !hasActiveRole(Role::Stop)) {
             state_ = State::Stopped;
             runLoopSpawned_ = false;
             for (auto& v : voices_) v.reset();
@@ -325,9 +329,22 @@ void Engine::updateMachineState() noexcept {
 
 float Engine::renderVoices() noexcept {
     float out = 0.0f;
-    for (auto& v : voices_)
-        out += v.process();
+    for (auto& v : voices_) {
+        const float sample = v.process();
+        if (v.role() == Role::Run || v.role() == Role::Load)
+            out += sample * activity_;
+        else
+            out += sample;
+    }
     return out;
+}
+
+bool Engine::hasActiveRole(Role role) const noexcept {
+    for (const auto& v : voices_) {
+        if (v.active() && v.role() == role)
+            return true;
+    }
+    return false;
 }
 
 float Engine::outputGain() const noexcept {
@@ -371,7 +388,7 @@ void Engine::process(float* monoOut, std::size_t frames) noexcept {
             }
         }
 
-        monoOut[i] = renderVoices() * activity_ * outputGain();
+        monoOut[i] = renderVoices() * outputGain();
     }
 }
 
