@@ -81,3 +81,20 @@ if(MECHAMORPH_BUILD_VST3)
     target_compile_features(Mechamorph PRIVATE cxx_std_17)
     smtg_target_configure_version_file(Mechamorph)
 endif()
+
+add_library(machine_sampler_core STATIC
+    src/MachineSamplerEngine.cpp
+)
+target_include_directories(machine_sampler_core PUBLIC include)
+target_compile_features(machine_sampler_core PUBLIC cxx_std_17)
+if(MSVC)
+    target_compile_options(machine_sampler_core PRIVATE /W4 /permissive-)
+else()
+    target_compile_options(machine_sampler_core PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+add_executable(machine_sampler_tests
+    tests/machine_sampler_tests.cpp
+)
+target_link_libraries(machine_sampler_tests PRIVATE machine_sampler_core)
+add_test(NAME machine_sampler_tests COMMAND machine_sampler_tests)
