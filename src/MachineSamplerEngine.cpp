@@ -177,12 +177,14 @@ void Engine::spawn(Role role, float force, bool preferLoop) noexcept {
 
     if (role == Role::Run) {
         const float speed = clamp01(params_.speed);
-        const float scaleRate = 1.20f - 0.72f * scale;
+        // Playback pitch/rate contributes only part of perceived size.
+        // Keep the range moderate so SCALE does not collapse into "slow sample".
+        const float scaleRate = 1.08f - 0.38f * scale;
         rate = (0.65f + 0.85f * speed) * scaleRate * sampleRateRatio;
-        // Large machines are not simply louder; they are slower/heavier.
-        gain *= 0.58f + 0.10f * scale - 0.08f * load;
+        // Large machines carry more body energy but not a simple loudness boost.
+        gain *= 0.56f + 0.08f * scale - 0.08f * load;
     } else {
-        const float scaleRate = 1.18f - 0.68f * scale;
+        const float scaleRate = 1.10f - 0.42f * scale;
         rate *= sampleRateRatio * scaleRate;
         rate *= 1.0f + (0.006f + 0.055f * wear * wear) * rng_.bipolar();
         gain *= (0.88f + 0.22f * scale) *
@@ -241,7 +243,9 @@ void Engine::stop() noexcept {
     state_ = State::Stopping;
     loadActive_ = false;
     spawn(Role::Stop, 1.0f);
-    stopCountdown_ = static_cast<int>(0.350 * sampleRate_);
+    const float scale = clamp01(params_.scale);
+    const double stopSeconds = 0.25 + 2.75 * scale * scale;
+    stopCountdown_ = static_cast<int>(stopSeconds * sampleRate_);
 }
 
 void Engine::triggerAction(float force) noexcept {
@@ -259,7 +263,10 @@ void Engine::triggerAction(float force) noexcept {
         const int secondary = static_cast<int>(
             1.0f + 4.0f * clatter * (0.35f + 0.65f * wear));
         for (int i = 0; i < secondary; ++i) {
-            const float ms = 5.0f + 28.0f * rng_.uniform01();
+            const float scale = clamp01(params_.scale);
+            const float ms =
+                5.0f +
+                (28.0f + 95.0f * scale * scale) * rng_.uniform01();
             // Secondary backlash/re-contact is still an ACTION/contact event.
             // Never use RELEASE material as generic clatter.
             schedule(
@@ -301,9 +308,10 @@ void Engine::updateMachineState() noexcept {
     // Larger machines accelerate more slowly and have lower natural cycle rate.
     const float targetSpeed =
         (0.40f + 3.60f * speed) *
-        (1.10f - 0.78f * scale);
+        (1.08f - 0.70f * scale);
 
-    const float inertiaSeconds = 0.03f + 1.20f * scale * scale;
+    // Colossal machines should feel inertial rather than merely slow.
+    const float inertiaSeconds = 0.02f + 2.80f * scale * scale * scale;
     const float inertiaCoeff =
         static_cast<float>(1.0 - std::exp(-1.0 / (inertiaSeconds * sampleRate_)));
     inertiaState_ += inertiaCoeff * (targetSpeed - inertiaState_);
@@ -324,7 +332,7 @@ void Engine::updateMachineState() noexcept {
     // the running mechanism itself, not just future one-shot events.
     const float speedForRate = clamp01(params_.speed);
     const float loadForRate = continuousLoad;
-    const float scaleRate = 1.20f - 0.72f * scale;
+    const float scaleRate = 1.08f - 0.38f * scale;
     const double wearEccentricity =
         1.0 +
         (0.010 + 0.040 * static_cast<double>(wear)) *
@@ -348,7 +356,7 @@ void Engine::updateMachineState() noexcept {
         state_ != State::Stopping &&
         state_ != State::Stopped) {
 
-        const float densityScale = 1.0f - 0.72f * scale;
+        const float densityScale = 1.0f - 0.82f * scale;
         const int camsPerRev = std::max(
             1,
             1 + static_cast<int>(std::floor(5.0f * actionAmount * densityScale)));
@@ -365,10 +373,10 @@ void Engine::updateMachineState() noexcept {
                 1.0f + (0.04f + 0.26f * wear * wear) * rng_.bipolar();
 
             float force =
-                (0.50f +
-                 0.30f * actionAmount +
+                (0.48f +
+                 0.28f * actionAmount +
                  0.10f * loadAmount +
-                 0.28f * scale) *
+                 0.42f * scale) *
                 forceVariation;
 
             force = std::clamp(force, 0.15f, 1.25f);
