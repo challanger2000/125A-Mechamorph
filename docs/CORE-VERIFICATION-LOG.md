@@ -118,3 +118,33 @@ Evidence class:
 - MEASURED / VERIFIED STANDALONE CORE
 
 This still does not constitute VST3/host PASS.
+
+
+## 2026-09-27 — Friction, true morph and stereo-preservation regression
+
+Changes covered:
+- reduced speed/load/activity/wear-coupled FrictionEngine
+- MECHANIZE changed from additive layer behaviour to a true source-to-machine morph
+- separate L/R body resonators with one shared mechanical state
+- stereo analysis uses channel energy rather than phase-cancellable mono sum
+- anti-phase stereo regression fixture added
+
+Standalone verification:
+- GCC 14.2 / Release / C++17
+- CTest: **1/1 PASS**
+- elapsed approximately 0.19 s
+
+Deterministic smoke render after morph/stereo changes:
+- peak: approximately **0.5106**
+- RMS: approximately **0.0738**
+
+Anti-phase fixture:
+- L = -R source
+- machine remains active
+- output remains finite
+- measurable non-zero delta from dry source
+
+Evidence class:
+- MEASURED / VERIFIED STANDALONE CORE
+
+VST3 wrapper remains unverified until a current Windows/Steinberg build is run.
