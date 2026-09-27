@@ -153,12 +153,17 @@ void AirEngine::reset() noexcept {
 float AirEngine::process(const Parameters& p, MechanicalState& state, DeterministicRng& rng) noexcept {
     const float air = std::clamp(p.air, 0.0f, 1.0f);
     const float phasePump = 0.5f + 0.5f * static_cast<float>(std::sin(state.phase));
-    const float inflow = air * (0.00002f + 0.00008f * phasePump);
-    const float leak = 0.00001f + 0.00008f * state.wear;
-    const float consumption = 0.00005f * state.inputEnvelope * air;
+    const float dt = static_cast<float>(1.0 / sampleRate_);
 
-    state.pressure = std::clamp(state.pressure + inflow - leak - consumption, 0.0f, 1.0f);
-    state.leak = leak;
+    // Prototype rates are expressed per second so behaviour remains sample-rate invariant.
+    const float inflowPerSecond = air * (0.35f + 1.15f * phasePump);
+    const float leakPerSecond = 0.18f + 0.90f * state.wear;
+    const float consumptionPerSecond = 0.55f * state.inputEnvelope * air;
+
+    state.pressure = std::clamp(
+        state.pressure + dt * (inflowPerSecond - leakPerSecond - consumptionPerSecond),
+        0.0f, 1.0f);
+    state.leak = leakPerSecond;
 
     const float white = rng.bipolar();
     // Very cheap low-pass coloration for first prototype.
@@ -176,11 +181,12 @@ float RatchetEngine::process(const Parameters& p, const MechanicalState& state, 
     const double sector = kTwoPi / static_cast<double>(teeth);
     const int prevIndex = static_cast<int>(previousPhase_ / sector);
     const int currentIndex = static_cast<int>(state.phase / sector);
+    const double oldPhase = previousPhase_;
     previousPhase_ = state.phase;
 
     bool fired = currentIndex != prevIndex;
     // Phase wrap is also one tooth crossing.
-    if (state.phase < sector && previousPhase_ > kTwoPi - sector)
+    if (state.phase < sector && oldPhase > kTwoPi - sector)
         fired = true;
 
     if (!fired) return 0.0f;
