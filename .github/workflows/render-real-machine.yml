@@ -97,6 +97,7 @@ jobs:
           name: Mechamorph-Control-Auditions-CC0-v0.1
           path: |
             real-machine-output/
+            control-measurements.csv
             machine-set/
           if-no-files-found: error
           retention-days: 7
