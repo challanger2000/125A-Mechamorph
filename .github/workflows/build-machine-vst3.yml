@@ -98,6 +98,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path generated-machine | Out-Null
           python tools/generate_machine_resources.py machine-set generated-machine
+          Copy-Item machine-set/machine_space_ir_generated.h generated-machine/machine_space_ir_generated.h
           Get-ChildItem generated-machine
 
       - name: Configure
@@ -107,15 +108,26 @@ jobs:
           $generated = (Resolve-Path generated-machine).Path
           cmake -S . -B build-machine-vst -G "Visual Studio 18 2026" -A x64 -DMECHAMORPH_BUILD_VST3=OFF -DMECHAMORPH_BUILD_MACHINE_VST3=ON "-DMECHAMORPH_MACHINE_GENERATED_DIR=$generated"
 
-      - name: Build instrument, tests and validator
+      - name: Build instrument, tests, BODY SPACE lab and validator
         shell: pwsh
         run: |
-          cmake --build build-machine-vst --config Release --target MechamorphMachine machine_sampler_tests validator --parallel 2
+          cmake --build build-machine-vst --config Release --target MechamorphMachine machine_sampler_tests measure_machine_space validator --parallel 2
 
       - name: Test machine engine
         shell: pwsh
         run: |
           ctest --test-dir build-machine-vst -C Release -R machine_sampler_tests --output-on-failure
+
+      - name: Measure BODY and SPACE on real machine material
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path space-lab | Out-Null
+          $source = Get-ChildItem -Path machine-set -File -Filter "run__*.wav" | Sort-Object Name | Select-Object -First 1
+          if (-not $source) { Write-Error "No RUN sample available for BODY SPACE lab"; exit 1 }
+          & .\build-machine-vst\Release\measure_machine_space.exe $source.FullName space-lab | Tee-Object -FilePath space-lab\metrics.csv
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item machine-set\OPENAIR-ATTRIBUTION.txt space-lab\OPENAIR-ATTRIBUTION.txt
+          Get-ChildItem space-lab
 
       - name: Locate and validate VST3
         shell: pwsh
@@ -147,6 +159,14 @@ jobs:
             "Embedded sample material uses CC0 sources documented in the repository manifests."
           )
           $notes | Set-Content -Encoding UTF8 packaged/README-PROTOTYPE.txt
+
+      - name: Upload BODY SPACE lab
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mechamorph-BODY-SPACE-Lab-v0.1
+          path: space-lab/
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Upload validated instrument
         uses: actions/upload-artifact@v4
