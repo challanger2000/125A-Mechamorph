@@ -5,7 +5,7 @@ on:
 
 jobs:
   windows-vst3:
-    runs-on: windows-latest
+    runs-on: windows-2025
     timeout-minutes: 20
 
     steps:
@@ -13,10 +13,41 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure
-        run: cmake -S . -B build -DMECHAMORPH_BUILD_VST3=ON -DCMAKE_BUILD_TYPE=Release
+        shell: pwsh
+        run: |
+          cmake --version
+          cmake -S . -B build -G "Visual Studio 18 2026" -A x64 -DMECHAMORPH_BUILD_VST3=ON
 
-      - name: Build
-        run: cmake --build build --config Release --parallel 2
+      - name: Build prototype, core tests and Steinberg validator
+        shell: pwsh
+        run: |
+          cmake --build build --config Release --target Mechamorph mechamorph_core_tests validator --parallel 2
 
       - name: Test standalone core
-        run: ctest --test-dir build -C Release --output-on-failure
+        shell: pwsh
+        run: |
+          ctest --test-dir build -C Release --output-on-failure
+
+      - name: Locate and validate VST3
+        shell: pwsh
+        run: |
+          $plugin = Get-ChildItem -Path build -Recurse -Directory -Filter "Mechamorph.vst3" | Select-Object -First 1
+          $validator = Get-ChildItem -Path build -Recurse -File -Filter "validator.exe" | Select-Object -First 1
+          if (-not $plugin) { Write-Error "Mechamorph.vst3 not found"; exit 1 }
+          if (-not $validator) { Write-Error "validator.exe not found"; exit 1 }
+
+          Write-Host "Plugin:    $($plugin.FullName)"
+          Write-Host "Validator: $($validator.FullName)"
+          & $validator.FullName $plugin.FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          New-Item -ItemType Directory -Force -Path packaged | Out-Null
+          Copy-Item -Path $plugin.FullName -Destination packaged -Recurse -Force
+
+      - name: Upload prototype VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: 125A-Mechamorph-v0.1.0-Windows-x64-PROTOTYPE
+          path: packaged/
+          if-no-files-found: error
+          retention-days: 7
