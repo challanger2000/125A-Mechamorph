@@ -17,3 +17,5 @@ Run BODY/SPACE control-gate lab with OpenAIR fingerprints.
 Retry BODY/SPACE lab after Windows source discovery fix.
 
 Retry BODY/SPACE lab after executable-path fix.
+
+Build Machine instrument with validated SPACE and internal SCALE-linked BODY.
