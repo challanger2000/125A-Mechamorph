@@ -325,18 +325,25 @@ int main(int argc, char** argv) {
     applyAudition(p);
     engine.setParameters(p);
 
-    constexpr double duration = 40.0;
+    const bool auditionMode = !auditionControl.empty();
+    const double duration = auditionMode ? 16.0 : 40.0;
     std::vector<float> out(static_cast<std::size_t>(duration * sr), 0.0f);
     std::size_t pos = 0;
 
+    const double startSeconds = auditionMode ? 3.0 : 6.0;
+    const double runSeconds = auditionMode ? 3.0 : 5.0;
+    const double loadSeconds = auditionMode ? 6.0 : 17.0;
+    const double releaseSeconds = auditionMode ? 2.0 : 5.0;
+    const double stopSeconds = auditionMode ? 2.0 : 7.0;
+
     engine.start();
-    renderBlock(engine, out, pos, 6.0, sr);
+    renderBlock(engine, out, pos, startSeconds, sr);
 
     p.speed = 0.50f;
     p.action = 0.58f;
     applyAudition(p);
     engine.setParameters(p);
-    renderBlock(engine, out, pos, 5.0, sr);
+    renderBlock(engine, out, pos, runSeconds, sr);
 
     p.speed = 0.52f;
     p.load = 0.70f;
@@ -346,7 +353,7 @@ int main(int argc, char** argv) {
     applyAudition(p);
     engine.setParameters(p);
     engine.setLoadActive(true);
-    renderBlock(engine, out, pos, 17.0, sr);
+    renderBlock(engine, out, pos, loadSeconds, sr);
 
     p.speed = 0.42f;
     p.load = 0.25f;
@@ -355,10 +362,10 @@ int main(int argc, char** argv) {
     applyAudition(p);
     engine.setParameters(p);
     engine.setLoadActive(false);
-    renderBlock(engine, out, pos, 5.0, sr);
+    renderBlock(engine, out, pos, releaseSeconds, sr);
 
     engine.stop();
-    renderBlock(engine, out, pos, 7.0, sr);
+    renderBlock(engine, out, pos, stopSeconds, sr);
 
     float peak = 0.0f;
     double rms = 0.0;
