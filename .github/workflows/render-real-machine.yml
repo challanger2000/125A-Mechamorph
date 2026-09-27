@@ -1,6 +1,10 @@
 name: Render Real CC0 Machine Core
 
 on:
+  push:
+    branches: [ "v0.1.0" ]
+    paths:
+      - "docs/REAL-MACHINE-TRIGGER.md"
   workflow_dispatch:
 
 jobs:
@@ -89,7 +93,7 @@ jobs:
       - name: Upload C++ machine render
         uses: actions/upload-artifact@v4
         with:
-          name: Mechamorph-MachineSamplerCore-CC0-v0.1
+          name: Mechamorph-Machine-Profiles-CC0-v0.1
           path: |
             real-machine-output/
             machine-set/
