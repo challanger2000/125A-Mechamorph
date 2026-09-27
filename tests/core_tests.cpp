@@ -148,6 +148,36 @@ int main() {
         assert(finalPeak < 1.0e-3f);
     }
 
+    // 8) Sustained excitation must still decay within the advertised finite tail.
+    {
+        Core tailCore;
+        tailCore.prepare(sr, 512);
+        Parameters q;
+        q.mechanize = 1.0f;
+        q.crank = 0.8f;
+        q.clatter = 0.4f;
+        q.wobble = 0.4f;
+        q.air = 1.0f;
+        q.body = 0.8f;
+        q.wear = 0.0f;
+        q.output = 0.5f;
+        tailCore.setParameters(q);
+
+        std::vector<float> x(static_cast<std::size_t>(12.0 * sr), 0.0f);
+        const std::size_t active = static_cast<std::size_t>(4.0 * sr);
+        for (std::size_t i = 0; i < active; ++i)
+            x[i] = static_cast<float>(0.2 * std::sin(2.0 * 3.14159265358979323846 * 220.0 * i / sr));
+
+        tailCore.process(x.data(), nullptr, x.size());
+        assert(finiteBuffer(x));
+
+        float finalPeak = 0.0f;
+        const std::size_t start = static_cast<std::size_t>(11.0 * sr);
+        for (std::size_t i = start; i < x.size(); ++i)
+            finalPeak = std::max(finalPeak, std::fabs(x[i]));
+        assert(finalPeak < 1.0e-4f);
+    }
+
     std::cout << "Mechamorph core tests PASS\n";
     return 0;
 }
