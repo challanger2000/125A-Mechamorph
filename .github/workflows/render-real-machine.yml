@@ -76,13 +76,18 @@ jobs:
         shell: bash
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --config Release --target machine_sampler_tests machine_real_render measure_machine_controls --parallel 2
+          cmake --build build --config Release --target machine_sampler_tests machine_real_render measure_machine_controls measure_machine_character --parallel 2
           ctest --test-dir build -R machine_sampler_tests --output-on-failure
 
       - name: Measure ACTION and WEAR
         shell: bash
         run: |
           ./build/measure_machine_controls | tee control-measurements.csv
+
+      - name: Measure BODY and SPACE
+        shell: bash
+        run: |
+          ./build/measure_machine_character | tee character-measurements.csv
 
       - name: Render scale auditions
         shell: bash
@@ -107,6 +112,7 @@ jobs:
           path: |
             real-machine-output/
             control-measurements.csv
+            character-measurements.csv
             machine-set/
           if-no-files-found: error
           retention-days: 7
