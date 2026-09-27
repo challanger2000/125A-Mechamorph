@@ -192,7 +192,7 @@ int main(int argc, char** argv) {
     for (const auto& v:pipes) {
         mechamorph::PipeEngine pipe;
         mechamorph::DeterministicRng rng;
-        rng.seed(0x125A91PEULL);
+        rng.seed(0x125A91FEULL);
         pipe.prepare(sr);
         pipe.setFrequency(440.0f);
 
