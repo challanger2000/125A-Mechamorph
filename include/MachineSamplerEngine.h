@@ -63,6 +63,7 @@ struct Parameters {
     float clatter = 0.20f;
     float body = 0.30f;
     float pressure = 0.0f;
+    float scale = 0.35f;   // internal physical size/mass, 0=tiny, 1=colossal
     float output = 0.50f;
 };
 
@@ -146,6 +147,7 @@ private:
 
     double phase_ = 0.0;
     double previousPhase_ = 0.0;
+    float inertiaState_ = 0.0f;
     float activity_ = 0.0f;
     float runBlend_ = 0.0f;
     bool runLoopSpawned_ = false;
