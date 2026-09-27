@@ -182,7 +182,11 @@ private:
 
     Parameters params_{};
     MechanicalState state_{};
-    DeterministicRng rng_{};
+    DeterministicRng rngAir_{};
+    DeterministicRng rngFriction_{};
+    DeterministicRng rngGear_{};
+    DeterministicRng rngRatchet_{};
+    DeterministicRng rngRattle_{};
     InputAnalyzer analyzer_{};
     MechanicalDrive drive_{};
     ModalResonator bodyL_{};
