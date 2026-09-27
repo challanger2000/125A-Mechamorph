@@ -202,18 +202,24 @@ void RattleEngine::prepare(double sampleRate) noexcept {
 
 void RattleEngine::reset() noexcept {
     for (auto& e : events_) e = {};
+    transientLatched_ = false;
 }
 
 float RattleEngine::process(const Parameters& p, const MechanicalState& state, DeterministicRng& rng) noexcept {
-    // Trigger cluster only on sufficiently strong transients.
-    if (state.transientStrength > 0.02f && p.clatter > 0.0f) {
-        const int requested = 1 + static_cast<int>(4.0f * std::clamp(p.clatter * (0.3f + state.wear), 0.0f, 1.0f));
+    // Trigger one bounded cluster on a transient threshold crossing.
+    const bool transientHigh = state.transientStrength > 0.02f;
+    const bool trigger = transientHigh && !transientLatched_ && p.clatter > 0.0f;
+    transientLatched_ = transientHigh;
+
+    if (trigger) {
+        const int requested = 1 + static_cast<int>(
+            4.0f * std::clamp(p.clatter * (0.3f + state.wear), 0.0f, 1.0f));
         int placed = 0;
         for (auto& e : events_) {
             if (placed >= requested) break;
             if (e.remaining <= 0) {
                 const float delayMs = 3.0f + 35.0f * rng.uniform01();
-                e.remaining = static_cast<int>(delayMs * 0.001 * sampleRate_);
+                e.remaining = std::max(1, static_cast<int>(delayMs * 0.001 * sampleRate_));
                 e.amplitude = (0.03f + 0.07f * rng.uniform01()) *
                               std::clamp(p.clatter, 0.0f, 1.0f);
                 ++placed;
