@@ -233,7 +233,7 @@ int main(int argc, char** argv) {
     if (argc < 3) {
         std::cerr << "usage: machine_real_render <sample_dir> <output.wav> [profile] [control] [value]\n";
         std::cerr << "profiles: all, projector, handcrank, industrial\n";
-        std::cerr << "controls: speed, load, action, wear, body\n";
+        std::cerr << "controls: speed, load, action, wear, body, scale\n";
         return 2;
     }
 
@@ -320,6 +320,7 @@ int main(int argc, char** argv) {
         else if (auditionControl == "action") q.action = auditionValue;
         else if (auditionControl == "wear") q.wear = auditionValue;
         else if (auditionControl == "body") q.body = auditionValue;
+        else if (auditionControl == "scale") q.scale = auditionValue;
     };
 
     applyAudition(p);
