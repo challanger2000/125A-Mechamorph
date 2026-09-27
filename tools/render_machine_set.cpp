@@ -231,14 +231,19 @@ void renderBlock(Engine& engine, std::vector<float>& out, std::size_t& pos, doub
 
 int main(int argc, char** argv) {
     if (argc < 3) {
-        std::cerr << "usage: machine_real_render <sample_dir> <output.wav> [profile]\n";
+        std::cerr << "usage: machine_real_render <sample_dir> <output.wav> [profile] [control] [value]\n";
         std::cerr << "profiles: all, projector, handcrank, industrial\n";
+        std::cerr << "controls: speed, load, action, wear, body\n";
         return 2;
     }
 
     const fs::path sampleDir = argv[1];
     const fs::path outputPath = argv[2];
     const std::string profile = argc >= 4 ? argv[3] : "all";
+    const std::string auditionControl = argc >= 5 ? argv[4] : "";
+    const float auditionValue = argc >= 6
+        ? std::clamp(std::stof(argv[5]), 0.0f, 1.0f)
+        : -1.0f;
     constexpr int sr = 48000;
 
     std::vector<std::unique_ptr<OwnedClip>> owned;
@@ -307,6 +312,17 @@ int main(int argc, char** argv) {
     p.body = 0.30f;
     p.pressure = 0.0f;
     p.output = 0.38f;
+
+    auto applyAudition = [&](Parameters& q) {
+        if (auditionValue < 0.0f) return;
+        if (auditionControl == "speed") q.speed = auditionValue;
+        else if (auditionControl == "load") q.load = auditionValue;
+        else if (auditionControl == "action") q.action = auditionValue;
+        else if (auditionControl == "wear") q.wear = auditionValue;
+        else if (auditionControl == "body") q.body = auditionValue;
+    };
+
+    applyAudition(p);
     engine.setParameters(p);
 
     constexpr double duration = 40.0;
@@ -318,6 +334,7 @@ int main(int argc, char** argv) {
 
     p.speed = 0.50f;
     p.action = 0.58f;
+    applyAudition(p);
     engine.setParameters(p);
     renderBlock(engine, out, pos, 5.0, sr);
 
@@ -326,6 +343,7 @@ int main(int argc, char** argv) {
     p.action = 0.58f;
     p.clatter = 0.28f;
     p.wear = 0.26f;
+    applyAudition(p);
     engine.setParameters(p);
     engine.setLoadActive(true);
     renderBlock(engine, out, pos, 17.0, sr);
@@ -334,6 +352,7 @@ int main(int argc, char** argv) {
     p.load = 0.25f;
     p.action = 0.42f;
     p.clatter = 0.18f;
+    applyAudition(p);
     engine.setParameters(p);
     engine.setLoadActive(false);
     renderBlock(engine, out, pos, 5.0, sr);
@@ -366,6 +385,8 @@ int main(int argc, char** argv) {
 
     std::cout << "Rendered " << outputPath
               << " profile=" << profile
+              << " control=" << (auditionControl.empty() ? "none" : auditionControl)
+              << " value=" << auditionValue
               << " peak=" << peak
               << " rms=" << rms
               << " final_state=" << static_cast<int>(engine.state())
