@@ -23,9 +23,12 @@ tresult PLUGIN_API Controller::initialize(FUnknown* context) {
     auto* machine = new StringListParameter(
         STR16("Machine"), kMachine, nullptr,
         ParameterInfo::kCanAutomate | ParameterInfo::kIsList);
-    machine->appendString(STR16("Projector"));
-    machine->appendString(STR16("Handcrank"));
-    machine->appendString(STR16("Industrial"));
+    machine->appendString(STR16("Tiny"));
+    machine->appendString(STR16("Clockwork"));
+    machine->appendString(STR16("Heavy"));
+    machine->appendString(STR16("Colossal"));
+    machine->appendString(STR16("Pneumatic"));
+    machine->appendString(STR16("Broken"));
     parameters.addParameter(machine);
 
     auto addPercent = [&](const TChar* title, ParamID id, double def) {
