@@ -174,7 +174,9 @@ float AirEngine::process(const Parameters& p, MechanicalState& state, Determinis
 
     // Prototype rates are expressed per second so behaviour remains sample-rate invariant.
     const float inflowPerSecond = air * state.activity * (0.35f + 1.15f * phasePump);
-    const float leakPerSecond = 0.04f + 0.30f * state.wear;
+    // Prototype reservoir discharge is deliberately bounded so the effect has
+    // a finite, host-reportable tail. Coefficients remain EMPIRICALLY TUNED.
+    const float leakPerSecond = 0.25f + 0.50f * state.wear;
     const float consumptionPerSecond = 0.20f * state.inputEnvelope * air;
 
     state.pressure = std::clamp(
