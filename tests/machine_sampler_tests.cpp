@@ -253,6 +253,32 @@ int main() {
         assert(peak < 0.25f);
     }
 
+    // Engine retrigger semantics: reset + start must return the machine
+    // to a fresh START cycle even if a previous cycle was already running.
+    {
+        Engine retrigger;
+        retrigger.prepare(sr);
+        retrigger.setSampleSet(&set);
+        retrigger.setParameters(p);
+        retrigger.start();
+
+        std::vector<float> first(4096, 0.0f);
+        retrigger.process(first.data(), first.size());
+        const double phaseBefore = retrigger.phase();
+
+        retrigger.reset();
+        retrigger.setSampleSet(&set);
+        retrigger.setParameters(p);
+        retrigger.start();
+
+        const double phaseAfterReset = retrigger.phase();
+        assert(phaseAfterReset < phaseBefore);
+
+        std::vector<float> second(256, 0.0f);
+        retrigger.process(second.data(), second.size());
+        assert(retrigger.state() != State::Stopped);
+    }
+
     std::cout << "Machine sampler engine tests PASS\n";
     return 0;
 }
