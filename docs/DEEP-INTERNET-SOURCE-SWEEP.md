@@ -830,3 +830,133 @@ Required sample roles:
 Real projectors and printing machines are especially valuable because they naturally contain several of these phases in one coherent real mechanism.
 
 This suggests Mechamorph should eventually support **machine-state sample sets**, not only isolated sample pools.
+
+
+---
+
+# Large-machine / colossal-machine source expansion
+
+These sources fill gaps for SCALE, HEAVY and COLOSSAL machine archetypes.
+
+## Hydraulic motion
+
+- **Short Machine Sound pack — qubodup**
+  - CC0
+  - derived from CC0 hydraulic/scissor-lift/freight-elevator sources
+  - useful for: hydraulic lift, piston-like movement, machine connection/disconnection, pressure-driven motion
+  - https://freesound.org/people/qubodup/packs/46368/
+
+- **Short Machine Sound 7 — qubodup**
+  - CC0
+  - 48 kHz FLAC
+  - compact hydraulic/motor movement
+  - https://freesound.org/people/qubodup/sounds/871231/
+
+- **industrial_machine_hydraulic — Kostrava**
+  - CC0
+  - dark industrial/hydraulic machine ambience
+  - useful for: deep machine bed, pressure system, grimy load character
+  - https://freesound.org/people/Kostrava/sounds/271328/
+
+## Press / impact / heavy cyclic machinery
+
+- **Schnellläuferpresse 01 — mark646**
+  - CC0
+  - real press at work
+  - 2+ minutes
+  - useful for: cyclic press body, repeated hard impacts, pump/mechanical rhythm
+  - https://freesound.org/people/mark646/sounds/209219/
+
+- **Schnellläuferpresse 02 — mark646**
+  - CC0
+  - alternate real press recording
+  - useful for: variation, de-recognition and hybrid machine assembly
+  - https://freesound.org/s/209218/
+
+- **Schnellläuferpresse 03 — mark646**
+  - CC0
+  - short real press take
+  - useful for: compact heavy-loop extraction
+  - https://freesound.org/people/mark646/sounds/209217/
+
+## Structural metal / steel groan
+
+- **Metallic Groan — hinchinbrook**
+  - CC0
+  - low heavy steel/iron groan from bunker door
+  - useful for: frame stress, structural flex, slow colossal movement
+  - https://freesound.org/people/hinchinbrook/sounds/496836/
+
+Important:
+Do not use this literally as "door".
+Extract/stretch/reshape small sections as structural stress events.
+
+## Factory hall / machine-space character
+
+- **Factory_Ambience.wav — Mortifreshman**
+  - CC0
+  - 48 kHz
+  - distant machine activity in a factory hall
+  - useful for: low-level SPACE character / machine-hall bed
+  - https://freesound.org/people/Mortifreshman/sounds/368825/
+
+- **Large Warehouse/Factory Ambience.wav — fimrod**
+  - CC0
+  - 48 kHz / 24-bit / stereo
+  - explicitly intended as large factory environment and perfect loop
+  - useful for: SPACE / warehouse machine-hall character
+  - https://freesound.org/people/fimrod/sounds/278987/
+
+- **Factory Ambience — JWS24**
+  - CC0
+  - recorded in a very large factory
+  - foreground and distant machine activity
+  - useful for: large-room realism and depth
+  - https://freesound.org/people/JWS24/sounds/790753/
+
+- **Industrial factory working 03 — dersinnsspace**
+  - CC0
+  - large hall with natural reverb and hard industrial sounds
+  - useful for: machine-hall impulse/space reference and rare industrial events
+  - https://freesound.org/people/dersinnsspace/sounds/439401/
+
+- **Factory Atmosphere — RICHERlandTV**
+  - CC0
+  - metallic clanging factory atmosphere
+  - useful for: rare background clangs / distant machine events
+  - https://freesound.org/people/RICHERlandTV/sounds/240134/
+
+- **abandoned warehouse — Kostrava**
+  - CC0
+  - metal squeeze, rumble, large empty industrial environment
+  - useful for: dark hall space, structural metal movement, colossal atmosphere
+  - https://freesound.org/people/Kostrava/sounds/240895/
+
+## Design consequence
+
+For large / colossal machines, add source roles beyond START/RUN/ACTION/LOAD/RELEASE/STOP:
+
+- STRUCTURE
+  - steel groan
+  - frame flex
+  - plate resonance
+
+- PRESSURE
+  - hydraulic movement
+  - valve / air / steam release
+
+- FOUNDATION
+  - low rumble
+  - floor/body vibration
+
+- HALL
+  - large industrial space / natural reflections
+
+- RARE_EVENT
+  - massive impact
+  - clutch engagement
+  - safety valve
+  - distant clang
+  - heavy chain movement
+
+These should remain sparse and state-dependent, not constant layers.
