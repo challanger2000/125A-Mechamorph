@@ -32,6 +32,11 @@ add_executable(mechamorph_control_measurements
 )
 target_link_libraries(mechamorph_control_measurements PRIVATE mechamorph_core)
 
+add_executable(mechamorph_signal_characterize
+    tools/characterize_signals.cpp
+)
+target_link_libraries(mechamorph_signal_characterize PRIVATE mechamorph_core)
+
 option(MECHAMORPH_BUILD_VST3 "Build the VST3 prototype wrapper" OFF)
 
 if(MECHAMORPH_BUILD_VST3)
