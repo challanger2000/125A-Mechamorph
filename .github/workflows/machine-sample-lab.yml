@@ -1,0 +1,90 @@
+name: Machine Sample Lab
+
+on:
+  push:
+    branches: [ "v0.1.0" ]
+    paths:
+      - ".github/workflows/machine-sample-lab.yml"
+  workflow_dispatch:
+
+jobs:
+  render-machine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify tools
+        run: |
+          cmake --version
+          python3 --version
+          ffmpeg -version | head -n 1
+
+      - name: Download CC0 prototype sources
+        run: |
+          mkdir -p machine-lab/raw machine-lab/converted machine-lab/set machine-lab/out
+          curl -L --fail --retry 3 -o machine-lab/raw/heidelberg.mp3 https://bigsoundbank.com/UPLOAD/mp3/3407.mp3
+          curl -L --fail --retry 3 -o machine-lab/raw/projector.mp3 https://bigsoundbank.com/UPLOAD/mp3/0071.mp3
+          curl -L --fail --retry 3 -o machine-lab/raw/switch.mp3 https://bigsoundbank.com/UPLOAD/mp3/0540.mp3
+          curl -L --fail --retry 3 -o machine-lab/raw/calculator.mp3 https://bigsoundbank.com/UPLOAD/mp3/3553.mp3
+
+      - name: Convert to analysis WAV
+        run: |
+          for f in heidelberg projector switch calculator; do
+            ffmpeg -hide_banner -loglevel error -y               -i machine-lab/raw/$f.mp3               -ac 1 -ar 48000 -c:a pcm_s16le               machine-lab/converted/$f.wav
+          done
+
+      - name: Build first machine sample set
+        run: |
+          # START: projector engagement/startup.
+          ffmpeg -hide_banner -loglevel error -y             -ss 0.0 -t 3.2             -i machine-lab/converted/projector.wav             -c:a pcm_s16le machine-lab/set/start__projector.wav
+
+          # RUN: stable middle section of real Heidelberg press.
+          ffmpeg -hide_banner -loglevel error -y             -ss 4.0 -t 6.0             -i machine-lab/converted/heidelberg.wav             -c:a pcm_s16le machine-lab/set/run__heidelberg.wav
+
+          # LOAD: alternate press section. The engine itself also slows RUN under load.
+          ffmpeg -hide_banner -loglevel error -y             -ss 10.0 -t 2.5             -i machine-lab/converted/heidelberg.wav             -c:a pcm_s16le machine-lab/set/load__heidelberg.wav
+
+          # STOP: actual end of projector recording.
+          ffmpeg -hide_banner -loglevel error -y             -sseof -4.5             -i machine-lab/converted/projector.wav             -c:a pcm_s16le machine-lab/set/stop__projector.wav
+
+          # Real mechanical one-shots extracted from two unrelated mechanisms.
+          python3 tools/extract_mechanical_events.py             machine-lab/converted/switch.wav machine-lab/set             --prefix action_switch --max-events 6 --post-ms 180
+
+          python3 tools/extract_mechanical_events.py             machine-lab/converted/calculator.wav machine-lab/set             --prefix action_calc --max-events 8 --post-ms 180
+
+          ls -lh machine-lab/set
+
+      - name: Configure and build machine engine
+        run: |
+          cmake -S . -B build-machine -DMECHAMORPH_BUILD_VST3=OFF -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-machine --target machine_sampler_tests machine_real_render --parallel 2
+
+      - name: Test machine sampler engine
+        run: |
+          ctest --test-dir build-machine -R machine_sampler_tests --output-on-failure
+
+      - name: Render complete machine performance
+        run: |
+          ./build-machine/machine_real_render             machine-lab/set             machine-lab/out/Mechamorph-Machine-Lab-v0.1.wav
+
+          ffmpeg -hide_banner -i machine-lab/out/Mechamorph-Machine-Lab-v0.1.wav             -af astats=metadata=1:reset=0 -f null - 2> machine-lab/out/astats.txt || true
+
+          tail -n 60 machine-lab/out/astats.txt
+
+      - name: Copy provenance
+        run: |
+          cp docs/MACHINE-SAMPLE-PROVENANCE.csv machine-lab/out/
+          cp docs/MACHINE-SAMPLE-LAB.md machine-lab/out/
+
+      - name: Upload machine lab
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mechamorph-Machine-Sample-Lab-v0.1
+          path: |
+            machine-lab/out/
+            machine-lab/set/
+          if-no-files-found: error
+          retention-days: 7
