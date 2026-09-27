@@ -98,3 +98,9 @@ add_executable(machine_sampler_tests
 )
 target_link_libraries(machine_sampler_tests PRIVATE machine_sampler_core)
 add_test(NAME machine_sampler_tests COMMAND machine_sampler_tests)
+
+add_executable(machine_real_render
+    tools/render_machine_set.cpp
+)
+target_link_libraries(machine_real_render PRIVATE machine_sampler_core)
+target_compile_features(machine_real_render PRIVATE cxx_std_17)
