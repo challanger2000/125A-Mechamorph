@@ -12,6 +12,7 @@ These IDs are reserved before VST3 integration so automation/state semantics do 
 | 1005 | kBody | BODY | 0.35 | 0.0 | Shared resonant body contribution |
 | 1006 | kWear | WEAR | 0.20 | 0.0 | Backlash/friction/leak/irregularity macro |
 | 1007 | kOutput | OUTPUT | 0.50 | 0.50 | Output trim; center = unity target |
+| 1008 | kBypass | BYPASS | 0.00 | 0.00 | Host-recognized bypass parameter |
 
 Rules:
 - IDs are not to be renumbered after public release.
