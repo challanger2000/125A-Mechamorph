@@ -17,7 +17,7 @@ using namespace Steinberg::Vst;
 
 namespace MechamorphMachine {
 namespace {
-constexpr int32 kStateVersion = 1;
+constexpr int32 kStateVersion = 2;
 }
 
 Processor::Processor() {
@@ -32,6 +32,7 @@ Processor::Processor() {
     machineParams_.body = 0.0f;
     machineParams_.pressure = 0.0f;
     machineParams_.output = 0.38f;
+    spaceAmount_ = 0.18f;
 }
 
 tresult PLUGIN_API Processor::initialize(FUnknown* context) {
@@ -57,6 +58,7 @@ tresult PLUGIN_API Processor::setupProcessing(ProcessSetup& setup) {
     sampleRate_ = setup.sampleRate > 1.0 ? setup.sampleRate : 48000.0;
     engine_.prepare(sampleRate_);
     engine_.setSampleSet(assets_.profile(machineIndex_));
+    spaceEngine_.prepare(sampleRate_);
     updateEngineParameters();
     return kResultOk;
 }
@@ -68,6 +70,7 @@ tresult PLUGIN_API Processor::setActive(TBool state) {
         activePitch_ = -1;
         engine_.reset();
         engine_.setSampleSet(assets_.profile(machineIndex_));
+        spaceEngine_.reset();
         updateEngineParameters();
     }
     return AudioEffect::setActive(state);
@@ -125,6 +128,9 @@ void Processor::applyParameter(ParamID id, float normalized) noexcept {
         case kScale:
             machineParams_.scale = v;
             break;
+        case kSpace:
+            spaceAmount_ = v;
+            break;
         case kOutput:
             machineParams_.output = v;
             break;
@@ -135,6 +141,15 @@ void Processor::applyParameter(ParamID id, float normalized) noexcept {
 
 void Processor::updateEngineParameters() noexcept {
     engine_.setParameters(machineParams_);
+
+    // BODY stays internal for now and follows physical scale.
+    // Small mechanisms stay compact; colossal machines excite more structure.
+    const float bodyAmount =
+        std::clamp(0.18f + 0.42f * machineParams_.scale, 0.0f, 0.72f);
+
+    spaceEngine_.setBody(bodyAmount);
+    spaceEngine_.setSpace(spaceAmount_);
+    spaceEngine_.setScale(machineParams_.scale);
 }
 
 tresult PLUGIN_API Processor::process(ProcessData& data) {
@@ -189,7 +204,8 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
             case kAction: return 3;
             case kWear: return 4;
             case kScale: return 5;
-            case kOutput: return 6;
+            case kSpace: return 6;
+            case kOutput: return 7;
             default: return -1;
         }
     };
@@ -298,6 +314,7 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
         activePitch_ = -1;
         engine_.reset();
         engine_.setSampleSet(assets_.profile(machineIndex_));
+        spaceEngine_.reset();
         updateEngineParameters();
     }
     transportWasPlaying_ = transportPlaying;
@@ -309,9 +326,14 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
 
         float mono = 0.0f;
         engine_.process(&mono, 1);
-        left[i] = mono;
-        right[i] = mono;
-        peak = std::max(peak, std::fabs(mono));
+
+        float outL = 0.0f;
+        float outR = 0.0f;
+        spaceEngine_.process(mono, outL, outR);
+
+        left[i] = outL;
+        right[i] = outR;
+        peak = std::max(peak, std::max(std::fabs(outL), std::fabs(outR)));
     }
 
     applyParamsAt(data.numSamples);
@@ -326,34 +348,56 @@ tresult PLUGIN_API Processor::setState(IBStream* state) {
 
     IBStreamer s(state, kLittleEndian);
     int32 version = 0;
-    float machine = 0.0f;
-    float speed = 0.0f;
-    float load = 0.0f;
-    float action = 0.0f;
-    float wear = 0.0f;
-    float scale = 0.0f;
-    float output = 0.0f;
-
-    if (!s.readInt32(version) || version != kStateVersion ||
-        !s.readFloat(machine) ||
-        !s.readFloat(speed) ||
-        !s.readFloat(load) ||
-        !s.readFloat(action) ||
-        !s.readFloat(wear) ||
-        !s.readFloat(scale) ||
-        !s.readFloat(output))
+    if (!s.readInt32(version))
         return kResultFalse;
 
-    machineIndex_ = std::clamp(static_cast<int>(std::floor(std::clamp(machine, 0.0f, 1.0f) * 3.0f)), 0, 2);
+    float machine = 0.0f;
+    float speed = 0.32f;
+    float load = 0.20f;
+    float action = 0.48f;
+    float wear = 0.18f;
+    float scale = 0.35f;
+    float space = 0.18f;
+    float output = 0.38f;
+
+    if (version == 1) {
+        if (!s.readFloat(machine) ||
+            !s.readFloat(speed) ||
+            !s.readFloat(load) ||
+            !s.readFloat(action) ||
+            !s.readFloat(wear) ||
+            !s.readFloat(scale) ||
+            !s.readFloat(output))
+            return kResultFalse;
+    } else if (version == kStateVersion) {
+        if (!s.readFloat(machine) ||
+            !s.readFloat(speed) ||
+            !s.readFloat(load) ||
+            !s.readFloat(action) ||
+            !s.readFloat(wear) ||
+            !s.readFloat(scale) ||
+            !s.readFloat(space) ||
+            !s.readFloat(output))
+            return kResultFalse;
+    } else {
+        return kResultFalse;
+    }
+
+    machineIndex_ = std::clamp(
+        static_cast<int>(std::floor(std::clamp(machine, 0.0f, 1.0f) * 3.0f)),
+        0, 2);
+
     machineParams_.speed = std::clamp(speed, 0.0f, 1.0f);
     machineParams_.load = std::clamp(load, 0.0f, 1.0f);
     machineParams_.action = std::clamp(action, 0.0f, 1.0f);
     machineParams_.wear = std::clamp(wear, 0.0f, 1.0f);
     machineParams_.scale = std::clamp(scale, 0.0f, 1.0f);
     machineParams_.clatter = 0.08f + 0.20f * machineParams_.wear;
+    spaceAmount_ = std::clamp(space, 0.0f, 1.0f);
     machineParams_.output = std::clamp(output, 0.0f, 1.0f);
 
     applyMachineProfile(false);
+    updateEngineParameters();
     return kResultOk;
 }
 
@@ -370,6 +414,7 @@ tresult PLUGIN_API Processor::getState(IBStream* state) {
         !s.writeFloat(machineParams_.action) ||
         !s.writeFloat(machineParams_.wear) ||
         !s.writeFloat(machineParams_.scale) ||
+        !s.writeFloat(spaceAmount_) ||
         !s.writeFloat(machineParams_.output))
         return kResultFalse;
 
