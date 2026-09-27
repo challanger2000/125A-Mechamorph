@@ -1,0 +1,98 @@
+name: Render Real CC0 Machine Core
+
+on:
+  push:
+    branches: [ "v0.1.0" ]
+
+jobs:
+  render-real-machine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install research dependencies
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg python3-numpy python3-scipy
+
+      - name: Download verified CC0 sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p research-sources/mp3 research-sources/wav
+
+          declare -A files=(
+            [projector35mm_0071]="0071"
+            [heidelberg_press_3409]="3409"
+            [calculator_printer_3553]="3553"
+            [old_switch_0540]="0540"
+            [slide_projector_0867]="0867"
+            [manual_winch_0902]="0902"
+            [large_ratchet_0795]="0795"
+            [sewing_slow_1115]="1115"
+            [sewing_fast_1116]="1116"
+            [large_spring_0206]="0206"
+            [medium_chain_0619]="0619"
+            [air_burst_0138]="0138"
+            [ratchet_rattle_0923]="0923"
+            [roller_shutter_2469]="2469"
+            [stapler_0009]="0009"
+          )
+
+          for name in "${!files[@]}"; do
+            id="${files[$name]}"
+            curl --fail --location --retry 2 --connect-timeout 20 \
+              "https://bigsoundbank.com/UPLOAD/mp3/$id.mp3" \
+              -o "research-sources/mp3/$name.mp3"
+            ffmpeg -hide_banner -loglevel error -y \
+              -i "research-sources/mp3/$name.mp3" \
+              -ac 1 -ar 48000 -c:a pcm_s16le \
+              "research-sources/wav/$name.wav"
+          done
+
+      - name: Build curated machine sample set
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p machine-set
+          python3 tools/build_machine_sample_set.py \
+            docs/MACHINE-SAMPLE-MANIFEST-01.csv \
+            research-sources/wav machine-set
+          python3 tools/build_machine_sample_set.py \
+            docs/MACHINE-SAMPLE-MANIFEST-02.csv \
+            research-sources/wav machine-set
+          cp docs/MACHINE-SAMPLE-MANIFEST-01.csv machine-set/
+          cp docs/MACHINE-SAMPLE-MANIFEST-02.csv machine-set/
+          ls -lh machine-set
+
+      - name: Build machine core renderer
+        shell: bash
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release --target machine_sampler_tests machine_real_render --parallel 2
+          ctest --test-dir build -R machine_sampler_tests --output-on-failure
+
+      - name: Render actual C++ machine engine
+        shell: bash
+        run: |
+          mkdir -p real-machine-output
+          ./build/machine_real_render \
+            machine-set \
+            real-machine-output/Mechamorph_MachineSamplerCore_CC0_v0.1.wav
+          cp machine-set/machine_sample_set.json real-machine-output/ || true
+          sha256sum real-machine-output/* > real-machine-output/SHA256SUMS.txt
+          ls -lh real-machine-output
+
+      - name: Upload C++ machine render
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mechamorph-MachineSamplerCore-CC0-v0.1
+          path: |
+            real-machine-output/
+            machine-set/
+          if-no-files-found: error
+          retention-days: 7
