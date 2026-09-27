@@ -692,3 +692,141 @@ Build a small curated palette:
 30. thin metal cabinet/plate
 
 This gives enough variety to create a machine that is not recognizably one sampled appliance, while every layer still has authentic mechanical identity.
+
+
+---
+
+# Additional high-value BigSoundBank / Museum of Lost Sounds finds
+
+## 35mm cinema projector family
+
+BigSoundBank has multiple real Kinoton FP30 recordings, often explicitly captured from the front/behind the mechanism and with start/run/stop phases.
+
+Examples:
+- #1 — start / rolling / stop, front of mechanism
+  - https://bigsoundbank.com/35mm-cinema-projector-1-s0065.html
+- #3 — fan + start + lamp + run + shutdown
+  - https://bigsoundbank.com/35mm-cinema-projector-3-s0067.html
+- #5 — ventilation/lamp off, start + run + stop
+  - https://bigsoundbank.com/35mm-cinema-projector-5-s0069.html
+- #7 — mechanism only, start + run + stop
+  - https://bigsoundbank.com/35mm-cinema-projector-7-s0071.html
+- #8 — fan + start + run + stop from behind projector
+  - https://bigsoundbank.com/35mm-cinema-projector-8-s0072.html
+- version with beeps:
+  - https://bigsoundbank.com/35mm-cinema-projector-beeps-s3298.html
+
+License:
+CC0 / public-domain equivalent on each page.
+
+Why extremely useful:
+- start transient
+- steady cyclic transport
+- reel/sprocket rhythm
+- shutdown decay
+- motor + mechanism separation
+- realistic old-machine cadence
+
+Potential Mechamorph use:
+- DRIVE bed
+- START/STOP state transitions
+- sprocket-like indexed motion
+- low continuous transport layer
+
+## Slide projector
+
+Examples:
+- https://bigsoundbank.com/slide-projector-s0867.html
+- https://bigsoundbank.com/slide-projector-2-s2964.html
+- https://bigsoundbank.com/slide-projector-4-s2966.html
+
+License:
+CC0.
+
+Why useful:
+- slide indexing
+- mechanical advance
+- start/stop
+- ventilation + transport
+- compact appliance-scale mechanics
+
+This may yield cleaner "single gesture" machine actions than industrial recordings.
+
+## Old switch
+
+BigSoundBank:
+https://bigsoundbank.com/old-switch-s0540.html
+
+License:
+CC0.
+
+Why useful:
+- authentic old switch body/contact
+- multiple actuation variations
+- small-machine contact vocabulary
+
+## Calculator-printer family
+
+BigSoundBank provides a full family (#1–#6), not just one take.
+
+Representative:
+https://bigsoundbank.com/calculator-printer-1-s3553.html
+
+License:
+CC0.
+
+Why useful:
+- key mechanism
+- indexing
+- roller
+- paper transport
+- carriage/reset feel
+- retro office machine body
+
+Potentially one of the best "small mechanical machine" source families.
+
+---
+
+# Important implementation insight from the sweep
+
+A useful machine palette should contain **state transitions**, not only loops and one-shots.
+
+Required sample roles:
+
+## START
+- motor spin-up
+- first engagement
+- first clunk
+- pressure catch
+- belt/gear engage
+
+## RUN
+- stable mechanism bed
+- speed-dependent loop segments
+- cyclic indexed contacts
+
+## ACTION
+- lever
+- ratchet
+- selector
+- latch
+- cam contact
+- spring return
+
+## LOAD
+- strain
+- slower motion
+- stronger clatter
+- bearing friction
+- pressure response
+
+## RELEASE / STOP
+- deceleration
+- final ratchet
+- spring unwind
+- pressure dump
+- end-stop clunk
+
+Real projectors and printing machines are especially valuable because they naturally contain several of these phases in one coherent real mechanism.
+
+This suggests Mechamorph should eventually support **machine-state sample sets**, not only isolated sample pools.
