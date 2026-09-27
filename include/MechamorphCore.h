@@ -176,7 +176,8 @@ public:
     void process(float* left, float* right, std::size_t frames) noexcept;
 
 private:
-    float processOne(float input) noexcept;
+    void processFrame(float inputL, float inputR, bool stereo,
+                      float& outputL, float& outputR) noexcept;
     static float clamp01(float x) noexcept;
 
     Parameters params_{};
@@ -184,7 +185,8 @@ private:
     DeterministicRng rng_{};
     InputAnalyzer analyzer_{};
     MechanicalDrive drive_{};
-    ModalResonator body_{};
+    ModalResonator bodyL_{};
+    ModalResonator bodyR_{};
     AirEngine air_{};
     FrictionEngine friction_{};
     GearEngine gear_{};
