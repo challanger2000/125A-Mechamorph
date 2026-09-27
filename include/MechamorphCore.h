@@ -132,11 +132,15 @@ private:
 
 class GearEngine {
 public:
+    void prepare(double sampleRate) noexcept;
     void reset() noexcept;
     float process(const Parameters& p, const MechanicalState& state, DeterministicRng& rng) noexcept;
 
 private:
+    double sampleRate_ = 48000.0;
     double previousPhase_ = 0.0;
+    int backlashRemaining_ = 0;
+    float backlashAmplitude_ = 0.0f;
 };
 
 class RatchetEngine {
