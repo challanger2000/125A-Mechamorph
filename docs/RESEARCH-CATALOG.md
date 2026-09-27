@@ -568,3 +568,108 @@ Build a **procedural engine first** and use recordings to:
 Do not build Mechamorph as a sample player disguised as a DSP effect.
 
 The differentiator is the **shared mechanical state and coupling to the incoming audio**.
+
+# Additional high-value CC0 finds — 2026-09-27
+
+## Bellows / airflow
+
+- **bellows.wav — lensson** — real button-accordion bellows creak; WAV 48 kHz/16-bit stereo; CC0
+  - https://freesound.org/people/lensson/sounds/368498/
+- **20180327_Bellows.wav — cabled_mess** — real pair-of-bellows airflow; WAV 96 kHz/24-bit mono; CC0
+  - https://freesound.org/people/cabled_mess/sounds/567083/
+- **BREATHING SQUEEZE ORGAN.wav — fthrll** — children's accordion with no keys pressed; only creaky squeeze-box and airflow; WAV 44.1 kHz/16-bit mono; CC0
+  - https://freesound.org/people/fthrll/sounds/522208/
+- **Accordion drum and other sounds — Finnssound** — straps, register mechanics, quiet buttons, air button and bellows-related sounds; WAV 44.1 kHz/24-bit; CC0
+  - https://freesound.org/people/Finnssound/sounds/646178/
+- **accordion theme — fchemotti** — deliberately imperfect accordion with leaky bellows, clacky keys and tuning problems; WAV 44.1 kHz/16-bit mono; CC0
+  - https://freesound.org/people/fchemotti/sounds/255223/
+
+These are especially valuable for analysing:
+- pump-cycle amplitude
+- leather/bellows creak
+- airflow spectrum
+- leak behaviour
+- clacky mechanical key events
+- how instability and air pressure interact perceptually
+
+## Loose hardware / tiny metal
+
+- **Metal Rattle FX.wav — Santi171** — metal washer rattling down a bolt; WAV 48 kHz/24-bit stereo; CC0
+  - https://freesound.org/people/Santi171/sounds/655961/
+- **COIN PURSE AND LOOSE CHANGE.wav — Alex_hears_things** — the apparent coins are actually screws; WAV 96 kHz/24-bit stereo; CC0
+  - https://freesound.org/people/Alex_hears_things/sounds/376664/
+- **Karabiner_Click_and_screw.wav — Rudmer_Rotteveel** — metal clip/click + screw mechanism; WAV 44.1 kHz/16-bit stereo; CC0
+  - https://freesound.org/people/Rudmer_Rotteveel/sounds/457460/
+
+Potential use:
+- loose-part collision pools
+- tiny hardware modal analysis
+- bolt/washer chatter
+- secondary collision clusters
+
+## Thin sheet metal / chatter / body
+
+- **THIN_METAL_RATTLE_ — studiogreenhill** — long thin-metal rattle; WAV 48 kHz/24-bit stereo; CC0
+  - https://freesound.org/people/studiogreenhill/sounds/852144/
+- **METAL SFX & FOLEY, Metal shake, rattle, thin metal — Alexbuk** — long thin-metal shake/rattle source; WAV 48 kHz/24-bit mono; CC0
+  - https://freesound.org/people/Alexbuk/sounds/391753/
+- **Soft Sheet Metal Impacts — rosshutton** — old radiator sheet-metal taps; WAV 44.1 kHz/16-bit; CC0
+  - https://freesound.org/people/rosshutton/sounds/806647/
+- **metal, creaking, sheet metal, noise — DreamArtSoundDesigners** — 96 kHz/32-bit stereo metal creak; CC0
+  - https://freesound.org/people/DreamArtSoundDesigners/sounds/695786/
+- **thin metal plate against wood, stone and metal.flac — qubodup** — cross-material collision set; FLAC 44.1 kHz/24-bit stereo; CC0
+  - https://freesound.org/people/qubodup/sounds/145122/
+- **Sheet metal knocking.WAV — cribbler** — hollow thin-metal knocks; WAV 48 kHz/24-bit stereo; CC0
+  - https://freesound.org/people/cribbler/sounds/370882/
+- **metal sheet thin drop on pile1.flac — kyles** — thin-sheet pile/drop behaviour; FLAC 48 kHz/16-bit stereo; CC0
+  - https://freesound.org/people/kyles/sounds/453350/
+
+Potential use:
+- thin-panel modal calibration
+- chatter/rattle density models
+- sheet body resonance
+- inharmonic decay analysis
+
+## Bearing / rotary fault / friction
+
+- **Spin Cycle.wav — Leafs67** — washing machine with squeaky bearing during spin; WAV 44.1 kHz/16-bit stereo; CC0
+  - https://freesound.org/people/Leafs67/sounds/379347/
+
+This is useful less as a literal layer and more as a research target for:
+- rotationally periodic squeal
+- bearing fault cadence
+- speed-linked friction modulation
+- sideband-like mechanical coloration
+
+## Crank / toy mechanism
+
+- **Toy Crank — loganzsound** — multiple ticks from a toy crank; WAV 44.1 kHz/16-bit stereo; CC0
+  - https://freesound.org/people/loganzsound/sounds/774641/
+- **Wind-up sound — Breviceps** — compact winding/crank event; WAV 44.1 kHz/16-bit stereo; CC0
+  - https://freesound.org/people/Breviceps/sounds/445966/
+
+## Broader CC0 pools
+
+- **100 CC0 metal and wood SFX — OpenGameArt / rubberduck**
+  - 100 sounds covering metal doors, hammers, keys, locks, sheets, springs, tools, wood breaking, hits and squeaks
+  - https://opengameart.org/content/100-cc0-metal-and-wood-sfx
+- **RPG Foley — Warsong**
+  - CC0 collection including chains, small metal, clanking, latches, metal-on-metal slides and tumbling wood
+  - https://warsong.pages.dev/sounds/rpg/
+- **Chain winch sounds — OpenGameArt / bart**
+  - CC0
+  - https://opengameart.org/content/chain-winch-sounds
+
+## Architectural conclusion from this pass
+
+At this point there is enough legitimate CC0 source material to avoid buying a commercial mechanical Foley library for the first prototypes.
+
+The strongest approach remains:
+
+1. analyze these recordings
+2. derive procedural/measured targets
+3. synthesize the recurring primitives algorithmically
+4. retain only selected CC0/original micro-textures for difficult organic details
+5. route both generated mechanism and input audio through shared bodies/state
+
+This should produce more variation and a stronger Mechamorph identity than shipping a large static sample bank.
