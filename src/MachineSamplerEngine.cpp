@@ -211,6 +211,11 @@ void Engine::start() noexcept {
     if (state_ != State::Stopped)
         return;
 
+    // A new start interrupts any residual stop/release tail from the previous
+    // cycle. This prevents stale machine tails from overlapping a fresh start.
+    for (auto& v : voices_) v.reset();
+    for (auto& e : pending_) e = {};
+
     state_ = State::Starting;
     // START is itself a mechanical event and must not be hidden by a fade-in.
     activity_ = 1.0f;
@@ -316,12 +321,17 @@ void Engine::updateMachineState() noexcept {
     if (state_ == State::Stopping) {
         if (stopCountdown_ > 0)
             --stopCountdown_;
-        if (stopCountdown_ <= 0 &&
-            activity_ <= 0.0f &&
-            !hasActiveRole(Role::Stop)) {
+        if (stopCountdown_ <= 0 && activity_ <= 0.0f) {
+            // Drive is now stopped. Keep STOP / RELEASE one-shots alive as a
+            // natural acoustic tail, but remove continuous machine beds.
             state_ = State::Stopped;
             runLoopSpawned_ = false;
-            for (auto& v : voices_) v.reset();
+            for (auto& v : voices_) {
+                if (v.active() &&
+                    (v.role() == Role::Run || v.role() == Role::Load)) {
+                    v.reset();
+                }
+            }
             for (auto& e : pending_) e = {};
         }
     }
