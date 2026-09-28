@@ -11,6 +11,7 @@ ROLE_MAP = {
     "load": 3,
     "release": 4,
     "stop": 5,
+    "friction": 6,
 }
 
 def profile_mask(name: str, role: str) -> int:
@@ -67,7 +68,7 @@ def main():
                 counts[role] += 1
         summary = " ".join(
             f"{name.upper()}={counts[ROLE_MAP[name]]}"
-            for name in ("start","run","action","load","release","stop")
+            for name in ("start","run","action","load","release","stop","friction")
         )
         print(profile_name.upper(), summary)
         for role_id, role_name in required_roles.items():
