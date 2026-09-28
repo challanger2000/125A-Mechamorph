@@ -2,7 +2,7 @@
 <vstgui-ui-description version="1">
   <colors><color name="Background" rgba="#090A0BFF"/></colors>
   <bitmaps>
-    <bitmap name="mech-faceplate" path="mechamorph-faceplate.png"/>
+    <bitmap name="mech-faceplate" path="mechamorph-faceplate-runtime.png"/>
     <bitmap name="mech-knob-machine" path="mechamorph-controls/knob-machine-64.png" multiframe-num-frames="64" multiframe-size="250,250" mulitframe-frames-per-row="1"/>
     <bitmap name="mech-knob-main" path="mechamorph-controls/knob-main-64.png" multiframe-num-frames="64" multiframe-size="125,125" mulitframe-frames-per-row="1"/>
     <bitmap name="mech-knob-scale" path="mechamorph-controls/knob-scale-64.png" multiframe-num-frames="64" multiframe-size="220,220" mulitframe-frames-per-row="1"/>

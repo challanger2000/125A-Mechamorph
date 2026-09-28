@@ -261,7 +261,7 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
     target_compile_features(mechamorph_process_contract_probe PRIVATE cxx_std_17)
     smtg_target_add_plugin_resources(MechamorphMachine RESOURCES
         "resource/mechamorph.uidesc"
-        "resource/mechamorph-faceplate.png"
+        "resource/mechamorph-faceplate-runtime.png"
     )
     smtg_target_add_plugin_resources(MechamorphMachine
         OUTPUT_SUBDIRECTORY "mechamorph-controls"

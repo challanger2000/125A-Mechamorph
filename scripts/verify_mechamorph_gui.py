@@ -28,7 +28,7 @@ bitmaps_node=root.find("bitmaps")
 assert bitmaps_node is not None,"UIDESC bitmaps section missing"
 bitmap_nodes={b.attrib["name"]:b for b in bitmaps_node.findall("bitmap")}
 expected={
-    "mech-faceplate":"mechamorph-faceplate.png",
+    "mech-faceplate":"mechamorph-faceplate-runtime.png",
     "mech-knob-machine":"mechamorph-controls/knob-machine-64.png",
     "mech-knob-main":"mechamorph-controls/knob-main-64.png",
     "mech-knob-scale":"mechamorph-controls/knob-scale-64.png",
@@ -55,8 +55,8 @@ def png_size(path):
     return struct.unpack(">II",data[16:24])
 
 asset_sizes={
-    ROOT/"resource/mechamorph-faceplate.png":(1440,960),
-    ROOT/"resource/mechamorph-controls/knob-master-64.png":(125,8000),
+    ROOT/"resource/mechamorph-faceplate-runtime.png":(1440,960),
+    ROOT/"resource/mechamorph-controls/mechamorph-knob-grip-64.png":(125,8000),
     ROOT/"resource/mechamorph-controls/knob-machine-64.png":(250,16000),
     ROOT/"resource/mechamorph-controls/knob-main-64.png":(125,8000),
     ROOT/"resource/mechamorph-controls/knob-scale-64.png":(220,14080),
@@ -65,6 +65,12 @@ asset_sizes={
 for path,size in asset_sizes.items():
     assert path.exists(),f"missing asset {path}"
     assert png_size(path)==size,(path,png_size(path),size)
+
+source_faceplate=ROOT/"resource/mechamorph-faceplate-v2.png"
+assert source_faceplate.exists(),f"missing source faceplate {source_faceplate}"
+fw,fh=png_size(source_faceplate)
+assert fw*2==fh*3,("faceplate source must be 3:2",fw,fh)
+assert fw>=1440 and fh>=960,("faceplate source too small",fw,fh)
 
 tpl=root.find("template")
 assert tpl is not None

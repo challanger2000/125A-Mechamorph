@@ -242,10 +242,10 @@ void GuiScale::draw(VSTGUI::CDrawContext* c){
 }
 VSTGUI::CMouseEventResult GuiScale::onMouseDown(VSTGUI::CPoint& where,const VSTGUI::CButtonState& buttons){
     if(!editor_||!buttons.isLeftButton()||!getViewSize().pointInside(where))return VSTGUI::kMouseEventNotHandled;
-    constexpr double f[]={1.0,1.25,1.5,2.0};
+    constexpr double f[]={0.9,1.0,1.1};
     const double z=editor_->getZoomFactor(); size_t best=0; double d=std::abs(z-f[0]);
-    for(size_t i=1;i<4;++i){const double q=std::abs(z-f[i]); if(q<d){d=q;best=i;}}
-    editor_->setZoomFactor(f[(best+1)%4]); invalid();
+    for(size_t i=1;i<3;++i){const double q=std::abs(z-f[i]); if(q<d){d=q;best=i;}}
+    editor_->setZoomFactor(f[(best+1)%3]); invalid();
     return VSTGUI::kMouseDownEventHandledButDontNeedMovedOrUpEvents;
 }
 

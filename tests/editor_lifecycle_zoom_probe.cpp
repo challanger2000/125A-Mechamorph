@@ -286,9 +286,9 @@ int run(const std::string& path) {
             trace("cycle "+std::to_string(cycle+1)+" locating VSTGUI child");
             HWND vstguiChild=findVstguiChild(hwnd);
             if(!vstguiChild) return fail(20,"VSTGUI child HWND not found");
-            const double zoomBefore[]={1.0,1.25,1.5,2.0};
-            const double zoomAfter []={1.25,1.5,2.0,1.0};
-            for(int zi=0;zi<4;++zi) {
+            const double zoomBefore[]={1.0,1.1,0.9};
+            const double zoomAfter []={1.1,0.9,1.0};
+            for(int zi=0;zi<3;++zi) {
                 trace("cycle "+std::to_string(cycle+1)+" UI zoom click "
                       +std::to_string(zoomBefore[zi])+" -> "+std::to_string(zoomAfter[zi]));
                 if(!clickUiScale(vstguiChild,zoomBefore[zi])) return fail(21,"UI scale click failed");
@@ -355,7 +355,7 @@ int run(const std::string& path) {
     }
 
     if(editors==0) return fail(18,"no editor instances exercised");
-    std::cout<<"Mechamorph editor lifecycle + DPI multires + actual UI zoom 100/125/150/200% PASS ("<<editors<<" editor cycles)\n";
+    std::cout<<"Mechamorph editor lifecycle + DPI multires + actual UI zoom 90/100/110% PASS ("<<editors<<" editor cycles)\n";
     return 0;
 }
 }
