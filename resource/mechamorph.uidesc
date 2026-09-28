@@ -3,11 +3,11 @@
   <colors><color name="Background" rgba="#090A0BFF"/></colors>
   <bitmaps>
     <bitmap name="mech-machine" path="mechamorph-controls/machine.png" multiframe-num-frames="6" multiframe-size="250,250" mulitframe-frames-per-row="1"/>
-    <bitmap name="mech-machine#1.25x" path="mechamorph-controls/machine#1.25x.png"/>
+    <bitmap name="mech-machine#1.252x" path="mechamorph-controls/machine#1.252x.png"/>
     <bitmap name="mech-machine#1.5x" path="mechamorph-controls/machine#1.5x.png"/>
     <bitmap name="mech-machine#2x" path="mechamorph-controls/machine#2x.png"/>
     <bitmap name="mech-main" path="mechamorph-controls/main.png" multiframe-num-frames="96" multiframe-size="170,170" mulitframe-frames-per-row="1"/>
-    <bitmap name="mech-main#1.25x" path="mechamorph-controls/main#1.25x.png"/>
+    <bitmap name="mech-main#1.2529411764705882x" path="mechamorph-controls/main#1.2529411764705882x.png"/>
     <bitmap name="mech-main#1.5x" path="mechamorph-controls/main#1.5x.png"/>
     <bitmap name="mech-main#2x" path="mechamorph-controls/main#2x.png"/>
     <bitmap name="mech-scale" path="mechamorph-controls/scale.png" multiframe-num-frames="72" multiframe-size="220,220" mulitframe-frames-per-row="1"/>
