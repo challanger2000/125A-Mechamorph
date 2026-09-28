@@ -3,6 +3,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import struct
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
@@ -22,6 +23,49 @@ actual=ui_path.read_text(encoding="utf-8")
 assert actual==generated,"mechamorph.uidesc is stale; regenerate from mechamorph.layout.json"
 
 root=ET.fromstring(generated)
+
+bitmap_specs={
+    "mech-machine":("machine",250,6,[("1.25",313),("1.5",375),("2",500)]),
+    "mech-main":("main",170,96,[("1.25",213),("1.5",255),("2",340)]),
+    "mech-scale":("scale",220,72,[("1.25",275),("1.5",330),("2",440)]),
+    "mech-utility":("utility",104,128,[("1.25",130),("1.5",156),("2",208)]),
+}
+bitmaps_node=root.find("bitmaps")
+assert bitmaps_node is not None,"UIDESC bitmaps section missing"
+bitmap_nodes={b.attrib["name"]:b for b in bitmaps_node.findall("bitmap")}
+expected_names=set()
+asset_root=ROOT/"resource/mechamorph-controls"
+
+def png_size(path):
+    data=path.read_bytes()[:24]
+    assert data[:8]==b"\x89PNG\r\n\x1a\n",f"bad PNG signature: {path}"
+    return struct.unpack(">II",data[16:24])
+
+for base_name,(stem,size,frames,scaled) in bitmap_specs.items():
+    expected_names.add(base_name)
+    b=bitmap_nodes.get(base_name)
+    assert b is not None,f"missing base bitmap {base_name}"
+    assert b.attrib.get("path")==f"mechamorph-controls/{stem}.png"
+    assert int(b.attrib.get("multiframe-num-frames","0"))==frames
+    assert b.attrib.get("multiframe-size")==f"{size},{size}"
+    assert b.attrib.get("mulitframe-frames-per-row")=="1"
+    path=asset_root/f"{stem}.png"
+    assert path.exists(),f"missing asset {path}"
+    assert png_size(path)==(size,size*frames),(path,png_size(path),(size,size*frames))
+    for factor,width in scaled:
+        name=f"{base_name}#{factor}x"
+        expected_names.add(name)
+        sb=bitmap_nodes.get(name)
+        assert sb is not None,f"missing scaled bitmap {name}"
+        expected_path=f"mechamorph-controls/{stem}#{factor}x.png"
+        assert sb.attrib.get("path")==expected_path,(name,sb.attrib.get("path"),expected_path)
+        path=asset_root/f"{stem}#{factor}x.png"
+        assert path.exists(),f"missing scaled asset {path}"
+        assert png_size(path)==(width,width*frames),(path,png_size(path),(width,width*frames))
+
+assert set(bitmap_nodes)==expected_names,("unexpected bitmap nodes",set(bitmap_nodes)-expected_names)
+assert len(list(asset_root.glob("*.png")))==16,"expected exactly 16 control PNGs"
+
 tpl=root.find("template")
 assert tpl is not None
 assert tpl.attrib.get("size")=="1440,900"
@@ -62,4 +106,4 @@ for knob,label in [("Speed","SpeedLabel"),("Load","LoadLabel"),("Action","Action
     kx,ky,kw,kh=box(knob); lx,ly,lw,lh=box(label)
     assert abs((kx+kw/2)-(lx+lw/2))<=1,(knob,label,"label not centered")
 
-print("Mechamorph GUI geometry contract PASS")
+print("Mechamorph GUI geometry + multires asset contract PASS")
