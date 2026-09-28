@@ -373,6 +373,36 @@ void Engine::updateMachineState() noexcept {
         }
     }
 
+    const bool revolutionWrapped = phase_ < previousPhase_;
+
+    // Once per revolution at most, a stressed/worn mechanism may briefly hang.
+    // This is independent from ACTION: a drive can jam even when few contact
+    // events are being generated.
+    if (revolutionWrapped &&
+        state_ != State::Stopping &&
+        state_ != State::Stopped &&
+        stallCountdown_ <= 0 &&
+        stallCooldown_ <= 0) {
+
+        const float stress =
+            std::max(0.0f, wear - 0.55f) *
+            std::max(0.0f, continuousLoad - 0.30f);
+        const float stallProbability =
+            std::min(0.085f, 0.55f * stress * stress);
+
+        if (stallProbability > 0.0f &&
+            rng_.uniform01() < stallProbability) {
+            const float holdSeconds =
+                0.06f +
+                0.30f * scale +
+                0.26f * wear;
+            stallCountdown_ =
+                static_cast<int>(holdSeconds * sampleRate_);
+            stallCooldown_ =
+                static_cast<int>((2.0f + 5.0f * (1.0f - wear)) * sampleRate_);
+        }
+    }
+
     const float actionAmount = clamp01(params_.action);
     if (actionAmount > 0.0f &&
         state_ != State::Stopping &&
@@ -386,32 +416,7 @@ void Engine::updateMachineState() noexcept {
         const int previousSector = static_cast<int>(previousPhase_ / sector);
         const int currentSector = static_cast<int>(phase_ / sector);
 
-        const bool wrapped = phase_ < previousPhase_;
-
-        // Once per revolution at most, a stressed/worn mechanism may briefly
-        // hang. At normal settings this is effectively absent; in the creative
-        // range it becomes an occasional believable machine fault.
-        if (wrapped && stallCountdown_ <= 0 && stallCooldown_ <= 0) {
-            const float stress =
-                std::max(0.0f, wear - 0.55f) *
-                std::max(0.0f, continuousLoad - 0.30f);
-            const float stallProbability =
-                std::min(0.085f, 0.55f * stress * stress);
-
-            if (stallProbability > 0.0f &&
-                rng_.uniform01() < stallProbability) {
-                const float holdSeconds =
-                    0.06f +
-                    0.30f * scale +
-                    0.26f * wear;
-                stallCountdown_ =
-                    static_cast<int>(holdSeconds * sampleRate_);
-                stallCooldown_ =
-                    static_cast<int>((2.0f + 5.0f * (1.0f - wear)) * sampleRate_);
-            }
-        }
-
-        if (wrapped || currentSector != previousSector) {
+        if (revolutionWrapped || currentSector != previousSector) {
             const float loadAmount = clamp01(params_.load);
 
             // Worn linkages do not hit every contact with identical force.
