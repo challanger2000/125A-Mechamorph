@@ -226,7 +226,7 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
         "${vst3sdk_machine_SOURCE_DIR}/public.sdk/source/vst/hosting/module_win32.cpp"
     )
     target_link_libraries(mechamorph_editor_lifecycle_probe PRIVATE
-        sdk_hosting sdk_common base pluginterfaces user32 ole32
+        sdk_hosting sdk_common base pluginterfaces user32 ole32 gdi32 windowscodecs
     )
     target_compile_definitions(mechamorph_editor_lifecycle_probe PRIVATE
         _CRT_SECURE_NO_WARNINGS NOMINMAX UNICODE _UNICODE

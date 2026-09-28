@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <wincodec.h>
 
 #include "base/source/fobject.h"
 #include "pluginterfaces/gui/iplugview.h"
@@ -47,6 +48,79 @@ bool ensureWindowClass() {
     return RegisterClassExW(&wc)!=0 || GetLastError()==ERROR_CLASS_ALREADY_EXISTS;
 }
 
+bool saveWindowClientPng(HWND hwnd, const std::wstring& path) {
+    if(!hwnd || path.empty()) return false;
+    RECT rc{};
+    if(!GetClientRect(hwnd,&rc)) return false;
+    const int width=rc.right-rc.left;
+    const int height=rc.bottom-rc.top;
+    if(width<=0 || height<=0) return false;
+
+    HDC src=GetDC(hwnd);
+    if(!src) return false;
+    HDC mem=CreateCompatibleDC(src);
+    HBITMAP bitmap=mem ? CreateCompatibleBitmap(src,width,height) : nullptr;
+    if(!mem || !bitmap) {
+        if(bitmap) DeleteObject(bitmap);
+        if(mem) DeleteDC(mem);
+        ReleaseDC(hwnd,src);
+        return false;
+    }
+    HGDIOBJ old=SelectObject(mem,bitmap);
+    BOOL rendered=PrintWindow(hwnd,mem,PW_CLIENTONLY);
+    if(!rendered)
+        rendered=BitBlt(mem,0,0,width,height,src,0,0,SRCCOPY|CAPTUREBLT);
+
+    BITMAPINFO info{};
+    info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);
+    info.bmiHeader.biWidth=width;
+    info.bmiHeader.biHeight=-height;
+    info.bmiHeader.biPlanes=1;
+    info.bmiHeader.biBitCount=32;
+    info.bmiHeader.biCompression=BI_RGB;
+    std::vector<BYTE> pixels(static_cast<size_t>(width)*static_cast<size_t>(height)*4u);
+    const int rows=rendered ? GetDIBits(mem,bitmap,0,static_cast<UINT>(height),pixels.data(),&info,DIB_RGB_COLORS) : 0;
+
+    SelectObject(mem,old);
+    DeleteObject(bitmap);
+    DeleteDC(mem);
+    ReleaseDC(hwnd,src);
+    if(rows!=height) return false;
+
+    IWICImagingFactory* factory=nullptr;
+    IWICStream* stream=nullptr;
+    IWICBitmapEncoder* encoder=nullptr;
+    IWICBitmapFrameEncode* frame=nullptr;
+    IPropertyBag2* props=nullptr;
+    HRESULT hr=CoCreateInstance(CLSID_WICImagingFactory,nullptr,CLSCTX_INPROC_SERVER,IID_PPV_ARGS(&factory));
+    if(SUCCEEDED(hr)) hr=factory->CreateStream(&stream);
+    if(SUCCEEDED(hr)) hr=stream->InitializeFromFilename(path.c_str(),GENERIC_WRITE);
+    if(SUCCEEDED(hr)) hr=factory->CreateEncoder(GUID_ContainerFormatPng,nullptr,&encoder);
+    if(SUCCEEDED(hr)) hr=encoder->Initialize(stream,WICBitmapEncoderNoCache);
+    if(SUCCEEDED(hr)) hr=encoder->CreateNewFrame(&frame,&props);
+    if(SUCCEEDED(hr)) hr=frame->Initialize(props);
+    if(SUCCEEDED(hr)) hr=frame->SetSize(static_cast<UINT>(width),static_cast<UINT>(height));
+    WICPixelFormatGUID format=GUID_WICPixelFormat32bppBGRA;
+    if(SUCCEEDED(hr)) hr=frame->SetPixelFormat(&format);
+    if(SUCCEEDED(hr) && format!=GUID_WICPixelFormat32bppBGRA) hr=E_FAIL;
+    if(SUCCEEDED(hr)) hr=frame->WritePixels(static_cast<UINT>(height),static_cast<UINT>(width*4),static_cast<UINT>(pixels.size()),pixels.data());
+    if(SUCCEEDED(hr)) hr=frame->Commit();
+    if(SUCCEEDED(hr)) hr=encoder->Commit();
+
+    if(props) props->Release();
+    if(frame) frame->Release();
+    if(encoder) encoder->Release();
+    if(stream) stream->Release();
+    if(factory) factory->Release();
+    return SUCCEEDED(hr);
+}
+
+std::wstring screenshotPathFromEnvironment() {
+    wchar_t buffer[32768]{};
+    const DWORD length=GetEnvironmentVariableW(L"MECHAMORPH_EDITOR_SCREENSHOT",buffer,static_cast<DWORD>(std::size(buffer)));
+    if(length==0 || length>=std::size(buffer)) return {};
+    return std::wstring(buffer,length);
+}
 void pump(DWORD ms) {
     const ULONGLONG end=GetTickCount64()+ms;
     MSG msg{};
@@ -249,6 +323,18 @@ int run(const std::string& path) {
             ShowWindow(hwnd,SW_SHOWNA);
             UpdateWindow(hwnd);
             pump(80);
+
+            if(cycle==0) {
+                const auto screenshotPath=screenshotPathFromEnvironment();
+                if(!screenshotPath.empty()) {
+                    HWND vstguiCapture=findVstguiChild(hwnd);
+                    if(!vstguiCapture) return fail(30,"VSTGUI child HWND not found for screenshot");
+                    trace("cycle 1 capturing rendered editor screenshot");
+                    if(!saveWindowClientPng(vstguiCapture,screenshotPath))
+                        return fail(31,"rendered editor screenshot capture failed");
+                    trace("cycle 1 screenshot captured");
+                }
+            }
 
             IPlugViewContentScaleSupport* scale{};
             if(view->queryInterface(IPlugViewContentScaleSupport::iid,reinterpret_cast<void**>(&scale))!=kResultTrue || !scale) {
