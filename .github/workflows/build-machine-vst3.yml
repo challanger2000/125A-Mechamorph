@@ -2,6 +2,9 @@ name: Build Machine Instrument VST3
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - v0.1.0
 
 jobs:
   prepare-samples:
