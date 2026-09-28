@@ -119,6 +119,8 @@ public:
     State state() const noexcept { return state_; }
     double phase() const noexcept { return phase_; }
     bool stalled() const noexcept { return stallCountdown_ > 0; }
+    std::uint64_t stallEventCount() const noexcept { return stallEvents_; }
+    std::uint64_t frictionEventCount() const noexcept { return frictionEvents_; }
 
 private:
     struct PendingEvent {
@@ -164,6 +166,8 @@ private:
     int stopCountdown_ = 0;
     int stallCountdown_ = 0;
     int stallCooldown_ = 0;
+    std::uint64_t stallEvents_ = 0;
+    std::uint64_t frictionEvents_ = 0;
 };
 
 } // namespace mechamorph::machine
