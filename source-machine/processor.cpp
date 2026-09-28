@@ -317,9 +317,9 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
             updateEngineParameters();
     };
 
-    // DAW transport owns the global stop condition. This keeps short MIDI
-    // trigger notes independent from machine lifetime, while transport stop
-    // reliably silences/reset the machine.
+    // DAW transport stop is an additional global reset condition.
+    // Normal note lifetime is handled by the intentional monophonic
+    // retrigger gate above; transport stop must still silence/reset safely.
     bool transportPlaying = transportWasPlaying_;
     if (data.processContext &&
         (data.processContext->state & ProcessContext::kPlaying) != 0) {
