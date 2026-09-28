@@ -53,6 +53,16 @@ tresult PLUGIN_API Controller::initialize(FUnknown* context) {
     output->setPrecision(1);
     parameters.addParameter(output);
 
+    parameters.addParameter(new RangeParameter(
+        STR16("Pressure Status"), kPressureStatus, nullptr,
+        0.0, 1.0, 0.0, 1, ParameterInfo::kIsReadOnly));
+    parameters.addParameter(new RangeParameter(
+        STR16("Friction Status"), kFrictionStatus, nullptr,
+        0.0, 1.0, 0.0, 1, ParameterInfo::kIsReadOnly));
+    parameters.addParameter(new RangeParameter(
+        STR16("Stall Status"), kStallStatus, nullptr,
+        0.0, 1.0, 0.0, 1, ParameterInfo::kIsReadOnly));
+
     return kResultOk;
 }
 
@@ -168,9 +178,9 @@ VSTGUI::CView* Controller::createCustomView(VSTGUI::UTF8StringPtr name,
     if(auto* v=knob("Space",kSpace,GuiKnob::Style::Utility,"mech-utility",0.18f)) return v;
     if(auto* v=knob("Output",kOutput,GuiKnob::Style::Utility,"mech-utility",0.38f)) return v;
 
-    if(std::strcmp(name,"PressureLamp")==0) return new GuiStatusLamp(r,GuiStatusLamp::Kind::Pressure);
-    if(std::strcmp(name,"FrictionLamp")==0) return new GuiStatusLamp(r,GuiStatusLamp::Kind::Friction);
-    if(std::strcmp(name,"StallLamp")==0) return new GuiStatusLamp(r,GuiStatusLamp::Kind::Stall);
+    if(std::strcmp(name,"PressureLamp")==0) return new GuiStatusLamp(r,editor,kPressureStatus,GuiStatusLamp::Kind::Pressure);
+    if(std::strcmp(name,"FrictionLamp")==0) return new GuiStatusLamp(r,editor,kFrictionStatus,GuiStatusLamp::Kind::Friction);
+    if(std::strcmp(name,"StallLamp")==0) return new GuiStatusLamp(r,editor,kStallStatus,GuiStatusLamp::Kind::Stall);
 
     if(auto* v=label("BrandTitle","MECHAMORPH",28.0)) return v;
     if(auto* v=label("BrandSubtitle","MECHANICAL INSTRUMENT",11.0,true)) return v;
