@@ -17,7 +17,7 @@ def profile_mask(name: str, role: str) -> int:
     n = name.lower()
     profiles = {
         "tiny": 1 << 0,
-        "clockwork": 1 << 1,
+        "intricate": 1 << 1,
         "heavy": 1 << 2,
         "colossal": 1 << 3,
         "pneumatic": 1 << 4,
@@ -56,7 +56,7 @@ def main():
     if not rows:
         raise SystemExit("no eligible machine samples")
 
-    profile_names = ("tiny","clockwork","heavy","colossal","pneumatic","broken")
+    profile_names = ("tiny","intricate","heavy","colossal","pneumatic","broken")
     required_roles = {0:"START",1:"RUN",2:"ACTION",5:"STOP"}
     print("PROFILE POOL MATRIX")
     for profile_index, profile_name in enumerate(profile_names):
