@@ -215,13 +215,23 @@ int run(const std::string& path) {
                 }
                 pump(50);
                 int w=0,h=0;
-                if(!validRect(view,w,h) || w!=baseW || h!=baseH) {
-                    std::cerr<<"logical editor size changed at content scale "<<factor<<": "<<w<<"x"<<h<<"\n";
+                const int expectedW=static_cast<int>(std::lround(baseW*factor));
+                const int expectedH=static_cast<int>(std::lround(baseH*factor));
+                if(!validRect(view,w,h) || w!=expectedW || h!=expectedH) {
+                    std::cerr<<"content scale "<<factor<<" produced "<<w<<"x"<<h
+                             <<"; expected "<<expectedW<<"x"<<expectedH<<"\n";
                     return 14;
                 }
             }
             if(scale->setContentScaleFactor(1.0f)!=kResultTrue) return 19;
             pump(40);
+            {
+                int w=0,h=0;
+                if(!validRect(view,w,h) || w!=baseW || h!=baseH) {
+                    std::cerr<<"content scale reset did not restore base size: "<<w<<"x"<<h<<"\n";
+                    return 23;
+                }
+            }
             scale->release();
 
             // Exercise the actual in-GUI UI-scale button, not merely host DPI/content scale.
