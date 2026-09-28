@@ -12,7 +12,7 @@ using namespace Steinberg::Vst;
 
 namespace MechamorphMachine {
 namespace {
-constexpr int32 kStateVersion = 3;
+constexpr int32 kStateVersion = 4;
 }
 
 tresult PLUGIN_API Controller::initialize(FUnknown* context) {
@@ -83,7 +83,7 @@ tresult PLUGIN_API Controller::setComponentState(IBStream* state) {
             !s.readFloat(space) ||
             !s.readFloat(output))
             return kResultFalse;
-    } else if (version == kStateVersion) {
+    } else if (version == 3 || version == kStateVersion) {
         if (!s.readFloat(machine) ||
             !s.readFloat(speed) ||
             !s.readFloat(load) ||
@@ -98,7 +98,17 @@ tresult PLUGIN_API Controller::setComponentState(IBStream* state) {
         return kResultFalse;
     }
 
-    setParamNormalized(kMachine, std::clamp<double>(machine,0.0,1.0));
+    if (version <= 3) {
+        const int legacyIndex = std::clamp(
+            static_cast<int>(std::lround(std::clamp<double>(machine,0.0,1.0) * 2.0)),
+            0, 2);
+        static constexpr int kLegacyToCurrent[3] = {0, 1, 2};
+        setParamNormalized(
+            kMachine,
+            static_cast<double>(kLegacyToCurrent[legacyIndex]) / 5.0);
+    } else {
+        setParamNormalized(kMachine, std::clamp<double>(machine,0.0,1.0));
+    }
     setParamNormalized(kSpeed, std::clamp<double>(speed,0.0,1.0));
     setParamNormalized(kLoad, std::clamp<double>(load,0.0,1.0));
     setParamNormalized(kAction, std::clamp<double>(action,0.0,1.0));
