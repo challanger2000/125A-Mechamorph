@@ -172,15 +172,19 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
 
     bool bakedIndicator=false;
     if(auto* bitmap=getDrawBackground()){
-        if(style_==Style::Main){
-            if(auto* mfb=dynamic_cast<VSTGUI::CMultiFrameBitmap*>(bitmap)){
-                const auto frame=mfb->normalizedValueToFrameIndex((float)v);
-                const VSTGUI::CPoint pos{center.x-imageRadius,center.y-imageRadius};
-                mfb->drawFrame(c,frame,pos);
-                bakedIndicator=true;
-            } else {
-                bitmap->draw(c,imageRect,{0,0});
-            }
+        if(auto* mfb=dynamic_cast<VSTGUI::CMultiFrameBitmap*>(bitmap)){
+            const auto frame=mfb->normalizedValueToFrameIndex((float)v);
+            constexpr double sourceFrameSize=125.0;
+            const double scale=imageSize/sourceFrameSize;
+            c->setBitmapInterpolationQuality(VSTGUI::CDrawContext::BitmapInterpolationQuality::kHigh);
+            VSTGUI::CDrawContext::Transform t{
+                *c,
+                VSTGUI::CGraphicsTransform()
+                    .translate(center.x,center.y)
+                    .scale(scale,scale)
+            };
+            mfb->drawFrame(c,frame,{-sourceFrameSize*0.5,-sourceFrameSize*0.5});
+            bakedIndicator=true;
         } else {
             bitmap->draw(c,imageRect,{0,0});
         }
@@ -188,8 +192,7 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
         radial(c,imageRect,{70,72,73,255},{18,20,21,255});
     }
 
-    // MAIN uses the indicator baked into the JKnobMan filmstrip.
-    // Other styles keep the separate VSTGUI indicator.
+    // The unified filmstrip already contains its indicator.
     if(!bakedIndicator){
         const double angle=(135.0+270.0*v)*kPi/180.0;
         const double p1=imageRadius*0.50;

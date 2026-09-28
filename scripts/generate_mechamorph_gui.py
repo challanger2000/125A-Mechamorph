@@ -25,6 +25,7 @@ def generate(L):
       '    <bitmap name="mech-static-machine" path="mechamorph-controls/knob-static-250.png"/>',
       '    <bitmap name="mech-static-main" path="mechamorph-controls/knob-static-170.png"/>',
       '    <bitmap name="mech-main-film" path="mechamorph-controls/main-knob-64.png" multiframe-num-frames="64" multiframe-size="125,125" mulitframe-frames-per-row="1"/>',
+      '    <bitmap name="mech-knob-master" path="mechamorph-controls/knob-master-64.png" multiframe-num-frames="64" multiframe-size="125,125" mulitframe-frames-per-row="1"/>',
       '    <bitmap name="mech-static-scale" path="mechamorph-controls/knob-static-220.png"/>',
       '    <bitmap name="mech-static-utility" path="mechamorph-controls/knob-static-104.png"/>',
       '  </bitmaps>',

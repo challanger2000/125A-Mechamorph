@@ -270,6 +270,7 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
             "resource/mechamorph-controls/knob-static-220.png"
             "resource/mechamorph-controls/knob-static-170.png"
             "resource/mechamorph-controls/main-knob-64.png"
+            "resource/mechamorph-controls/knob-master-64.png"
             "resource/mechamorph-controls/knob-static-104.png"
     )
     target_compile_features(MechamorphMachine PRIVATE cxx_std_17)
