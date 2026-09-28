@@ -17,7 +17,7 @@ using namespace Steinberg::Vst;
 
 namespace MechamorphMachine {
 namespace {
-constexpr int32 kStateVersion = 3;
+constexpr int32 kStateVersion = 4;
 }
 
 Processor::Processor() {
@@ -399,7 +399,7 @@ tresult PLUGIN_API Processor::setState(IBStream* state) {
             !s.readFloat(space) ||
             !s.readFloat(output))
             return kResultFalse;
-    } else if (version == kStateVersion) {
+    } else if (version == 3 || version == kStateVersion) {
         if (!s.readFloat(machine) ||
             !s.readFloat(speed) ||
             !s.readFloat(load) ||
@@ -414,9 +414,20 @@ tresult PLUGIN_API Processor::setState(IBStream* state) {
         return kResultFalse;
     }
 
-    machineIndex_ = std::clamp(
-        static_cast<int>(std::floor(std::clamp(machine, 0.0f, 1.0f) * 6.0f)),
-        0, 5);
+    if (version <= 3) {
+        // Legacy states used three machines encoded as 0 / 0.5 / 1.0.
+        const int legacyIndex = std::clamp(
+            static_cast<int>(std::lround(std::clamp(machine, 0.0f, 1.0f) * 2.0f)),
+            0, 2);
+        // Preserve conceptual identity as closely as possible:
+        // Projector -> TINY, Handcrank -> INTRICATE, Industrial -> HEAVY.
+        static constexpr int kLegacyToCurrent[3] = {0, 1, 2};
+        machineIndex_ = kLegacyToCurrent[legacyIndex];
+    } else {
+        machineIndex_ = std::clamp(
+            static_cast<int>(std::floor(std::clamp(machine, 0.0f, 1.0f) * 6.0f)),
+            0, 5);
+    }
 
     machineParams_.speed = std::clamp(speed, 0.0f, 1.0f);
     machineParams_.load = std::clamp(load, 0.0f, 1.0f);
