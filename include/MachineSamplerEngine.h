@@ -87,7 +87,7 @@ public:
     bool looping() const noexcept { return clip_.loop; }
     Role role() const noexcept { return role_; }
     double sourceSampleRate() const noexcept { return clip_.sampleRate; }
-    void setRate(double rate) noexcept { rate_ = std::clamp(rate, 0.25, 4.0); }
+    void setRate(double rate) noexcept { rate_ = std::clamp(rate, 0.04, 4.0); }
 
 private:
     Clip clip_ {};
@@ -158,6 +158,8 @@ private:
     bool runLoopSpawned_ = false;
     bool loadActive_ = false;
     int stopCountdown_ = 0;
+    int stallCountdown_ = 0;
+    int stallCooldown_ = 0;
 };
 
 } // namespace mechamorph::machine
