@@ -32,6 +32,7 @@ public:
     GuiKnob(const GuiKnob& other);
     VSTGUI::CBaseObject* newCopy() const override { return new GuiKnob(*this); }
     void draw(VSTGUI::CDrawContext* context) override;
+    void valueChanged() override;
 private:
     Style style_;
 };
@@ -48,10 +49,11 @@ private:
     bool muted_;
 };
 
-class GuiStatusLamp final : public VSTGUI::CView {
+class GuiStatusLamp final : public VSTGUI::CControl {
 public:
     enum class Kind { Pressure, Friction, Stall };
-    GuiStatusLamp(const VSTGUI::CRect& size, Kind kind);
+    GuiStatusLamp(const VSTGUI::CRect& size, VSTGUI::IControlListener* listener,
+                  int32_t tag, Kind kind);
     GuiStatusLamp(const GuiStatusLamp& other);
     VSTGUI::CBaseObject* newCopy() const override { return new GuiStatusLamp(*this); }
     void draw(VSTGUI::CDrawContext* context) override;
