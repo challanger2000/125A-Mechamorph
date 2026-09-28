@@ -32,6 +32,7 @@ bool writeState(MemoryStream& ms,int32 version,const std::initializer_list<float
 bool readV4(IComponent* c,std::array<float,9>& values){
     MemoryStream ms;
     if(c->getState(&ms)!=kResultTrue) return false;
+    if(ms.getSize()!=40) return false; // int32 version + 9 float user values only
     ms.seek(0,IBStream::kIBSeekSet,nullptr);
     IBStreamer s(&ms,kLittleEndian);
     int32 version=0;
@@ -129,6 +130,12 @@ int run(const std::string& path){
             return 21;
         }
         if(source->setState(&invalid)==kResultTrue){ std::cerr<<"[FAIL] NaN state accepted\n"; return 22; }
+        std::array<float,9> afterInvalid{};
+        if(!readV4(source.get(),afterInvalid)){ return 25; }
+        if(!same(afterInvalid,migrated3)){
+            std::cerr<<"[FAIL] rejected NaN state mutated valid state\n";
+            return 26;
+        }
 
         if(source->terminate()!=kResultOk){ std::cerr<<"[FAIL] terminate\n"; return 23; }
         std::cout<<"Mechamorph state/recall contract PASS\n";
