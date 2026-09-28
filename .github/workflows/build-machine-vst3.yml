@@ -93,6 +93,31 @@ jobs:
               "friction-src/friction__oga_scrape_${tag}.wav"
             i=$((i+1))
           done
+      - name: Download CC0 pressure sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p pressure-src pressure-pack
+
+          curl --fail --location --retry 2 \
+            "https://opengameart.org/sites/default/files/steam_hisses.zip" \
+            -o pressure-src/steam_hisses.zip
+          unzip -q pressure-src/steam_hisses.zip -d pressure-pack
+
+          i=1
+          for file in pressure-pack/*; do
+            [ -f "$file" ] || continue
+            case "${file,,}" in
+              *.wav|*.ogg|*.flac) ;;
+              *) continue ;;
+            esac
+            [ "$i" -gt 8 ] && break
+            printf -v tag "%02d" "$i"
+            ffmpeg -hide_banner -loglevel error -y \
+              -i "$file" -ac 1 -ar 48000 -c:a pcm_s16le \
+              "pressure-src/pressure__oga_steam_${tag}.wav"
+            i=$((i+1))
+          done
       - name: Build curated sample set
         shell: bash
         run: |
@@ -106,6 +131,7 @@ jobs:
             research-sources/wav machine-set
 
           cp friction-src/friction__*.wav machine-set/
+          cp pressure-src/pressure__*.wav machine-set/
 
           python3 tools/generate_machine_variants.py \
             machine-set machine-set
