@@ -78,10 +78,10 @@ HWND findVstguiChild(HWND parent) {
 
 bool clickUiScale(HWND vstguiChild,double currentZoom) {
     if(!vstguiChild) return false;
-    // UIScale logical rect: x=48..154, y=294..324.
+    // UIScale logical rect: x=660..780, y=870..898.
     // VSTGUI's user zoom scales both the control geometry and the platform child.
-    const int x=static_cast<int>(std::lround(101.0*currentZoom));
-    const int y=static_cast<int>(std::lround(309.0*currentZoom));
+    const int x=static_cast<int>(std::lround(720.0*currentZoom));
+    const int y=static_cast<int>(std::lround(884.0*currentZoom));
     const LPARAM p=MAKELPARAM(x,y);
     SendMessageW(vstguiChild,WM_LBUTTONDOWN,MK_LBUTTON,p);
     SendMessageW(vstguiChild,WM_LBUTTONUP,0,p);
@@ -230,7 +230,7 @@ int run(const std::string& path) {
 
             int baseW=0,baseH=0;
             if(!validRect(view,baseW,baseH)) return fail(6,"base getSize failed");
-            if(baseW!=1440 || baseH!=900) {
+            if(baseW!=1440 || baseH!=960) {
                 std::cerr<<"unexpected base editor size "<<baseW<<"x"<<baseH<<"\n";
                 return fail(7,"unexpected base editor size");
             }
@@ -307,15 +307,15 @@ int run(const std::string& path) {
             {
                 struct DefaultCase { ParamID id; int x; int y; double def; const char* name; };
                 const DefaultCase cases[] = {
-                    {2000,720,190,0.00,"Machine"},
-                    {2001,143,610,0.32,"Speed"},
-                    {2002,385,610,0.20,"Load"},
-                    {2003,627,610,0.48,"Action"},
-                    {2004,869,610,0.18,"Wear"},
-                    {2005,1154,610,0.35,"Scale"},
-                    {2008,1368,470,0.28,"Body"},
-                    {2006,1368,626,0.18,"Space"},
-                    {2007,1368,782,0.38,"Output"}
+                    {2000,720,248,0.00,"Machine"},
+                    {2001,137,667,0.32,"Speed"},
+                    {2002,375,667,0.20,"Load"},
+                    {2003,609,667,0.48,"Action"},
+                    {2004,842,667,0.18,"Wear"},
+                    {2005,1118,663,0.35,"Scale"},
+                    {2008,1345,526,0.28,"Body"},
+                    {2006,1345,670,0.18,"Space"},
+                    {2007,1345,818,0.38,"Output"}
                 };
                 trace("cycle "+std::to_string(cycle+1)+" Ctrl+click default reset matrix");
                 for(const auto& dc:cases){
