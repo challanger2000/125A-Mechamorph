@@ -75,7 +75,7 @@ assert tpl.attrib.get("size")=="1440,900"
 views=[v for v in tpl if v.attrib.get("custom-view-name")]
 names=[v.attrib["custom-view-name"] for v in views]
 required=[
- "Faceplate","BrandLogo","BrandTitle","BrandSubtitle","UIScale","MachineLabel","Machine",
+ "Faceplate","BrandLogo","BrandTitle","BrandSubtitle","UIScale","MachineLabel","Machine","MachinePosRow1","MachinePosRow2",
  "PressureLamp","FrictionLamp","StallLamp","PressureLabel","FrictionLabel","StallLabel",
  "Speed","Load","Action","Wear","Scale","Body","Space","Output",
  "SpeedLabel","LoadLabel","ActionLabel","WearLabel","ScaleLabel","BodyLabel","SpaceLabel","OutputLabel"
@@ -97,6 +97,8 @@ def box(n):
 assert box("BrandLogo")==tuple(layout["top"]["brandLogo"]),"BrandLogo geometry not sourced from layout"
 assert box("BrandTitle")==tuple(layout["top"]["brandTitle"]),"BrandTitle geometry not sourced from layout"
 assert box("BrandSubtitle")==tuple(layout["top"]["brandSubtitle"]),"BrandSubtitle geometry not sourced from layout"
+for item in layout["top"]["machinePositions"]:
+    assert box(item["name"])==tuple(item["rect"]),(item["name"],"machine position legend geometry mismatch")
 
 for n,cx in [("Speed",143),("Load",385),("Action",627),("Wear",869),("Scale",1154),
              ("Body",1368),("Space",1368),("Output",1368),("Machine",720)]:
