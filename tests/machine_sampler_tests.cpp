@@ -285,6 +285,56 @@ int main() {
         assert(retrigger.state() != State::Stopped);
     }
 
+    // RUN-bed allocation regression: if the fixed voice pool is temporarily
+    // full when the delayed RUN event becomes due, the engine must retry once
+    // a voice is free instead of permanently believing that RUN is active.
+    {
+        std::vector<float> longStart(static_cast<std::size_t>(2.0 * sr), 0.05f);
+        std::vector<float> longAction(static_cast<std::size_t>(2.0 * sr), 0.04f);
+        std::vector<float> runBed(static_cast<std::size_t>(0.20 * sr), 0.06f);
+
+        SampleSet saturatedSet;
+        assert(saturatedSet.start.add({
+            longStart.data(), longStart.size(), sr, false, "long_start"}));
+        assert(saturatedSet.action.add({
+            longAction.data(), longAction.size(), sr, false, "long_action"}));
+        assert(saturatedSet.run.add({
+            runBed.data(), runBed.size(), sr, true, "run_bed"}));
+
+        Engine saturated;
+        saturated.prepare(sr);
+        saturated.setSampleSet(&saturatedSet);
+
+        Parameters satP;
+        satP.speed = 1.0f;
+        satP.action = 0.0f;
+        satP.clatter = 0.0f;
+        satP.wear = 0.0f;
+        satP.output = 0.5f;
+        saturated.setParameters(satP);
+        saturated.start();
+
+        // START occupies one voice; fill the remaining eleven with long ACTION
+        // gestures so the first delayed RUN spawn has no free slot.
+        for (std::size_t i = 1; i < Engine::kMaxVoices; ++i)
+            saturated.triggerAction(0.4f);
+
+        std::vector<float> blocked(static_cast<std::size_t>(1.0 * sr), 0.0f);
+        saturated.process(blocked.data(), blocked.size());
+
+        // Let the long one-shots finish. RUN must subsequently recover and the
+        // drive must leave Starting rather than getting stuck forever.
+        std::vector<float> recovered(static_cast<std::size_t>(2.0 * sr), 0.0f);
+        saturated.process(recovered.data(), recovered.size());
+        assert(saturated.state() == State::Running ||
+               saturated.state() == State::Loaded);
+
+        double recoveredEnergy = 0.0;
+        for (float v : recovered)
+            recoveredEnergy += static_cast<double>(v) * v;
+        assert(recoveredEnergy > 0.0);
+    }
+
     // PRESSURE behaviour:
     // pressure=0 must produce no pressure events; pneumatic-style pressure=1
     // under load must breathe occasionally but never become a constant hiss.
