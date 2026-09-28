@@ -175,6 +175,8 @@ VSTGUI::CView* Controller::createCustomView(VSTGUI::UTF8StringPtr name,
     if(auto* v=label("BrandTitle","MECHAMORPH",28.0)) return v;
     if(auto* v=label("BrandSubtitle","MECHANICAL INSTRUMENT",11.0,true)) return v;
     if(auto* v=label("MachineLabel","MACHINE",13.0)) return v;
+    if(auto* v=label("MachinePosRow1","1 TINY   2 INTRICATE   3 HEAVY",8.5,true)) return v;
+    if(auto* v=label("MachinePosRow2","4 COLOSSAL   5 PNEUMATIC   6 BROKEN",8.5,true)) return v;
     if(auto* v=label("SpeedLabel","SPEED",12.0)) return v;
     if(auto* v=label("LoadLabel","LOAD",12.0)) return v;
     if(auto* v=label("ActionLabel","ACTION",12.0)) return v;
