@@ -67,6 +67,8 @@ tresult PLUGIN_API Processor::setupProcessing(ProcessSetup& setup) {
 tresult PLUGIN_API Processor::setActive(TBool state) {
     if (state) {
         transportWasPlaying_ = false;
+        activeNoteId_ = -1;
+        activePitch_ = -1;
         engine_.reset();
         engine_.setSampleSet(assets_.profile(machineIndex_));
         spaceEngine_.reset();
@@ -254,14 +256,37 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
                 break;
 
             if (e.type == Event::kNoteOnEvent && e.noteOn.velocity > 0.0f) {
-                // Trigger semantics are intentionally latch-like:
-                // every positive Note On restarts a complete machine cycle.
-                // Note Off / velocity-zero Note On do not stop the machine;
-                // DAW transport stop owns the global reset/stop condition.
+                // Monophonic retrigger gate:
+                // every Note On restarts the complete machine cycle and becomes
+                // the only note allowed to stop that new cycle.
                 engine_.reset();
                 engine_.setSampleSet(assets_.profile(machineIndex_));
                 updateEngineParameters();
                 engine_.start();
+
+                activeNoteId_ = e.noteOn.noteId;
+                activePitch_ = e.noteOn.pitch;
+            } else if (
+                e.type == Event::kNoteOffEvent ||
+                (e.type == Event::kNoteOnEvent && e.noteOn.velocity <= 0.0f)) {
+
+                const int32 noteId =
+                    e.type == Event::kNoteOffEvent ? e.noteOff.noteId : e.noteOn.noteId;
+                const int16 pitch =
+                    e.type == Event::kNoteOffEvent ? e.noteOff.pitch : e.noteOn.pitch;
+
+                // Prefer VST3 noteId when the host supplies one. Fall back to
+                // pitch for hosts that use noteId=-1.
+                const bool idMatches =
+                    activeNoteId_ >= 0 && noteId >= 0 && noteId == activeNoteId_;
+                const bool pitchMatches =
+                    (activeNoteId_ < 0 || noteId < 0) && pitch == activePitch_;
+
+                if (idMatches || pitchMatches) {
+                    engine_.stop();
+                    activeNoteId_ = -1;
+                    activePitch_ = -1;
+                }
             }
 
             ++eventIndex;
@@ -304,6 +329,8 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
     }
 
     if (transportWasPlaying_ && !transportPlaying) {
+        activeNoteId_ = -1;
+        activePitch_ = -1;
         engine_.reset();
         engine_.setSampleSet(assets_.profile(machineIndex_));
         spaceEngine_.reset();
