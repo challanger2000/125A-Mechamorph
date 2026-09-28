@@ -38,15 +38,21 @@ This hybrid approach replaces the failed assumption that every old mechanical de
 
 ## Current verified engineering status
 
-The existing DSP/VST3 infrastructure remains useful:
+The authoritative current state is recorded in [CURRENT.md](CURRENT.md).
 
-- Windows VST3 prototype builds successfully.
-- Steinberg Validator: **47/47 PASS** on the verified prototype build.
-- Standalone DSP tests pass.
-- Standalone Machine Sampler state/scheduler tests pass.
-- Research audio provenance and license handling are documented.
+For the current `v0.1.0` Windows development build:
 
-The current VST3 sound architecture is **not** considered the final Mechamorph sound concept.
+- Windows x64 VST3 build: **PASS**
+- Steinberg Validator: **47/47 PASS**
+- Machine engine regression: **PASS**
+- editor lifecycle and 100/125/150/200% zoom: **PASS**
+- state save/restore and legacy migration: **PASS**
+- VST3 process contract: **PASS** across realtime/offline, 44.1/48/96/192 kHz and block sizes 1/16/64/257/1024
+- MIDI, automation, NaN robustness and repeated activate/deactivate: **PASS**
+- BODY / SPACE measurement lab: **PASS**
+- research audio provenance and license handling are documented
+
+This is verified engineering evidence for the current development build. It is not, by itself, a public-release declaration.
 
 ## Machine engine states
 
