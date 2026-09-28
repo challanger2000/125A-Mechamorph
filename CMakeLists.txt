@@ -220,6 +220,18 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
     )
 
     target_link_libraries(MechamorphMachine PRIVATE sdk vstgui_support)
+
+    add_executable(mechamorph_editor_lifecycle_probe
+        tests/editor_lifecycle_zoom_probe.cpp
+        "${vst3sdk_machine_SOURCE_DIR}/public.sdk/source/vst/hosting/module_win32.cpp"
+    )
+    target_link_libraries(mechamorph_editor_lifecycle_probe PRIVATE
+        sdk_hosting sdk_common base pluginterfaces user32 ole32
+    )
+    target_compile_definitions(mechamorph_editor_lifecycle_probe PRIVATE
+        _CRT_SECURE_NO_WARNINGS NOMINMAX UNICODE _UNICODE
+    )
+    target_compile_features(mechamorph_editor_lifecycle_probe PRIVATE cxx_std_17)
     smtg_target_add_plugin_resources(MechamorphMachine RESOURCES "resource/mechamorph.uidesc")
     smtg_target_add_plugin_resources(MechamorphMachine
         OUTPUT_SUBDIRECTORY "mechamorph-controls"
