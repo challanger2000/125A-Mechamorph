@@ -89,6 +89,15 @@ bool clickUiScale(HWND vstguiChild,double currentZoom) {
     return true;
 }
 
+bool ctrlClickAt(HWND vstguiChild,int x,int y) {
+    if(!vstguiChild) return false;
+    const LPARAM p=MAKELPARAM(x,y);
+    SendMessageW(vstguiChild,WM_LBUTTONDOWN,MK_LBUTTON|MK_CONTROL,p);
+    SendMessageW(vstguiChild,WM_LBUTTONUP,MK_CONTROL,p);
+    pump(50);
+    return true;
+}
+
 class HostFrame final : public FObject, public IPlugFrame {
 public:
     explicit HostFrame(HWND h):hwnd_(h){}
@@ -294,6 +303,37 @@ int run(const std::string& path) {
             }
 
             trace("cycle "+std::to_string(cycle+1)+" focus on/off");
+            // Ctrl+click default reset matrix for every user-facing control.
+            {
+                struct DefaultCase { ParamID id; int x; int y; double def; const char* name; };
+                const DefaultCase cases[] = {
+                    {2000,720,190,0.00,"Machine"},
+                    {2001,143,610,0.32,"Speed"},
+                    {2002,385,610,0.20,"Load"},
+                    {2003,627,610,0.48,"Action"},
+                    {2004,869,610,0.18,"Wear"},
+                    {2005,1154,610,0.35,"Scale"},
+                    {2008,1368,470,0.28,"Body"},
+                    {2006,1368,626,0.18,"Space"},
+                    {2007,1368,782,0.38,"Output"}
+                };
+                trace("cycle "+std::to_string(cycle+1)+" Ctrl+click default reset matrix");
+                for(const auto& dc:cases){
+                    const double testValue = dc.def < 0.75 ? 0.91 : 0.10;
+                    if(holder.controller->setParamNormalized(dc.id,testValue)!=kResultTrue)
+                        return fail(27,std::string("setParamNormalized failed for ")+dc.name);
+                    pump(20);
+                    if(!ctrlClickAt(vstguiChild,dc.x,dc.y))
+                        return fail(28,std::string("Ctrl+click dispatch failed for ")+dc.name);
+                    const double actual=holder.controller->getParamNormalized(dc.id);
+                    if(std::fabs(actual-dc.def)>1.0e-6){
+                        std::cerr<<"[editor-probe] "<<dc.name<<" Ctrl+click expected "<<dc.def
+                                 <<" got "<<actual<<std::endl;
+                        return fail(29,std::string("Ctrl+click default mismatch for ")+dc.name);
+                    }
+                }
+            }
+
             view->onFocus(true);
             pump(10);
             view->onFocus(false);
