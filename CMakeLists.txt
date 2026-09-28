@@ -137,7 +137,7 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
 
     if(NOT TARGET sdk)
         include(FetchContent)
-        set(SMTG_ENABLE_VSTGUI_SUPPORT OFF CACHE BOOL "" FORCE)
+        set(SMTG_ENABLE_VSTGUI_SUPPORT ON CACHE BOOL "" FORCE)
         set(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES OFF CACHE BOOL "" FORCE)
         set(SMTG_ENABLE_VST3_HOSTING_EXAMPLES OFF CACHE BOOL "" FORCE)
 
@@ -146,8 +146,6 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
             GIT_REPOSITORY https://github.com/steinbergmedia/vst3sdk.git
             GIT_TAG 3cdf9ca5d1f5b1b21e0a86832aa4abe55607bd96
             GIT_SHALLOW FALSE
-            GIT_SUBMODULES vstgui4
-            GIT_SUBMODULES_RECURSE TRUE
         )
         FetchContent_MakeAvailable(vst3sdk_machine)
         smtg_enable_vst3_sdk()
@@ -161,7 +159,6 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
     target_include_directories(measure_machine_space PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/source-machine"
         "${MECHAMORPH_MACHINE_GENERATED_DIR}"
-        "${vst3sdk_machine_SOURCE_DIR}/vstgui4"
     )
     target_compile_features(measure_machine_space PRIVATE cxx_std_17)
 
