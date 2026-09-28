@@ -30,7 +30,7 @@ jobs:
 
           declare -A files=(
             [main.png]=main_170px_96f_scale-1x.png
-            [main#1.25x.png]=main_213px_96f_scale-1p25x.png
+            [main#1.2529411764705882x.png]=main_213px_96f_scale-1p25x.png
             [main#1.5x.png]=main_255px_96f_scale-1p5x.png
             [main#2x.png]=main_340px_96f_scale-2x.png
 
@@ -45,7 +45,7 @@ jobs:
             [utility#2x.png]=utility_208px_128f_scale-2x.png
 
             [machine.png]=machine_250px_6f_scale-1x.png
-            [machine#1.25x.png]=machine_313px_6f_scale-1p25x.png
+            [machine#1.252x.png]=machine_313px_6f_scale-1p25x.png
             [machine#1.5x.png]=machine_375px_6f_scale-1p5x.png
             [machine#2x.png]=machine_500px_6f_scale-2x.png
           )
@@ -66,10 +66,10 @@ jobs:
           m=json.loads((root/"manifest.json").read_text())
 
           expect={
-            "main":(96,[(1.0,"main.png",170),(1.25,"main#1.25x.png",213),(1.5,"main#1.5x.png",255),(2.0,"main#2x.png",340)]),
+            "main":(96,[(1.0,"main.png",170),(213/170,"main#1.2529411764705882x.png",213),(1.5,"main#1.5x.png",255),(2.0,"main#2x.png",340)]),
             "scale":(72,[(1.0,"scale.png",220),(1.25,"scale#1.25x.png",275),(1.5,"scale#1.5x.png",330),(2.0,"scale#2x.png",440)]),
             "utility":(128,[(1.0,"utility.png",104),(1.25,"utility#1.25x.png",130),(1.5,"utility#1.5x.png",156),(2.0,"utility#2x.png",208)]),
-            "machine":(6,[(1.0,"machine.png",250),(1.25,"machine#1.25x.png",313),(1.5,"machine#1.5x.png",375),(2.0,"machine#2x.png",500)]),
+            "machine":(6,[(1.0,"machine.png",250),(313/250,"machine#1.252x.png",313),(1.5,"machine#1.5x.png",375),(2.0,"machine#2x.png",500)]),
           }
           for key,(frames,variants) in expect.items():
             assert m["controls"][key]["frameCount"]==frames
