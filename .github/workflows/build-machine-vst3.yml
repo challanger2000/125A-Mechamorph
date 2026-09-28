@@ -247,7 +247,7 @@ jobs:
             "",
             "Instrument prototype - no audio input required.",
             "",
-            "MIDI: Any positive Note On retriggers the complete machine cycle. Note Off does not stop it; DAW transport stop resets/stops the machine.",
+            "MIDI: Any Note On starts the machine. It stops when all held notes are released.",
             "",
             "Parameters: Machine, Speed, Load, Action, Wear, Scale, Body, Space, Output.",
             "",
