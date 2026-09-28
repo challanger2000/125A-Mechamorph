@@ -10,7 +10,7 @@ namespace MechamorphMachine {
 
 class GuiFaceplate final : public VSTGUI::CView {
 public:
-    explicit GuiFaceplate(const VSTGUI::CRect& size);
+    GuiFaceplate(const VSTGUI::CRect& size, VSTGUI::CBitmap* background);
     GuiFaceplate(const GuiFaceplate& other);
     VSTGUI::CBaseObject* newCopy() const override { return new GuiFaceplate(*this); }
     void draw(VSTGUI::CDrawContext* context) override;
@@ -24,7 +24,7 @@ public:
     void draw(VSTGUI::CDrawContext* context) override;
 };
 
-class GuiKnob final : public VSTGUI::CAnimKnob {
+class GuiKnob final : public VSTGUI::CKnobBase {
 public:
     enum class Style { Main, Scale, Utility, Machine };
     GuiKnob(const VSTGUI::CRect& size, VSTGUI::IControlListener* listener, int32_t tag,

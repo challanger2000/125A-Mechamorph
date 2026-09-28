@@ -2,60 +2,49 @@
 <vstgui-ui-description version="1">
   <colors><color name="Background" rgba="#090A0BFF"/></colors>
   <bitmaps>
-    <bitmap name="mech-machine" path="mechamorph-controls/machine.png" multiframe-num-frames="6" multiframe-size="250,250" mulitframe-frames-per-row="1"/>
-    <bitmap name="mech-machine#1.252x" path="mechamorph-controls/machine#1.252x.png"/>
-    <bitmap name="mech-machine#1.5x" path="mechamorph-controls/machine#1.5x.png"/>
-    <bitmap name="mech-machine#2x" path="mechamorph-controls/machine#2x.png"/>
-    <bitmap name="mech-main" path="mechamorph-controls/main.png" multiframe-num-frames="96" multiframe-size="170,170" mulitframe-frames-per-row="1"/>
-    <bitmap name="mech-main#1.2529411764705882x" path="mechamorph-controls/main#1.2529411764705882x.png"/>
-    <bitmap name="mech-main#1.5x" path="mechamorph-controls/main#1.5x.png"/>
-    <bitmap name="mech-main#2x" path="mechamorph-controls/main#2x.png"/>
-    <bitmap name="mech-scale" path="mechamorph-controls/scale.png" multiframe-num-frames="72" multiframe-size="220,220" mulitframe-frames-per-row="1"/>
-    <bitmap name="mech-scale#1.25x" path="mechamorph-controls/scale#1.25x.png"/>
-    <bitmap name="mech-scale#1.5x" path="mechamorph-controls/scale#1.5x.png"/>
-    <bitmap name="mech-scale#2x" path="mechamorph-controls/scale#2x.png"/>
-    <bitmap name="mech-utility" path="mechamorph-controls/utility.png" multiframe-num-frames="128" multiframe-size="104,104" mulitframe-frames-per-row="1"/>
-    <bitmap name="mech-utility#1.25x" path="mechamorph-controls/utility#1.25x.png"/>
-    <bitmap name="mech-utility#1.5x" path="mechamorph-controls/utility#1.5x.png"/>
-    <bitmap name="mech-utility#2x" path="mechamorph-controls/utility#2x.png"/>
+    <bitmap name="mech-faceplate" path="mechamorph-faceplate.png"/>
+    <bitmap name="mech-static-machine" path="mechamorph-controls/knob-static-250.png"/>
+    <bitmap name="mech-static-main" path="mechamorph-controls/knob-static-170.png"/>
+    <bitmap name="mech-static-scale" path="mechamorph-controls/knob-static-220.png"/>
+    <bitmap name="mech-static-utility" path="mechamorph-controls/knob-static-104.png"/>
   </bitmaps>
-  <template name="view" class="CViewContainer" origin="0,0" size="1440,900" transparent="false" background-color="Background">
-    <view class="CView" custom-view-name="Faceplate" origin="0,0" size="1440,900" mouse-enabled="false"/>
+  <template name="view" class="CViewContainer" origin="0,0" size="1440,960" transparent="false" background-color="Background">
+    <view class="CView" custom-view-name="Faceplate" origin="0,0" size="1440,960" mouse-enabled="false"/>
 
-    <view class="CView" custom-view-name="BrandLogo" origin="54,58" size="196,98" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="BrandTitle" origin="266,76" size="218,42" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="BrandSubtitle" origin="266,124" size="218,18" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="UIScale" origin="48,294" size="106,30"/>
+    <view class="CView" custom-view-name="BrandLogo" origin="48,80" size="170,85" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="BrandTitle" origin="225,86" size="290,40" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="BrandSubtitle" origin="225,136" size="290,20" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="UIScale" origin="660,870" size="120,28"/>
 
-    <view class="CView" custom-view-name="MachineLabel" origin="620,42" size="200,26" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="Machine" origin="595,65" size="250,250"/>
-    <view class="CView" custom-view-name="MachinePosRow1" origin="558,320" size="324,16" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="MachinePosRow2" origin="558,340" size="324,16" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="MachineLabel" origin="630,66" size="180,24" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="Machine" origin="580,108" size="280,280"/>
+    <view class="CView" custom-view-name="MachinePosRow1" origin="570,390" size="300,16" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="MachinePosRow2" origin="570,412" size="300,16" mouse-enabled="false"/>
 
-    <view class="CView" custom-view-name="PressureLamp" origin="1025,163" size="54,54" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="FrictionLamp" origin="1165,163" size="54,54" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="StallLamp" origin="1305,163" size="54,54" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="PressureLabel" origin="1000,254" size="104,18" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="FrictionLabel" origin="1140,254" size="104,18" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="StallLabel" origin="1280,254" size="104,18" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="PressureLamp" origin="1014,99" size="52,52" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="FrictionLamp" origin="1164,99" size="52,52" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="StallLamp" origin="1314,99" size="52,52" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="PressureLabel" origin="990,160" size="100,20" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="FrictionLabel" origin="1140,160" size="100,20" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="StallLabel" origin="1290,160" size="100,20" mouse-enabled="false"/>
 
-    <view class="CView" custom-view-name="Speed" origin="58,525" size="170,170"/>
-    <view class="CView" custom-view-name="Load" origin="300,525" size="170,170"/>
-    <view class="CView" custom-view-name="Action" origin="542,525" size="170,170"/>
-    <view class="CView" custom-view-name="Wear" origin="784,525" size="170,170"/>
-    <view class="CView" custom-view-name="Scale" origin="1044,500" size="220,220"/>
+    <view class="CView" custom-view-name="Speed" origin="42,572" size="190,190"/>
+    <view class="CView" custom-view-name="Load" origin="280,572" size="190,190"/>
+    <view class="CView" custom-view-name="Action" origin="514,572" size="190,190"/>
+    <view class="CView" custom-view-name="Wear" origin="747,572" size="190,190"/>
+    <view class="CView" custom-view-name="Scale" origin="993,538" size="250,250"/>
 
-    <view class="CView" custom-view-name="Body" origin="1316,418" size="104,104"/>
-    <view class="CView" custom-view-name="Space" origin="1316,574" size="104,104"/>
-    <view class="CView" custom-view-name="Output" origin="1316,730" size="104,104"/>
+    <view class="CView" custom-view-name="Body" origin="1286,467" size="118,118"/>
+    <view class="CView" custom-view-name="Space" origin="1286,611" size="118,118"/>
+    <view class="CView" custom-view-name="Output" origin="1286,759" size="118,118"/>
 
-    <view class="CView" custom-view-name="SpeedLabel" origin="56,814" size="174,24" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="LoadLabel" origin="298,814" size="174,24" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="ActionLabel" origin="540,814" size="174,24" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="WearLabel" origin="782,814" size="174,24" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="ScaleLabel" origin="1028,814" size="252,24" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="BodyLabel" origin="1326,520" size="84,18" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="SpaceLabel" origin="1326,676" size="84,18" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="OutputLabel" origin="1326,832" size="84,18" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="SpeedLabel" origin="42,500" size="190,28" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="LoadLabel" origin="280,500" size="190,28" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="ActionLabel" origin="514,500" size="190,28" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="WearLabel" origin="747,500" size="190,28" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="ScaleLabel" origin="988,500" size="260,28" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="BodyLabel" origin="1294,470" size="102,20" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="SpaceLabel" origin="1294,614" size="102,20" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="OutputLabel" origin="1294,762" size="102,20" mouse-enabled="false"/>
   </template>
 </vstgui-ui-description>

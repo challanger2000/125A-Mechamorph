@@ -259,26 +259,17 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
         _CRT_SECURE_NO_WARNINGS NOMINMAX
     )
     target_compile_features(mechamorph_process_contract_probe PRIVATE cxx_std_17)
-    smtg_target_add_plugin_resources(MechamorphMachine RESOURCES "resource/mechamorph.uidesc")
+    smtg_target_add_plugin_resources(MechamorphMachine RESOURCES
+        "resource/mechamorph.uidesc"
+        "resource/mechamorph-faceplate.png"
+    )
     smtg_target_add_plugin_resources(MechamorphMachine
         OUTPUT_SUBDIRECTORY "mechamorph-controls"
         RESOURCES
-            "resource/mechamorph-controls/machine.png"
-            "resource/mechamorph-controls/machine#1.252x.png"
-            "resource/mechamorph-controls/machine#1.5x.png"
-            "resource/mechamorph-controls/machine#2x.png"
-            "resource/mechamorph-controls/main.png"
-            "resource/mechamorph-controls/main#1.2529411764705882x.png"
-            "resource/mechamorph-controls/main#1.5x.png"
-            "resource/mechamorph-controls/main#2x.png"
-            "resource/mechamorph-controls/scale.png"
-            "resource/mechamorph-controls/scale#1.25x.png"
-            "resource/mechamorph-controls/scale#1.5x.png"
-            "resource/mechamorph-controls/scale#2x.png"
-            "resource/mechamorph-controls/utility.png"
-            "resource/mechamorph-controls/utility#1.25x.png"
-            "resource/mechamorph-controls/utility#1.5x.png"
-            "resource/mechamorph-controls/utility#2x.png"
+            "resource/mechamorph-controls/knob-static-250.png"
+            "resource/mechamorph-controls/knob-static-220.png"
+            "resource/mechamorph-controls/knob-static-170.png"
+            "resource/mechamorph-controls/knob-static-104.png"
     )
     target_compile_features(MechamorphMachine PRIVATE cxx_std_17)
     smtg_target_configure_version_file(MechamorphMachine)

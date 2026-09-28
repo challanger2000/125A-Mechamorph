@@ -78,58 +78,19 @@ std::vector<LogoPath> parseMasterLogo(){
 }
 }
 
-GuiFaceplate::GuiFaceplate(const VSTGUI::CRect& s):CView(s){setMouseEnabled(false);}
+GuiFaceplate::GuiFaceplate(const VSTGUI::CRect& s,VSTGUI::CBitmap* background):CView(s){
+    setMouseEnabled(false);
+    setBackground(background);
+}
 GuiFaceplate::GuiFaceplate(const GuiFaceplate& o):CView(o){}
 void GuiFaceplate::draw(VSTGUI::CDrawContext* c){
     const auto r=getViewSize();
-    c->setDrawMode(VSTGUI::kAntiAliasing);
-    c->setFillColor({8,9,10,255}); c->drawRect(r,VSTGUI::kDrawFilled);
-    auto chassis=r; chassis.inset(8,8);
-    fillRound(c,chassis,12,kPanelTop,kPanelBottom);
-    strokeRound(c,chassis,12,{4,5,6,255},2.0);
-    auto inner=chassis; inner.inset(5,5); strokeRound(c,inner,9,{188,186,178,45},1.0);
-
-    // Upper structure: branding bay, MACHINE bridge and status bay.
-    fillRound(c,{28,28,520,344},8,{82,83,82,255},{30,31,31,255});
-    strokeRound(c,{28,28,520,344},8,{6,7,8,255},2);
-    fillRound(c,{548,20,892,366},16,{41,43,44,255},{17,19,20,255});
-    strokeRound(c,{548,20,892,366},16,{6,7,8,255},2);
-    fillRound(c,{920,28,1412,344},8,{53,54,54,255},{19,21,22,255});
-    strokeRound(c,{920,28,1412,344},8,{6,7,8,255},2);
-
-    // Lower module bank. These dimensions are the permanent layout contract.
-    const double xs[]={28,270,512,754,996};
-    const double ws[]={230,230,230,230,316};
-    for(int i=0;i<5;++i){
-        const VSTGUI::CRect bay{xs[i],386,xs[i]+ws[i],872};
-        fillRound(c,bay,8,{39,41,42,255},{20,22,23,255});
-        strokeRound(c,bay,8,{6,7,8,255},1.6);
+    if(auto* bg=getDrawBackground()){
+        bg->draw(c,r,{0,0});
+    } else {
+        c->setFillColor({8,9,10,255});
+        c->drawRect(r,VSTGUI::kDrawFilled);
     }
-    // Utility column.
-    for(const auto& y : {398.0,554.0,710.0}){
-        VSTGUI::CRect bay{1324,y,1412,y+146};
-        fillRound(c,bay,7,{40,42,43,255},{18,20,21,255});
-        strokeRound(c,bay,7,{6,7,8,255},1.4);
-    }
-
-    // Engraved label plates: text itself is a separate VSTGUI layer.
-    const double labelX[]={56,298,540,782,1028};
-    const double labelW[]={174,174,174,174,252};
-    for(int i=0;i<5;++i){
-        VSTGUI::CRect plate{labelX[i],806,labelX[i]+labelW[i],848};
-        fillRound(c,plate,5,{78,77,73,255},{36,36,35,255});
-        strokeRound(c,plate,5,{8,9,10,255},1);
-    }
-    // Status label plates.
-    for(const auto& x : {1000.0,1140.0,1280.0}){
-        VSTGUI::CRect plate{x,246,x+104,282};
-        fillRound(c,plate,4,{70,69,66,255},{32,32,31,255});
-        strokeRound(c,plate,4,{8,9,10,255},1);
-    }
-
-    // restrained brushed-metal texture
-    c->setFrameColor({235,235,229,10}); c->setLineWidth(1.0);
-    for(int y=18;y<884;y+=6)c->drawLine({14.0,(double)y},{1426.0,(double)y});
     setDirty(false);
 }
 
@@ -161,55 +122,82 @@ void GuiLogo::draw(VSTGUI::CDrawContext* c){
 
 GuiKnob::GuiKnob(const VSTGUI::CRect& s,VSTGUI::IControlListener* l,int32_t tag,Style st,
                  VSTGUI::CBitmap* background,float defaultValue)
-:CAnimKnob(s,l,tag,background),style_(st){
+:CKnobBase(s,l,tag,background),style_(st){
     setStartAngle((float)(135.0/180.0*kPi)); setRangeAngle((float)(270.0/180.0*kPi));
     setDefaultValue(defaultValue);
     setTransparency(true); setWantsFocus(true);
 }
-GuiKnob::GuiKnob(const GuiKnob& o):CAnimKnob(o),style_(o.style_){}
+GuiKnob::GuiKnob(const GuiKnob& o):CKnobBase(o),style_(o.style_){}
 void GuiKnob::valueChanged(){
     if(style_==Style::Machine){
         const float n=std::clamp(getValueNormalized(),0.0f,1.0f);
         const float snapped=std::round(n*5.0f)/5.0f;
-        CAnimKnob::setValueNormalized(snapped);
+        CKnobBase::setValueNormalized(snapped);
     }
-    CAnimKnob::valueChanged();
+    CKnobBase::valueChanged();
 }
 void GuiKnob::draw(VSTGUI::CDrawContext* c){
-    if(getBackground()!=nullptr){
-        CAnimKnob::draw(c);
-        return;
-    }
-    const auto r=getViewSize(); const auto center=r.getCenter();
+    const auto r=getViewSize();
+    const auto center=r.getCenter();
     const double v=std::clamp((double)getValueNormalized(),0.0,1.0);
-    const double radius=std::min(r.getWidth(),r.getHeight())*.36;
+    const double imageSize=
+        style_==Style::Machine ? 250.0 :
+        style_==Style::Scale ? 220.0 :
+        style_==Style::Utility ? 104.0 : 170.0;
+    const double imageRadius=imageSize*0.5;
+    const VSTGUI::CRect imageRect{
+        center.x-imageRadius,center.y-imageRadius,
+        center.x+imageRadius,center.y+imageRadius};
+
     c->setDrawMode(VSTGUI::kAntiAliasing);
 
-    // Scale/ticks remain visible even before final filmstrips are installed.
-    const int ticks=style_==Style::Machine?6:(style_==Style::Utility?9:13);
-    for(int i=0;i<ticks;++i){
-        const double t=(ticks==1)?0.0:(double)i/(ticks-1);
-        const double a=(135.0+270.0*t)*kPi/180.0;
-        const double ro=radius+15,ri=radius+8;
-        c->setFrameColor({200,195,181,(uint8_t)((i==0||i==ticks-1)?220:120)});
-        c->setLineWidth((i==0||i==ticks-1)?1.5:1.0);
-        c->drawLine({center.x+std::cos(a)*ri,center.y+std::sin(a)*ri},
-                    {center.x+std::cos(a)*ro,center.y+std::sin(a)*ro});
+    // Amber under-light: deliberately offset downwards so the metal appears
+    // illuminated from underneath rather than outlined with a neon border.
+    struct GlowRing { double extra; double yOffset; double width; uint8_t alpha; };
+    static constexpr GlowRing glow[]={
+        {9.0,4.0,10.0,26},
+        {6.0,3.0,6.0,62},
+        {3.0,2.0,2.2,190}
+    };
+    for(const auto& g:glow){
+        VSTGUI::CRect gr{
+            center.x-imageRadius-g.extra,
+            center.y-imageRadius-g.extra+g.yOffset,
+            center.x+imageRadius+g.extra,
+            center.y+imageRadius+g.extra+g.yOffset};
+        c->setFrameColor({255,142,20,g.alpha});
+        c->setLineWidth(g.width);
+        c->drawEllipse(gr,VSTGUI::kDrawStroked);
     }
 
-    const VSTGUI::CRect shadow{center.x-radius-5,center.y-radius,center.x+radius+5,center.y+radius+10};
-    c->setFillColor({0,0,0,125}); c->drawEllipse(shadow,VSTGUI::kDrawFilled);
-    const VSTGUI::CRect skirt{center.x-radius,center.y-radius,center.x+radius,center.y+radius};
-    radial(c,skirt,{105,108,109,255},{24,26,27,255});
-    c->setFrameColor({5,6,7,255}); c->setLineWidth(1.5); c->drawEllipse(skirt,VSTGUI::kDrawStroked);
-    auto cap=skirt; cap.inset(radius*.18,radius*.18);
-    radial(c,cap,{52,54,55,255},{13,14,15,255});
+    if(auto* bitmap=getDrawBackground()){
+        bitmap->draw(c,imageRect,{0,0});
+    } else {
+        radial(c,imageRect,{70,72,73,255},{18,20,21,255});
+    }
 
-    const double a=(135.0+270.0*v)*kPi/180.0;
-    const double p1=radius*.25,p2=radius*.78;
-    c->setFrameColor(kIvory); c->setLineWidth(style_==Style::Utility?2.0:2.6);
-    c->drawLine({center.x+std::cos(a)*p1,center.y+std::sin(a)*p1},
-                {center.x+std::cos(a)*p2,center.y+std::sin(a)*p2});
+    // The indicator is a VSTGUI layer, not baked into the bitmap.
+    // MACHINE snaps to the existing six list values in valueChanged().
+    const double angle=(135.0+270.0*v)*kPi/180.0;
+    const double p1=imageRadius*0.50;
+    const double p2=imageRadius*0.82;
+    const VSTGUI::CPoint a{
+        center.x+std::cos(angle)*p1,
+        center.y+std::sin(angle)*p1};
+    const VSTGUI::CPoint b{
+        center.x+std::cos(angle)*p2,
+        center.y+std::sin(angle)*p2};
+
+    c->setFrameColor({0,0,0,190});
+    c->setLineWidth(style_==Style::Utility?4.0:5.0);
+    c->drawLine(a,b);
+    c->setFrameColor({255,145,18,255});
+    c->setLineWidth(style_==Style::Utility?2.6:3.4);
+    c->drawLine(a,b);
+    c->setFrameColor({255,226,132,255});
+    c->setLineWidth(style_==Style::Utility?1.0:1.25);
+    c->drawLine(a,b);
+
     setDirty(false);
 }
 

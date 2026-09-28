@@ -16,23 +16,16 @@ def view(name,r,mouse=True):
 def generate(L):
     W,H=L["canvas"]["w"],L["canvas"]["h"]
     sz=L["sizes"]; top=L["top"]; controls=L["controls"]; labels=L["labels"]
-    bitmap_families=[
-      ("mech-machine","machine",250,6,[("1.252",313),("1.5",375),("2",500)]),
-      ("mech-main","main",170,96,[("1.2529411764705882",213),("1.5",255),("2",340)]),
-      ("mech-scale","scale",220,72,[("1.25",275),("1.5",330),("2",440)]),
-      ("mech-utility","utility",104,128,[("1.25",130),("1.5",156),("2",208)]),
-    ]
     out=[
       '<?xml version="1.0" encoding="UTF-8"?>',
       '<vstgui-ui-description version="1">',
       '  <colors><color name="Background" rgba="#090A0BFF"/></colors>',
-      '  <bitmaps>'
-    ]
-    for name,file_stem,size,frames,scaled in bitmap_families:
-        out.append(f'    <bitmap name="{name}" path="mechamorph-controls/{file_stem}.png" multiframe-num-frames="{frames}" multiframe-size="{size},{size}" mulitframe-frames-per-row="1"/>')
-        for factor,_ in scaled:
-            out.append(f'    <bitmap name="{name}#{factor}x" path="mechamorph-controls/{file_stem}#{factor}x.png"/>')
-    out += [
+      '  <bitmaps>',
+      '    <bitmap name="mech-faceplate" path="mechamorph-faceplate.png"/>',
+      '    <bitmap name="mech-static-machine" path="mechamorph-controls/knob-static-250.png"/>',
+      '    <bitmap name="mech-static-main" path="mechamorph-controls/knob-static-170.png"/>',
+      '    <bitmap name="mech-static-scale" path="mechamorph-controls/knob-static-220.png"/>',
+      '    <bitmap name="mech-static-utility" path="mechamorph-controls/knob-static-104.png"/>',
       '  </bitmaps>',
       f'  <template name="view" class="CViewContainer" origin="0,0" size="{W},{H}" transparent="false" background-color="Background">',
       view("Faceplate",[0,0,W,H],False),

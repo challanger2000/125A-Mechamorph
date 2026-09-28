@@ -164,19 +164,19 @@ VSTGUI::CView* Controller::createCustomView(VSTGUI::UTF8StringPtr name,
         return std::strcmp(name,n)==0 ? static_cast<VSTGUI::CView*>(new GuiLabel(r,text,fs,muted)) : nullptr;
     };
 
-    if(std::strcmp(name,"Faceplate")==0) return new GuiFaceplate(r);
+    if(std::strcmp(name,"Faceplate")==0){\n        auto* bitmap=description ? description->getBitmap("mech-faceplate") : nullptr;\n        return new GuiFaceplate(r,bitmap);\n    }
     if(std::strcmp(name,"BrandLogo")==0) return new GuiLogo(r);
     if(std::strcmp(name,"UIScale")==0) return new GuiScale(r,editor);
 
-    if(auto* v=knob("Machine",kMachine,GuiKnob::Style::Machine,"mech-machine",0.00f)) return v;
-    if(auto* v=knob("Speed",kSpeed,GuiKnob::Style::Main,"mech-main",0.32f)) return v;
-    if(auto* v=knob("Load",kLoad,GuiKnob::Style::Main,"mech-main",0.20f)) return v;
-    if(auto* v=knob("Action",kAction,GuiKnob::Style::Main,"mech-main",0.48f)) return v;
-    if(auto* v=knob("Wear",kWear,GuiKnob::Style::Main,"mech-main",0.18f)) return v;
-    if(auto* v=knob("Scale",kScale,GuiKnob::Style::Scale,"mech-scale",0.35f)) return v;
-    if(auto* v=knob("Body",kBody,GuiKnob::Style::Utility,"mech-utility",0.28f)) return v;
-    if(auto* v=knob("Space",kSpace,GuiKnob::Style::Utility,"mech-utility",0.18f)) return v;
-    if(auto* v=knob("Output",kOutput,GuiKnob::Style::Utility,"mech-utility",0.38f)) return v;
+    if(auto* v=knob("Machine",kMachine,GuiKnob::Style::Machine,"mech-static-machine",0.00f)) return v;
+    if(auto* v=knob("Speed",kSpeed,GuiKnob::Style::Main,"mech-static-main",0.32f)) return v;
+    if(auto* v=knob("Load",kLoad,GuiKnob::Style::Main,"mech-static-main",0.20f)) return v;
+    if(auto* v=knob("Action",kAction,GuiKnob::Style::Main,"mech-static-main",0.48f)) return v;
+    if(auto* v=knob("Wear",kWear,GuiKnob::Style::Main,"mech-static-main",0.18f)) return v;
+    if(auto* v=knob("Scale",kScale,GuiKnob::Style::Scale,"mech-static-scale",0.35f)) return v;
+    if(auto* v=knob("Body",kBody,GuiKnob::Style::Utility,"mech-static-utility",0.28f)) return v;
+    if(auto* v=knob("Space",kSpace,GuiKnob::Style::Utility,"mech-static-utility",0.18f)) return v;
+    if(auto* v=knob("Output",kOutput,GuiKnob::Style::Utility,"mech-static-utility",0.38f)) return v;
 
     if(std::strcmp(name,"PressureLamp")==0) return new GuiStatusLamp(r,editor,kPressureStatus,GuiStatusLamp::Kind::Pressure);
     if(std::strcmp(name,"FrictionLamp")==0) return new GuiStatusLamp(r,editor,kFrictionStatus,GuiStatusLamp::Kind::Friction);
