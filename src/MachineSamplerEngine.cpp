@@ -140,6 +140,7 @@ const Pool* Engine::poolFor(Role role) const noexcept {
         case Role::Release: return &set_->release;
         case Role::Stop: return &set_->stop;
         case Role::Friction: return &set_->friction;
+        case Role::Pressure: return &set_->pressure;
     }
     return nullptr;
 }
@@ -377,6 +378,42 @@ void Engine::updateMachineState() noexcept {
     }
 
     const bool revolutionWrapped = phase_ < previousPhase_;
+
+    if (pressureCooldown_ > 0)
+        --pressureCooldown_;
+
+    // Pressure/hydraulic breathing follows actual machine load and profile
+    // character. It is deliberately sparse: no constant hiss bed.
+    const float pressureCharacter = clamp01(params_.pressure);
+    if (revolutionWrapped &&
+        pressureCharacter > 0.0f &&
+        continuousLoad > 0.18f &&
+        state_ != State::Stopping &&
+        state_ != State::Stopped &&
+        pressureCooldown_ <= 0) {
+
+        const float pressureProbability =
+            std::min(
+                0.28f,
+                pressureCharacter *
+                (0.05f + 0.24f * continuousLoad));
+
+        if (rng_.uniform01() < pressureProbability) {
+            const float force =
+                0.18f +
+                0.42f * pressureCharacter +
+                0.22f * continuousLoad;
+            ++pressureEvents_;
+            spawn(Role::Pressure, force);
+
+            const float cooldownSeconds =
+                0.55f +
+                2.2f * (1.0f - pressureCharacter) +
+                0.8f * (1.0f - continuousLoad);
+            pressureCooldown_ =
+                static_cast<int>(cooldownSeconds * sampleRate_);
+        }
+    }
 
     // Once per revolution at most, a stressed/worn mechanism may briefly hang.
     // This is independent from ACTION: a drive can jam even when few contact
