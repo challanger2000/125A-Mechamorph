@@ -55,6 +55,8 @@ if(MECHAMORPH_BUILD_VST3)
         GIT_REPOSITORY https://github.com/steinbergmedia/vst3sdk.git
         GIT_TAG 3cdf9ca5d1f5b1b21e0a86832aa4abe55607bd96
         GIT_SHALLOW FALSE
+        GIT_SUBMODULES vstgui4
+        GIT_SUBMODULES_RECURSE TRUE
     )
     FetchContent_MakeAvailable(vst3sdk)
     smtg_enable_vst3_sdk()
