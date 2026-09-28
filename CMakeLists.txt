@@ -225,11 +225,11 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
         OUTPUT_SUBDIRECTORY "mechamorph-controls"
         RESOURCES
             "resource/mechamorph-controls/machine.png"
-            "resource/mechamorph-controls/machine#1.25x.png"
+            "resource/mechamorph-controls/machine#1.252x.png"
             "resource/mechamorph-controls/machine#1.5x.png"
             "resource/mechamorph-controls/machine#2x.png"
             "resource/mechamorph-controls/main.png"
-            "resource/mechamorph-controls/main#1.25x.png"
+            "resource/mechamorph-controls/main#1.2529411764705882x.png"
             "resource/mechamorph-controls/main#1.5x.png"
             "resource/mechamorph-controls/main#2x.png"
             "resource/mechamorph-controls/scale.png"
