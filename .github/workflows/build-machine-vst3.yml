@@ -290,6 +290,58 @@ jobs:
           New-Item -ItemType Directory -Force -Path packaged | Out-Null
           Copy-Item -Path $plugin.FullName -Destination packaged -Recurse -Force
 
+      - name: Run 125A Plugin Tester full QA
+        if: contains(github.event.head_commit.message, '[full-qa]')
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $testerCommit = "502864c2758e6cb5cce0ec2b941d0d31e86b1905"
+
+          git clone --branch 0.2.7 --depth 1 https://github.com/challanger2000/125A-Plugin-Tester-Final.git tester-src
+          $actualTesterCommit = (git -C tester-src rev-parse HEAD).Trim()
+          if ($actualTesterCommit -ne $testerCommit) {
+            Write-Error "Unexpected 125A Plugin Tester commit: $actualTesterCommit"
+            exit 1
+          }
+
+          cmake -S tester-src -B tester-build -G "Visual Studio 18 2026" -A x64 "-DCMAKE_INSTALL_PREFIX=$PWD/tester-runtime"
+          cmake --build tester-build --config Release --parallel 2
+          cmake --install tester-build --config Release --prefix "$PWD/tester-runtime"
+
+          $plugin = Get-ChildItem -Path build-machine-vst -Recurse -Directory -Filter "MechamorphMachine.vst3" | Select-Object -First 1
+          if (-not $plugin) {
+            Write-Error "MechamorphMachine.vst3 not found for 125A Plugin Tester"
+            exit 1
+          }
+
+          New-Item -ItemType Directory -Force -Path tester-reports | Out-Null
+          $env:125A_PLUGIN_TESTER_REPORT_DIR = (Resolve-Path tester-reports).Path
+
+          $tester = Join-Path (Resolve-Path tester-runtime).Path "125A_Plugin_Tester.exe"
+          if (-not (Test-Path $tester)) {
+            Write-Error "125A_Plugin_Tester.exe not found after install"
+            exit 1
+          }
+
+          & $tester $plugin.FullName
+          $rc = $LASTEXITCODE
+          Write-Host "125A Plugin Tester native exit code: $rc"
+
+          Get-ChildItem tester-reports -File | Sort-Object Name | ForEach-Object {
+            Write-Host "===== $($_.Name) ====="
+            Get-Content $_.FullName
+          }
+
+          if ($rc -ne 0) { exit $rc }
+
+      - name: Upload 125A Plugin Tester reports
+        if: contains(github.event.head_commit.message, '[full-qa]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mechamorph-125A-Plugin-Tester-Reports-v0.1.0
+          path: tester-reports/
+          if-no-files-found: error
+          retention-days: 7
       - name: Add prototype notes
         shell: pwsh
         run: |
