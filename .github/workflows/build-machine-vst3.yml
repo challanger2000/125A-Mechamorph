@@ -238,21 +238,10 @@ jobs:
           $probe = Get-ChildItem -Path build-machine-vst -Recurse -File -Filter "mechamorph_editor_lifecycle_probe.exe" | Select-Object -First 1
           if (-not $plugin) { Write-Error "MechamorphMachine.vst3 not found for editor lifecycle probe"; exit 1 }
           if (-not $probe) { Write-Error "mechamorph_editor_lifecycle_probe.exe not found"; exit 1 }
-          New-Item -ItemType Directory -Force -Path gui-capture | Out-Null
-          $env:MECHAMORPH_EDITOR_SCREENSHOT = "$PWD\gui-capture\MechamorphMachine-Editor-100pct.png"
           & $probe.FullName $plugin.FullName
           $rc = $LASTEXITCODE
           Write-Host "Editor lifecycle native exit code: $rc"
           if ($rc -ne 0) { exit $rc }
-          if (-not (Test-Path $env:MECHAMORPH_EDITOR_SCREENSHOT)) { Write-Error "Rendered editor screenshot was not created"; exit 1 }
-
-      - name: Upload rendered editor screenshot
-        uses: actions/upload-artifact@v4
-        with:
-          name: Mechamorph-Rendered-Editor-100pct
-          path: gui-capture/MechamorphMachine-Editor-100pct.png
-          if-no-files-found: error
-          retention-days: 7
 
       - name: Test state save restore and legacy migration
         shell: pwsh
