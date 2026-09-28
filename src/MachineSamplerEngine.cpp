@@ -137,6 +137,7 @@ const Pool* Engine::poolFor(Role role) const noexcept {
         case Role::Load: return &set_->load;
         case Role::Release: return &set_->release;
         case Role::Stop: return &set_->stop;
+        case Role::Friction: return &set_->friction;
     }
     return nullptr;
 }
@@ -400,6 +401,23 @@ void Engine::updateMachineState() noexcept {
                 static_cast<int>(holdSeconds * sampleRate_);
             stallCooldown_ =
                 static_cast<int>((2.0f + 5.0f * (1.0f - wear)) * sampleRate_);
+            spawn(Role::Friction, 0.35f + 0.45f * wear);
+        }
+    }
+
+    if (revolutionWrapped &&
+        state_ != State::Stopping &&
+        state_ != State::Stopped &&
+        stallCountdown_ <= 0) {
+        const float frictionStress =
+            std::max(0.0f, wear - 0.45f) *
+            std::max(0.0f, continuousLoad - 0.35f);
+        const float frictionProbability =
+            std::min(0.055f, 0.20f * frictionStress);
+
+        if (frictionProbability > 0.0f &&
+            rng_.uniform01() < frictionProbability) {
+            spawn(Role::Friction, 0.20f + 0.40f * frictionStress);
         }
     }
 
