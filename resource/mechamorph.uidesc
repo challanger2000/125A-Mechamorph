@@ -3,7 +3,7 @@
   <colors><color name="Background" rgba="#090A0BFF"/></colors>
   <bitmaps>
     <bitmap name="mech-faceplate" path="mechamorph-faceplate-runtime.png"/>
-    <bitmap name="mech-knob-machine" path="mechamorph-controls/knob-machine-64.png" multiframe-num-frames="64" multiframe-size="262,262" mulitframe-frames-per-row="1"/>
+    <bitmap name="mech-knob-machine" path="mechamorph-controls/knob-machine-64.png" multiframe-num-frames="64" multiframe-size="256,256" mulitframe-frames-per-row="1"/>
     <bitmap name="mech-knob-main" path="mechamorph-controls/knob-main-64.png" multiframe-num-frames="64" multiframe-size="168,168" mulitframe-frames-per-row="1"/>
     <bitmap name="mech-knob-scale" path="mechamorph-controls/knob-scale-64.png" multiframe-num-frames="64" multiframe-size="198,198" mulitframe-frames-per-row="1"/>
     <bitmap name="mech-knob-utility" path="mechamorph-controls/knob-utility-64.png" multiframe-num-frames="64" multiframe-size="90,90" mulitframe-frames-per-row="1"/>
@@ -13,19 +13,19 @@
 
     <view class="CView" custom-view-name="UIScale" origin="390,170" size="100,24"/>
 
-    <view class="CView" custom-view-name="Machine" origin="578,98" size="280,280"/>
+    <view class="CView" custom-view-name="Machine" origin="580,98" size="280,280"/>
     <view class="CView" custom-view-name="MachinePosRow1" origin="570,390" size="300,16" mouse-enabled="false"/>
     <view class="CView" custom-view-name="MachinePosRow2" origin="570,412" size="300,16" mouse-enabled="false"/>
 
-    <view class="CView" custom-view-name="PressureLamp" origin="1012,99" size="52,52" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="FrictionLamp" origin="1164,99" size="52,52" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="StallLamp" origin="1314,99" size="52,52" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="PressureLamp" origin="1012,98" size="52,52" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="FrictionLamp" origin="1162,99" size="52,52" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="StallLamp" origin="1313,99" size="52,52" mouse-enabled="false"/>
 
     <view class="CView" custom-view-name="Speed" origin="41,570" size="190,190"/>
-    <view class="CView" custom-view-name="Load" origin="276,569" size="190,190"/>
+    <view class="CView" custom-view-name="Load" origin="276,572" size="190,190"/>
     <view class="CView" custom-view-name="Action" origin="514,569" size="190,190"/>
-    <view class="CView" custom-view-name="Wear" origin="744,570" size="190,190"/>
-    <view class="CView" custom-view-name="Scale" origin="987,539" size="250,250"/>
+    <view class="CView" custom-view-name="Wear" origin="743,572" size="190,190"/>
+    <view class="CView" custom-view-name="Scale" origin="983,539" size="250,250"/>
 
     <view class="CView" custom-view-name="Body" origin="1288,463" size="118,118"/>
     <view class="CView" custom-view-name="Space" origin="1288,611" size="118,118"/>
