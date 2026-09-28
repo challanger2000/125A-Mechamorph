@@ -279,6 +279,52 @@ int main() {
         assert(retrigger.state() != State::Stopped);
     }
 
+    // Rare STALL/JAM behaviour:
+    // normal musical settings must not stall; extreme wear/load should
+    // eventually produce a sparse, deterministic stall.
+    {
+        Engine normal;
+        normal.prepare(sr);
+        normal.setSampleSet(&set);
+        Parameters np = p;
+        np.load = 0.35f;
+        np.wear = 0.40f;
+        np.action = 0.0f;
+        np.output = 0.5f;
+        normal.setParameters(np);
+        normal.start();
+
+        bool normalStalled = false;
+        float sample = 0.0f;
+        for (int i = 0; i < static_cast<int>(30.0 * sr); ++i) {
+            normal.process(&sample, 1);
+            normalStalled = normalStalled || normal.stalled();
+        }
+        assert(!normalStalled);
+
+        Engine stressed;
+        stressed.prepare(sr);
+        stressed.setSampleSet(&set);
+        Parameters sp = p;
+        sp.load = 1.0f;
+        sp.wear = 1.0f;
+        sp.action = 0.0f;
+        sp.scale = 0.75f;
+        sp.output = 0.5f;
+        stressed.setParameters(sp);
+        stressed.start();
+
+        bool stressedStalled = false;
+        for (int i = 0; i < static_cast<int>(90.0 * sr); ++i) {
+            stressed.process(&sample, 1);
+            if (stressed.stalled()) {
+                stressedStalled = true;
+                break;
+            }
+        }
+        assert(stressedStalled);
+    }
+
     std::cout << "Machine sampler engine tests PASS\n";
     return 0;
 }
