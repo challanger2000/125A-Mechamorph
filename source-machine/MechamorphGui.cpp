@@ -167,6 +167,14 @@ GuiKnob::GuiKnob(const VSTGUI::CRect& s,VSTGUI::IControlListener* l,int32_t tag,
     setTransparency(true); setWantsFocus(true);
 }
 GuiKnob::GuiKnob(const GuiKnob& o):CAnimKnob(o),style_(o.style_){}
+void GuiKnob::valueChanged(){
+    if(style_==Style::Machine){
+        const float n=std::clamp(getValueNormalized(),0.0f,1.0f);
+        const float snapped=std::round(n*5.0f)/5.0f;
+        CAnimKnob::setValueNormalized(snapped);
+    }
+    CAnimKnob::valueChanged();
+}
 void GuiKnob::draw(VSTGUI::CDrawContext* c){
     if(getBackground()!=nullptr){
         CAnimKnob::draw(c);
@@ -218,19 +226,27 @@ void GuiLabel::draw(VSTGUI::CDrawContext* c){
     setDirty(false);
 }
 
-GuiStatusLamp::GuiStatusLamp(const VSTGUI::CRect& s,Kind k):CView(s),kind_(k){setMouseEnabled(false);}
-GuiStatusLamp::GuiStatusLamp(const GuiStatusLamp& o):CView(o),kind_(o.kind_){}
+GuiStatusLamp::GuiStatusLamp(const VSTGUI::CRect& s,VSTGUI::IControlListener* l,int32_t tag,Kind k)
+:CControl(s,l,tag,nullptr),kind_(k){setMouseEnabled(false); setTransparency(true);}
+GuiStatusLamp::GuiStatusLamp(const GuiStatusLamp& o):CControl(o),kind_(o.kind_){}
 void GuiStatusLamp::draw(VSTGUI::CDrawContext* c){
     const auto r=getViewSize();
-    VSTGUI::CColor dim;
+    const float on=std::clamp(getValueNormalized(),0.0f,1.0f);
+    VSTGUI::CColor dim,bright;
     switch(kind_){
-        case Kind::Pressure: dim={64,45,14,255}; break;
-        case Kind::Friction: dim={54,52,47,255}; break;
-        default: dim={58,19,17,255}; break;
+        case Kind::Pressure: dim={64,45,14,255}; bright={255,171,48,255}; break;
+        case Kind::Friction: dim={54,52,47,255}; bright={232,225,207,255}; break;
+        default: dim={58,19,17,255}; bright={244,55,43,255}; break;
     }
     c->setDrawMode(VSTGUI::kAntiAliasing);
     radial(c,r,{95,96,94,255},{20,22,23,255});
-    auto lens=r; lens.inset(7,7); radial(c,lens,{85,76,55,255},dim);
+    auto lens=r; lens.inset(7,7);
+    const auto lerp=[&](VSTGUI::CColor a,VSTGUI::CColor b){
+        auto ch=[&](uint8_t x,uint8_t y){return static_cast<uint8_t>(std::lround(x+(y-x)*on));};
+        return VSTGUI::CColor{ch(a.red,b.red),ch(a.green,b.green),ch(a.blue,b.blue),255};
+    };
+    const auto active=lerp(dim,bright);
+    radial(c,lens,lerp({85,76,55,255},bright),active);
     c->setFrameColor({5,6,7,255}); c->setLineWidth(1.0); c->drawEllipse(r,VSTGUI::kDrawStroked);
     setDirty(false);
 }
