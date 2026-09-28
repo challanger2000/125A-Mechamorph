@@ -159,13 +159,19 @@ void GuiLogo::draw(VSTGUI::CDrawContext* c){
     setDirty(false);
 }
 
-GuiKnob::GuiKnob(const VSTGUI::CRect& s,VSTGUI::IControlListener* l,int32_t tag,Style st)
-:CAnimKnob(s,l,tag,nullptr),style_(st){
+GuiKnob::GuiKnob(const VSTGUI::CRect& s,VSTGUI::IControlListener* l,int32_t tag,Style st,
+                 VSTGUI::CBitmap* background,float defaultValue)
+:CAnimKnob(s,l,tag,background),style_(st){
     setStartAngle((float)(135.0/180.0*kPi)); setRangeAngle((float)(270.0/180.0*kPi));
+    setDefaultValue(defaultValue);
     setTransparency(true); setWantsFocus(true);
 }
 GuiKnob::GuiKnob(const GuiKnob& o):CAnimKnob(o),style_(o.style_){}
 void GuiKnob::draw(VSTGUI::CDrawContext* c){
+    if(getBackground()!=nullptr){
+        CAnimKnob::draw(c);
+        return;
+    }
     const auto r=getViewSize(); const auto center=r.getCenter();
     const double v=std::clamp((double)getValueNormalized(),0.0,1.0);
     const double radius=std::min(r.getWidth(),r.getHeight())*.36;
