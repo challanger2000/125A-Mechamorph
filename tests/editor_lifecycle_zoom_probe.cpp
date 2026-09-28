@@ -56,36 +56,46 @@ bool saveWindowClientPng(HWND hwnd, const std::wstring& path) {
     const int height=rc.bottom-rc.top;
     if(width<=0 || height<=0) return false;
 
-    HDC src=GetDC(hwnd);
-    if(!src) return false;
-    HDC mem=CreateCompatibleDC(src);
-    HBITMAP bitmap=mem ? CreateCompatibleBitmap(src,width,height) : nullptr;
+    POINT origin{0,0};
+    if(!ClientToScreen(hwnd,&origin)) return false;
+
+    HDC screen=GetDC(nullptr);
+    if(!screen) return false;
+    HDC mem=CreateCompatibleDC(screen);
+    HBITMAP bitmap=mem ? CreateCompatibleBitmap(screen,width,height) : nullptr;
     if(!mem || !bitmap) {
         if(bitmap) DeleteObject(bitmap);
         if(mem) DeleteDC(mem);
-        ReleaseDC(hwnd,src);
+        ReleaseDC(nullptr,screen);
         return false;
     }
+
     HGDIOBJ old=SelectObject(mem,bitmap);
-    BOOL rendered=PrintWindow(hwnd,mem,PW_CLIENTONLY);
-    if(!rendered)
-        rendered=BitBlt(mem,0,0,width,height,src,0,0,SRCCOPY|CAPTUREBLT);
+    const BOOL rendered=BitBlt(mem,0,0,width,height,screen,origin.x,origin.y,SRCCOPY|CAPTUREBLT);
 
     BITMAPINFO info{};
     info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);
     info.bmiHeader.biWidth=width;
     info.bmiHeader.biHeight=-height;
     info.bmiHeader.biPlanes=1;
-    info.bmiHeader.biBitCount=32;
+    info.bmiHeader.biBitCount=24;
     info.bmiHeader.biCompression=BI_RGB;
-    std::vector<BYTE> pixels(static_cast<size_t>(width)*static_cast<size_t>(height)*4u);
+    const UINT stride=((static_cast<UINT>(width)*24u+31u)/32u)*4u;
+    std::vector<BYTE> pixels(static_cast<size_t>(stride)*static_cast<size_t>(height));
     const int rows=rendered ? GetDIBits(mem,bitmap,0,static_cast<UINT>(height),pixels.data(),&info,DIB_RGB_COLORS) : 0;
 
     SelectObject(mem,old);
     DeleteObject(bitmap);
     DeleteDC(mem);
-    ReleaseDC(hwnd,src);
+    ReleaseDC(nullptr,screen);
     if(rows!=height) return false;
+
+    BYTE minValue=255, maxValue=0;
+    for(BYTE value:pixels) {
+        minValue=std::min(minValue,value);
+        maxValue=std::max(maxValue,value);
+    }
+    if(maxValue-minValue<8) return false;
 
     IWICImagingFactory* factory=nullptr;
     IWICStream* stream=nullptr;
@@ -100,10 +110,10 @@ bool saveWindowClientPng(HWND hwnd, const std::wstring& path) {
     if(SUCCEEDED(hr)) hr=encoder->CreateNewFrame(&frame,&props);
     if(SUCCEEDED(hr)) hr=frame->Initialize(props);
     if(SUCCEEDED(hr)) hr=frame->SetSize(static_cast<UINT>(width),static_cast<UINT>(height));
-    WICPixelFormatGUID format=GUID_WICPixelFormat32bppBGRA;
+    WICPixelFormatGUID format=GUID_WICPixelFormat24bppBGR;
     if(SUCCEEDED(hr)) hr=frame->SetPixelFormat(&format);
-    if(SUCCEEDED(hr) && format!=GUID_WICPixelFormat32bppBGRA) hr=E_FAIL;
-    if(SUCCEEDED(hr)) hr=frame->WritePixels(static_cast<UINT>(height),static_cast<UINT>(width*4),static_cast<UINT>(pixels.size()),pixels.data());
+    if(SUCCEEDED(hr) && format!=GUID_WICPixelFormat24bppBGR) hr=E_FAIL;
+    if(SUCCEEDED(hr)) hr=frame->WritePixels(static_cast<UINT>(height),stride,static_cast<UINT>(pixels.size()),pixels.data());
     if(SUCCEEDED(hr)) hr=frame->Commit();
     if(SUCCEEDED(hr)) hr=encoder->Commit();
 
