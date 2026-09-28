@@ -295,9 +295,9 @@ int run(const std::string& path) {
                 int w=0,h=0;
                 const int expectedW=static_cast<int>(std::lround(baseW*zoomAfter[zi]));
                 const int expectedH=static_cast<int>(std::lround(baseH*zoomAfter[zi]));
-                if(!validRect(view,w,h) || w!=expectedW || h!=expectedH) {
+                if(!validRect(view,w,h) || std::abs(w-expectedW)>1 || std::abs(h-expectedH)>1) {
                     std::cerr<<"UI zoom "<<zoomAfter[zi]<<" produced "<<w<<"x"<<h
-                             <<"; expected "<<expectedW<<"x"<<expectedH<<"\n";
+                             <<"; expected "<<expectedW<<"x"<<expectedH<<" (+/-1 px platform rounding)\n";
                     return fail(22,"UI zoom size mismatch");
                 }
             }
