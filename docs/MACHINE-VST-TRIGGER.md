@@ -33,3 +33,5 @@ Verify INTRICATE rename and sparse STALL/JAM behavior.
 Verify INTRICATE + FRICTION/SQUEAL/SCRAPE stress behavior and rare-event QA.
 
 Retry FRICTION build after robust CC0 scrape file iteration fix.
+
+Verify PRESSURE role with CC0 steam hisses and sparse load-driven QA.
