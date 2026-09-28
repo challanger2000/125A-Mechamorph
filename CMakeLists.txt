@@ -183,7 +183,7 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
         else()
             message(FATAL_ERROR "Unexpected 125A branding fill: ${MECHAMORPH_BRANDING_FILL}")
         endif()
-        string(APPEND MECHAMORPH_BRANDING_PATHS "    {\\\"${MECHAMORPH_BRANDING_D}\\\", ${MECHAMORPH_BRANDING_RED}},\\n")
+        string(APPEND MECHAMORPH_BRANDING_PATHS "    {\"${MECHAMORPH_BRANDING_D}\", ${MECHAMORPH_BRANDING_RED}},\n")
     endforeach()
     configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/source-machine/branding_master.h.in"
