@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdint>
+#include <utility>
 
 namespace MechamorphMachine {
 namespace {
