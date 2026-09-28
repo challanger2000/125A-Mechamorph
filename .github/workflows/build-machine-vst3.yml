@@ -247,7 +247,7 @@ jobs:
             "",
             "Instrument prototype - no audio input required.",
             "",
-            "MIDI: Any Note On starts the machine. It stops when all held notes are released.",
+            "MIDI: Any positive Note On retriggers the complete machine cycle. Only the matching Note Off for the latest trigger stops that cycle.",
             "",
             "Parameters: Machine, Speed, Load, Action, Wear, Scale, Body, Space, Output.",
             "",
