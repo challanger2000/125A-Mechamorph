@@ -122,6 +122,8 @@ void Engine::reset() noexcept {
     stopCountdown_ = 0;
     stallCountdown_ = 0;
     stallCooldown_ = 0;
+    stallEvents_ = 0;
+    frictionEvents_ = 0;
     rng_.seed(0x125A4D414348494EULL);
     for (auto& v : voices_) v.reset();
     for (auto& e : pending_) e = {};
@@ -401,6 +403,8 @@ void Engine::updateMachineState() noexcept {
                 static_cast<int>(holdSeconds * sampleRate_);
             stallCooldown_ =
                 static_cast<int>((2.0f + 5.0f * (1.0f - wear)) * sampleRate_);
+            ++stallEvents_;
+            ++frictionEvents_;
             spawn(Role::Friction, 0.35f + 0.45f * wear);
         }
     }
@@ -417,6 +421,7 @@ void Engine::updateMachineState() noexcept {
 
         if (frictionProbability > 0.0f &&
             rng_.uniform01() < frictionProbability) {
+            ++frictionEvents_;
             spawn(Role::Friction, 0.20f + 0.40f * frictionStress);
         }
     }
