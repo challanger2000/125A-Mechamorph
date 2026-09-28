@@ -58,6 +58,40 @@ jobs:
               "research-sources/wav/$name.wav"
           done
 
+      - name: Download CC0 friction sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p friction-src friction-pack
+
+          curl --fail --location --retry 2 \
+            "https://opengameart.org/sites/default/files/squeakyclick1.wav" \
+            -o friction-src/squeakyclick1.wav
+          curl --fail --location --retry 2 \
+            "https://opengameart.org/sites/default/files/squeakyclick2.wav" \
+            -o friction-src/squeakyclick2.wav
+          curl --fail --location --retry 2 \
+            "https://opengameart.org/sites/default/files/scrapes.zip" \
+            -o friction-src/scrapes.zip
+
+          unzip -q friction-src/scrapes.zip -d friction-pack
+
+          ffmpeg -hide_banner -loglevel error -y \
+            -i friction-src/squeakyclick1.wav -ac 1 -ar 48000 -c:a pcm_s16le \
+            friction-src/friction__oga_squeakyclick1.wav
+          ffmpeg -hide_banner -loglevel error -y \
+            -i friction-src/squeakyclick2.wav -ac 1 -ar 48000 -c:a pcm_s16le \
+            friction-src/friction__oga_squeakyclick2.wav
+
+          i=1
+          while IFS= read -r file; do
+            [ "$i" -gt 6 ] && break
+            printf -v tag "%02d" "$i"
+            ffmpeg -hide_banner -loglevel error -y \
+              -i "$file" -ac 1 -ar 48000 -c:a pcm_s16le \
+              "friction-src/friction__oga_scrape_${tag}.wav"
+            i=$((i+1))
+          done < <(find friction-pack -type f \( -iname "*.wav" -o -iname "*.ogg" \) | sort)
       - name: Build curated sample set
         shell: bash
         run: |
@@ -69,6 +103,8 @@ jobs:
           python3 tools/build_machine_sample_set.py \
             docs/MACHINE-SAMPLE-MANIFEST-02.csv \
             research-sources/wav machine-set
+
+          cp friction-src/friction__*.wav machine-set/
 
           python3 tools/generate_machine_variants.py \
             machine-set machine-set
