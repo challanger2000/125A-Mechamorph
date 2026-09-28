@@ -34,6 +34,8 @@ int fail(int code, const std::string& message) {
     return code;
 }
 
+void pump(DWORD ms);
+
 LRESULT CALLBACK wndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
     return DefWindowProcW(h,m,w,l);
 }
@@ -71,8 +73,8 @@ bool saveWindowClientPng(HWND hwnd, const std::wstring& path) {
 
     RECT work{};
     if(!SystemParametersInfoW(SPI_GETWORKAREA,0,&work,0)) return false;
-    const int tileWidth=std::max(1,work.right-work.left);
-    const int tileHeight=std::max(1,work.bottom-work.top);
+    const int tileWidth=std::max<int>(1,static_cast<int>(work.right-work.left));
+    const int tileHeight=std::max<int>(1,static_cast<int>(work.bottom-work.top));
 
     HDC screen=GetDC(nullptr);
     if(!screen) return false;
