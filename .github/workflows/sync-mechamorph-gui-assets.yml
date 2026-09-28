@@ -1,0 +1,93 @@
+name: Sync Mechamorph GUI Assets
+
+on:
+  push:
+    branches:
+      - v0.1.0
+    paths:
+      - '.github/workflows/sync-mechamorph-gui-assets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v0.1.0
+
+      - name: Fetch approved Knob Designer assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          src_commit="2a779df"
+          # Resolve the current v0.2.0 asset commit once, then pin exact blob contents through SHA256 manifest below.
+          base="https://raw.githubusercontent.com/challanger2000/125A-Knob-Designer/v0.2.0/generated-assets/mechamorph-v0.1.0"
+          mkdir -p resource/mechamorph-controls
+          files=(
+            main_170px_96f_scale-1x.png
+            main_213px_96f_scale-1p25x.png
+            main_255px_96f_scale-1p5x.png
+            main_340px_96f_scale-2x.png
+            scale_220px_72f_scale-1x.png
+            scale_275px_72f_scale-1p25x.png
+            scale_330px_72f_scale-1p5x.png
+            scale_440px_72f_scale-2x.png
+            utility_104px_128f_scale-1x.png
+            utility_130px_128f_scale-1p25x.png
+            utility_156px_128f_scale-1p5x.png
+            utility_208px_128f_scale-2x.png
+            machine_250px_6f_scale-1x.png
+            machine_313px_6f_scale-1p25x.png
+            machine_375px_6f_scale-1p5x.png
+            machine_500px_6f_scale-2x.png
+          )
+          for file in "${files[@]}"; do
+            curl --fail --location --retry 3 "$base/$file" -o "resource/mechamorph-controls/$file"
+            test -s "resource/mechamorph-controls/$file"
+          done
+          curl --fail --location --retry 3 "$base/manifest.json" -o resource/mechamorph-controls/manifest.json
+
+      - name: Verify source manifest and PNG headers
+        shell: python
+        run: |
+          import json, struct
+          from pathlib import Path
+          root=Path("resource/mechamorph-controls")
+          m=json.loads((root/"manifest.json").read_text())
+          expect={
+            "main":(170,96,[170,213,255,340]),
+            "scale":(220,72,[220,275,330,440]),
+            "utility":(104,128,[104,130,156,208]),
+            "machine":(250,6,[250,313,375,500]),
+          }
+          for key,(base,frames,widths) in expect.items():
+            c=m["controls"][key]
+            assert c["baseFrame"]==[base,base]
+            assert c["frameCount"]==frames
+            assert [x["frameWidth"] for x in c["outputs"]]==widths
+            for x in c["outputs"]:
+              p=root/x["file"]
+              data=p.read_bytes()
+              assert data[:8]==b"\x89PNG\r\n\x1a\n"
+              w,h=struct.unpack(">II",data[16:24])
+              assert w==x["frameWidth"],(p,w,x["frameWidth"])
+              assert h==x["frameHeight"]*frames,(p,h,x["frameHeight"]*frames)
+          print("Mechamorph GUI asset sync PASS")
+
+      - name: Commit approved assets
+        shell: bash
+        run: |
+          git config user.name "125A GUI Asset Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add resource/mechamorph-controls
+          if git diff --cached --quiet; then
+            echo "GUI assets unchanged."
+            exit 0
+          fi
+          git commit -m "Sync approved Mechamorph GUI filmstrips [skip ci]"
+          git push origin HEAD:v0.1.0
