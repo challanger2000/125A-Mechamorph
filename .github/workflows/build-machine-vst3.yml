@@ -2,6 +2,18 @@ name: Build Machine Instrument VST3
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - v0.1.0
+    paths:
+      - ".github/workflows/build-machine-vst3.yml"
+      - "CMakeLists.txt"
+      - "source-machine/**"
+      - "include/**"
+      - "src/**"
+      - "resource/**"
+      - "scripts/**"
+      - "tests/**"
 
 jobs:
   prepare-samples:
