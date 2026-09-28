@@ -37,6 +37,7 @@ bool addClip(
         case Role::Load:    return set.load.add(clip);
         case Role::Release: return set.release.add(clip);
         case Role::Stop:    return set.stop.add(clip);
+        case Role::Friction:return set.friction.add(clip);
     }
     return false;
 }
