@@ -1,6 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <vstgui-ui-description version="1">
   <colors><color name="Background" rgba="#090A0BFF"/></colors>
+  <bitmaps>
+    <bitmap name="mech-machine" path="mechamorph-controls/machine.png" multiframe-num-frames="6" multiframe-size="250,250" mulitframe-frames-per-row="1"/>
+    <bitmap name="mech-machine#1.25x" path="mechamorph-controls/machine#1.25x.png"/>
+    <bitmap name="mech-machine#1.5x" path="mechamorph-controls/machine#1.5x.png"/>
+    <bitmap name="mech-machine#2x" path="mechamorph-controls/machine#2x.png"/>
+    <bitmap name="mech-main" path="mechamorph-controls/main.png" multiframe-num-frames="96" multiframe-size="170,170" mulitframe-frames-per-row="1"/>
+    <bitmap name="mech-main#1.25x" path="mechamorph-controls/main#1.25x.png"/>
+    <bitmap name="mech-main#1.5x" path="mechamorph-controls/main#1.5x.png"/>
+    <bitmap name="mech-main#2x" path="mechamorph-controls/main#2x.png"/>
+    <bitmap name="mech-scale" path="mechamorph-controls/scale.png" multiframe-num-frames="72" multiframe-size="220,220" mulitframe-frames-per-row="1"/>
+    <bitmap name="mech-scale#1.25x" path="mechamorph-controls/scale#1.25x.png"/>
+    <bitmap name="mech-scale#1.5x" path="mechamorph-controls/scale#1.5x.png"/>
+    <bitmap name="mech-scale#2x" path="mechamorph-controls/scale#2x.png"/>
+    <bitmap name="mech-utility" path="mechamorph-controls/utility.png" multiframe-num-frames="128" multiframe-size="104,104" mulitframe-frames-per-row="1"/>
+    <bitmap name="mech-utility#1.25x" path="mechamorph-controls/utility#1.25x.png"/>
+    <bitmap name="mech-utility#1.5x" path="mechamorph-controls/utility#1.5x.png"/>
+    <bitmap name="mech-utility#2x" path="mechamorph-controls/utility#2x.png"/>
+  </bitmaps>
   <template name="view" class="CViewContainer" origin="0,0" size="1440,900" transparent="false" background-color="Background">
     <view class="CView" custom-view-name="Faceplate" origin="0,0" size="1440,900" mouse-enabled="false"/>
 
