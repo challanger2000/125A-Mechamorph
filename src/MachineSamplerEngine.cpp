@@ -124,6 +124,8 @@ void Engine::reset() noexcept {
     stallCooldown_ = 0;
     stallEvents_ = 0;
     frictionEvents_ = 0;
+    pressureEvents_ = 0;
+    pressureCooldown_ = 0;
     rng_.seed(0x125A4D414348494EULL);
     for (auto& v : voices_) v.reset();
     for (auto& e : pending_) e = {};
