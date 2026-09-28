@@ -172,10 +172,10 @@ VSTGUI::CView* Controller::createCustomView(VSTGUI::UTF8StringPtr name,
     if(std::strcmp(name,"UIScale")==0) return new GuiScale(r,editor);
 
     if(auto* v=knob("Machine",kMachine,GuiKnob::Style::Machine,"mech-static-machine",0.00f)) return v;
-    if(auto* v=knob("Speed",kSpeed,GuiKnob::Style::Main,"mech-static-main",0.32f)) return v;
-    if(auto* v=knob("Load",kLoad,GuiKnob::Style::Main,"mech-static-main",0.20f)) return v;
-    if(auto* v=knob("Action",kAction,GuiKnob::Style::Main,"mech-static-main",0.48f)) return v;
-    if(auto* v=knob("Wear",kWear,GuiKnob::Style::Main,"mech-static-main",0.18f)) return v;
+    if(auto* v=knob("Speed",kSpeed,GuiKnob::Style::Main,"mech-main-film",0.32f)) return v;
+    if(auto* v=knob("Load",kLoad,GuiKnob::Style::Main,"mech-main-film",0.20f)) return v;
+    if(auto* v=knob("Action",kAction,GuiKnob::Style::Main,"mech-main-film",0.48f)) return v;
+    if(auto* v=knob("Wear",kWear,GuiKnob::Style::Main,"mech-main-film",0.18f)) return v;
     if(auto* v=knob("Scale",kScale,GuiKnob::Style::Scale,"mech-static-scale",0.35f)) return v;
     if(auto* v=knob("Body",kBody,GuiKnob::Style::Utility,"mech-static-utility",0.28f)) return v;
     if(auto* v=knob("Space",kSpace,GuiKnob::Style::Utility,"mech-static-utility",0.18f)) return v;

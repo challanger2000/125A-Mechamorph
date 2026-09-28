@@ -143,7 +143,7 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
     const double imageSize=
         style_==Style::Machine ? 250.0 :
         style_==Style::Scale ? 220.0 :
-        style_==Style::Utility ? 104.0 : 170.0;
+        style_==Style::Utility ? 104.0 : 125.0;
     const double imageRadius=imageSize*0.5;
     const VSTGUI::CRect imageRect{
         center.x-imageRadius,center.y-imageRadius,
@@ -170,33 +170,47 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
         c->drawEllipse(gr,VSTGUI::kDrawStroked);
     }
 
+    bool bakedIndicator=false;
     if(auto* bitmap=getDrawBackground()){
-        bitmap->draw(c,imageRect,{0,0});
+        if(style_==Style::Main){
+            if(auto* mfb=dynamic_cast<VSTGUI::CMultiFrameBitmap*>(bitmap)){
+                const auto frame=mfb->normalizedValueToFrameIndex((float)v);
+                const VSTGUI::CPoint pos{center.x-imageRadius,center.y-imageRadius};
+                mfb->drawFrame(c,frame,pos);
+                bakedIndicator=true;
+            } else {
+                bitmap->draw(c,imageRect,{0,0});
+            }
+        } else {
+            bitmap->draw(c,imageRect,{0,0});
+        }
     } else {
         radial(c,imageRect,{70,72,73,255},{18,20,21,255});
     }
 
-    // The indicator is a VSTGUI layer, not baked into the bitmap.
-    // MACHINE snaps to the existing six list values in valueChanged().
-    const double angle=(135.0+270.0*v)*kPi/180.0;
-    const double p1=imageRadius*0.50;
-    const double p2=imageRadius*0.82;
-    const VSTGUI::CPoint a{
-        center.x+std::cos(angle)*p1,
-        center.y+std::sin(angle)*p1};
-    const VSTGUI::CPoint b{
-        center.x+std::cos(angle)*p2,
-        center.y+std::sin(angle)*p2};
+    // MAIN uses the indicator baked into the JKnobMan filmstrip.
+    // Other styles keep the separate VSTGUI indicator.
+    if(!bakedIndicator){
+        const double angle=(135.0+270.0*v)*kPi/180.0;
+        const double p1=imageRadius*0.50;
+        const double p2=imageRadius*0.82;
+        const VSTGUI::CPoint a{
+            center.x+std::cos(angle)*p1,
+            center.y+std::sin(angle)*p1};
+        const VSTGUI::CPoint b{
+            center.x+std::cos(angle)*p2,
+            center.y+std::sin(angle)*p2};
 
-    c->setFrameColor({0,0,0,190});
-    c->setLineWidth(style_==Style::Utility?4.0:5.0);
-    c->drawLine(a,b);
-    c->setFrameColor({255,145,18,255});
-    c->setLineWidth(style_==Style::Utility?2.6:3.4);
-    c->drawLine(a,b);
-    c->setFrameColor({255,226,132,255});
-    c->setLineWidth(style_==Style::Utility?1.0:1.25);
-    c->drawLine(a,b);
+        c->setFrameColor({0,0,0,190});
+        c->setLineWidth(style_==Style::Utility?4.0:5.0);
+        c->drawLine(a,b);
+        c->setFrameColor({255,145,18,255});
+        c->setLineWidth(style_==Style::Utility?2.6:3.4);
+        c->drawLine(a,b);
+        c->setFrameColor({255,226,132,255});
+        c->setLineWidth(style_==Style::Utility?1.0:1.25);
+        c->drawLine(a,b);
+    }
 
     setDirty(false);
 }

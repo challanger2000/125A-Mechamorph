@@ -31,12 +31,17 @@ expected={
     "mech-faceplate":"mechamorph-faceplate.png",
     "mech-static-machine":"mechamorph-controls/knob-static-250.png",
     "mech-static-main":"mechamorph-controls/knob-static-170.png",
+    "mech-main-film":"mechamorph-controls/main-knob-64.png",
     "mech-static-scale":"mechamorph-controls/knob-static-220.png",
     "mech-static-utility":"mechamorph-controls/knob-static-104.png",
 }
 assert set(bitmap_nodes)==set(expected),("unexpected bitmap nodes",set(bitmap_nodes)^set(expected))
 for name,path in expected.items():
     assert bitmap_nodes[name].attrib.get("path")==path,(name,bitmap_nodes[name].attrib.get("path"),path)
+film=bitmap_nodes["mech-main-film"]
+assert film.attrib.get("multiframe-num-frames")=="64"
+assert film.attrib.get("multiframe-size")=="125,125"
+assert film.attrib.get("mulitframe-frames-per-row")=="1"
 
 def png_size(path):
     data=path.read_bytes()[:24]
@@ -48,6 +53,7 @@ asset_sizes={
     ROOT/"resource/mechamorph-controls/knob-static-250.png":(250,250),
     ROOT/"resource/mechamorph-controls/knob-static-220.png":(220,220),
     ROOT/"resource/mechamorph-controls/knob-static-170.png":(170,170),
+    ROOT/"resource/mechamorph-controls/main-knob-64.png":(125,8000),
     ROOT/"resource/mechamorph-controls/knob-static-104.png":(104,104),
 }
 for path,size in asset_sizes.items():
