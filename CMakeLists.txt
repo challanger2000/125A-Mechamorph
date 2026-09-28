@@ -170,6 +170,9 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
         source-machine/processor.cpp
         source-machine/controller.h
         source-machine/controller.cpp
+        source-machine/editor.cpp
+        source-machine/MechamorphGui.h
+        source-machine/MechamorphGui.cpp
         source-machine/MachineSpaceEngine.h
         source-machine/MachineSpaceEngine.cpp
         source-machine/entry.cpp
@@ -185,7 +188,8 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
         "${MECHAMORPH_MACHINE_GENERATED_DIR}"
     )
 
-    target_link_libraries(MechamorphMachine PRIVATE sdk)
+    target_link_libraries(MechamorphMachine PRIVATE sdk vstgui_support)
+    smtg_target_add_plugin_resources(MechamorphMachine RESOURCES "resource/mechamorph.uidesc")
     target_compile_features(MechamorphMachine PRIVATE cxx_std_17)
     smtg_target_configure_version_file(MechamorphMachine)
 endif()
