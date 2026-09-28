@@ -64,6 +64,25 @@ tresult PLUGIN_API Processor::setupProcessing(ProcessSetup& setup) {
     return kResultOk;
 }
 
+tresult PLUGIN_API Processor::setProcessing(TBool state) {
+    if (state) {
+        // VST3 processing can be stopped/restarted without a new setActive().
+        // Reset only preallocated realtime state here; no allocation or I/O.
+        transportWasPlaying_ = false;
+        activeNoteId_ = -1;
+        activePitch_ = -1;
+        engine_.reset();
+        engine_.setSampleSet(assets_.profile(machineIndex_));
+        spaceEngine_.reset();
+        statusInitialized_ = false;
+        lastPressureStatus_ = false;
+        lastFrictionStatus_ = false;
+        lastStallStatus_ = false;
+        updateEngineParameters();
+    }
+    return kResultOk;
+}
+
 tresult PLUGIN_API Processor::setActive(TBool state) {
     if (state) {
         transportWasPlaying_ = false;
