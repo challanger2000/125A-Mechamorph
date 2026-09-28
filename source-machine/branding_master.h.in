@@ -1,0 +1,19 @@
+#pragma once
+
+#include <cstddef>
+
+namespace MechamorphMachine::Branding {
+
+struct MasterPathSource {
+    const char* d;
+    bool red;
+};
+
+// Generated at configure time directly from resource/125A_Logo_Master_FINAL.svg.
+// Each entry is one original SVG path. No rasterization or redraw.
+inline constexpr MasterPathSource kMasterPaths[] = {
+@MECHAMORPH_BRANDING_PATHS@};
+
+inline constexpr std::size_t kMasterPathCount = @MECHAMORPH_BRANDING_PATH_COUNT@;
+
+} // namespace MechamorphMachine::Branding
