@@ -448,6 +448,7 @@ tresult PLUGIN_API Processor::setState(IBStream* state) {
     machineParams_.output = std::clamp(output, 0.0f, 1.0f);
 
     applyMachineProfile(false);
+    spaceEngine_.reset();
     updateEngineParameters();
     return kResultOk;
 }
