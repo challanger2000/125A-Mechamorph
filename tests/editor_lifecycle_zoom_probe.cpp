@@ -6,6 +6,7 @@
 #include "pluginterfaces/vst/ivstcomponent.h"
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 #include "pluginterfaces/vst/ivstmessage.h"
+#include "pluginterfaces/vst/vsttypes.h"
 #include "public.sdk/source/vst/hosting/hostclasses.h"
 #include "public.sdk/source/vst/hosting/module.h"
 
