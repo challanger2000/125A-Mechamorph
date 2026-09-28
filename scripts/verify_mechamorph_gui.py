@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+import json
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+ROOT=Path(__file__).resolve().parents[1]
+layout=json.loads((ROOT/"resource/mechamorph.layout.json").read_text(encoding="utf-8"))
+root=ET.parse(ROOT/"resource/mechamorph.uidesc").getroot()
+tpl=root.find("template")
+assert tpl is not None
+assert tpl.attrib.get("size")=="1440,900"
+views=[v for v in tpl if v.attrib.get("custom-view-name")]
+names=[v.attrib["custom-view-name"] for v in views]
+required=[
+ "Faceplate","BrandTitle","BrandSubtitle","UIScale","MachineLabel","Machine",
+ "PressureLamp","FrictionLamp","StallLamp","PressureLabel","FrictionLabel","StallLabel",
+ "Speed","Load","Action","Wear","Scale","Body","Space","Output",
+ "SpeedLabel","LoadLabel","ActionLabel","WearLabel","ScaleLabel","BodyLabel","SpaceLabel","OutputLabel"
+]
+missing=[n for n in required if n not in names]
+assert not missing,missing
+assert len(names)==len(set(names)),"duplicate custom view names"
+for v in views:
+    x,y=map(int,v.attrib["origin"].split(","))
+    w,h=map(int,v.attrib["size"].split(","))
+    assert x>=0 and y>=0 and x+w<=1440 and y+h<=900,(v.attrib["custom-view-name"],x,y,w,h)
+
+def box(n):
+    v=next(v for v in views if v.attrib["custom-view-name"]==n)
+    x,y=map(int,v.attrib["origin"].split(",")); w,h=map(int,v.attrib["size"].split(","))
+    return x,y,w,h
+
+# Permanent symmetry/alignment contracts.
+for n,cx in [("Speed",143),("Load",385),("Action",627),("Wear",869),("Scale",1154),
+             ("Body",1368),("Space",1368),("Output",1368),("Machine",720)]:
+    x,y,w,h=box(n)
+    assert x+w/2==cx,(n,"axis mismatch")
+
+for knob,label in [("Speed","SpeedLabel"),("Load","LoadLabel"),("Action","ActionLabel"),
+                   ("Wear","WearLabel"),("Scale","ScaleLabel"),("Body","BodyLabel"),
+                   ("Space","SpaceLabel"),("Output","OutputLabel")]:
+    kx,ky,kw,kh=box(knob); lx,ly,lw,lh=box(label)
+    assert abs((kx+kw/2)-(lx+lw/2))<=1,(knob,label,"label not centered")
+
+print("Mechamorph GUI geometry contract PASS")
