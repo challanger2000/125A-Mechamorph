@@ -567,6 +567,14 @@ bool Engine::hasActiveRole(Role role) const noexcept {
     return false;
 }
 
+bool Engine::pressureActive() const noexcept {
+    return hasActiveRole(Role::Pressure);
+}
+
+bool Engine::frictionActive() const noexcept {
+    return hasActiveRole(Role::Friction);
+}
+
 float Engine::outputGain() const noexcept {
     const float db = 24.0f * (clamp01(params_.output) - 0.5f);
     return std::pow(10.0f, db / 20.0f);
