@@ -151,25 +151,6 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
 
     c->setDrawMode(VSTGUI::kAntiAliasing);
 
-    // Amber under-light: deliberately offset downwards so the metal appears
-    // illuminated from underneath rather than outlined with a neon border.
-    struct GlowRing { double extra; double yOffset; double width; uint8_t alpha; };
-    static constexpr GlowRing glow[]={
-        {9.0,4.0,10.0,26},
-        {6.0,3.0,6.0,62},
-        {3.0,2.0,2.2,190}
-    };
-    for(const auto& g:glow){
-        VSTGUI::CRect gr{
-            center.x-imageRadius-g.extra,
-            center.y-imageRadius-g.extra+g.yOffset,
-            center.x+imageRadius+g.extra,
-            center.y+imageRadius+g.extra+g.yOffset};
-        c->setFrameColor({255,142,20,g.alpha});
-        c->setLineWidth(g.width);
-        c->drawEllipse(gr,VSTGUI::kDrawStroked);
-    }
-
     bool bakedIndicator=false;
     if(auto* bitmap=getDrawBackground()){
         if(auto* mfb=dynamic_cast<VSTGUI::CMultiFrameBitmap*>(bitmap)){
