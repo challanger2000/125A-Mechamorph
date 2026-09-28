@@ -27,7 +27,8 @@ public:
 class GuiKnob final : public VSTGUI::CAnimKnob {
 public:
     enum class Style { Main, Scale, Utility, Machine };
-    GuiKnob(const VSTGUI::CRect& size, VSTGUI::IControlListener* listener, int32_t tag, Style style);
+    GuiKnob(const VSTGUI::CRect& size, VSTGUI::IControlListener* listener, int32_t tag,
+            Style style, VSTGUI::CBitmap* background, float defaultValue);
     GuiKnob(const GuiKnob& other);
     VSTGUI::CBaseObject* newCopy() const override { return new GuiKnob(*this); }
     void draw(VSTGUI::CDrawContext* context) override;
