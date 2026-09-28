@@ -1,14 +1,19 @@
 #include "MechamorphGui.h"
+#include "branding_master.h"
 #include "vstgui/plugin-bindings/vst3editor.h"
 #include "vstgui/lib/cdrawcontext.h"
 #include "vstgui/lib/cgradient.h"
 #include "vstgui/lib/cgraphicspath.h"
 #include "vstgui/lib/cfont.h"
 #include <algorithm>
+#include <cctype>
+#include <cstdlib>
 #include <cmath>
 #include <cstdio>
 #include <cstdint>
 #include <utility>
+#include <string_view>
+#include <vector>
 
 namespace MechamorphMachine {
 namespace {
@@ -16,6 +21,8 @@ constexpr double kPi=3.14159265358979323846;
 constexpr VSTGUI::CColor kPanelTop{67,68,68,255};
 constexpr VSTGUI::CColor kPanelBottom{20,22,23,255};
 constexpr VSTGUI::CColor kIvory{224,215,196,255};
+constexpr VSTGUI::CColor kLogoSilver{217,217,217,255};
+constexpr VSTGUI::CColor kLogoRed{215,25,32,255};
 
 void fillRound(VSTGUI::CDrawContext* c,const VSTGUI::CRect& r,double radius,
                VSTGUI::CColor a,VSTGUI::CColor b) {
@@ -35,6 +42,39 @@ void radial(VSTGUI::CDrawContext* c,const VSTGUI::CRect& r,VSTGUI::CColor a,VSTG
     auto* g=VSTGUI::CGradient::create(0.0,1.0,a,b);
     if(g){ c->fillRadialGradient(p,*g,r.getCenter(),std::max(r.getWidth(),r.getHeight())*.55,{-r.getWidth()*.12,-r.getHeight()*.15}); g->forget(); }
     p->forget();
+}
+
+struct LogoSubpath { std::vector<VSTGUI::CPoint> points; };
+struct LogoPath { std::vector<LogoSubpath> subpaths; bool red{false}; };
+
+std::vector<LogoPath> parseMasterLogo(){
+    std::vector<LogoPath> result;
+    result.reserve(Branding::kMasterPathCount);
+    for(const auto& source:Branding::kMasterPaths){
+        const std::string_view d{source.d};
+        LogoPath path; path.red=source.red;
+        const char* p=d.data(); const char* end=d.data()+d.size();
+        char command=0; LogoSubpath* current=nullptr;
+        while(p<end){
+            while(p<end&&(std::isspace(static_cast<unsigned char>(*p))||*p==',')) ++p;
+            if(p>=end) break;
+            if(std::isalpha(static_cast<unsigned char>(*p))){
+                command=*p++;
+                if(command=='Z'||command=='z'){ command=0; current=nullptr; continue; }
+            }
+            if(command!='M'&&command!='m'&&command!='L'&&command!='l'){ ++p; continue; }
+            char* next=nullptr;
+            const double x=std::strtod(p,&next); if(next==p||next>end) break; p=next;
+            while(p<end&&(std::isspace(static_cast<unsigned char>(*p))||*p==',')) ++p;
+            const double y=std::strtod(p,&next); if(next==p||next>end) break; p=next;
+            if(command=='M'||command=='m'){
+                path.subpaths.emplace_back(); current=&path.subpaths.back();
+                current->points.emplace_back(x,y); command=(command=='M')?'L':'l';
+            } else if(current) current->points.emplace_back(x,y);
+        }
+        if(!path.subpaths.empty()) result.emplace_back(std::move(path));
+    }
+    return result;
 }
 }
 
@@ -90,6 +130,32 @@ void GuiFaceplate::draw(VSTGUI::CDrawContext* c){
     // restrained brushed-metal texture
     c->setFrameColor({235,235,229,10}); c->setLineWidth(1.0);
     for(int y=18;y<884;y+=6)c->drawLine({14.0,(double)y},{1426.0,(double)y});
+    setDirty(false);
+}
+
+GuiLogo::GuiLogo(const VSTGUI::CRect& s):CView(s){setMouseEnabled(false);}
+GuiLogo::GuiLogo(const GuiLogo& o):CView(o){}
+void GuiLogo::draw(VSTGUI::CDrawContext* c){
+    static const auto logo=parseMasterLogo();
+    const auto r=getViewSize();
+    constexpr double masterWidth=1774.0, masterHeight=887.0;
+    const double scale=std::min(r.getWidth()/masterWidth,r.getHeight()/masterHeight);
+    const double x0=r.left+(r.getWidth()-masterWidth*scale)*0.5;
+    const double y0=r.top +(r.getHeight()-masterHeight*scale)*0.5;
+    c->setDrawMode(VSTGUI::kAntiAliasing);
+    for(const auto& sourcePath:logo){
+        auto* path=c->createGraphicsPath(); if(!path) continue;
+        for(const auto& subpath:sourcePath.subpaths){
+            if(subpath.points.empty()) continue;
+            const auto toView=[&](const VSTGUI::CPoint& p){ return VSTGUI::CPoint{x0+p.x*scale,y0+p.y*scale}; };
+            path->beginSubpath(toView(subpath.points.front()));
+            for(std::size_t i=1;i<subpath.points.size();++i) path->addLine(toView(subpath.points[i]));
+            path->closeSubpath();
+        }
+        c->setFillColor(sourcePath.red?kLogoRed:kLogoSilver);
+        c->drawGraphicsPath(path,VSTGUI::CDrawContext::kPathFilledEvenOdd);
+        path->forget();
+    }
     setDirty(false);
 }
 
