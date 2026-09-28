@@ -2,9 +2,13 @@ name: Build Machine Instrument VST3
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - v0.1.0
 
 jobs:
   prepare-samples:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[final-gui-gate]')
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
