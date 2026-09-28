@@ -197,6 +197,11 @@ jobs:
           Copy-Item machine-set/machine_space_ir_generated.h generated-machine/machine_space_ir_generated.h
           Get-ChildItem generated-machine
 
+      - name: Verify GUI geometry contract
+        shell: pwsh
+        run: |
+          python scripts/verify_mechamorph_gui.py
+
       - name: Configure
         shell: pwsh
         run: |
