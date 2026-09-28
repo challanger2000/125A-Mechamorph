@@ -19,7 +19,7 @@ from scipy.io import wavfile
 from scipy.signal import butter, sosfilt, resample_poly
 
 
-PROFILES = ("tiny", "clockwork", "heavy", "colossal", "pneumatic", "broken")
+PROFILES = ("tiny", "intricate", "heavy", "colossal", "pneumatic", "broken")
 
 
 def read_mono(path: Path):
@@ -111,7 +111,7 @@ def profile_transform(x: np.ndarray, sr: int, profile: str, role: str) -> np.nda
         y = highpass(y, sr, 180.0)
         y = transient_emphasis(y, 0.20)
 
-    elif profile == "clockwork":
+    elif profile == "intricate":
         y = rate_change(y, 1.18)
         y = highpass(y, sr, 120.0)
         y = lowpass(y, sr, 8500.0)
@@ -156,7 +156,7 @@ def eligible_profiles(stem: str, role: str):
     if role == "run":
         mapping = {
             "tiny": ("sewing", "projector", "rattle"),
-            "clockwork": ("winch", "projector", "sewing", "rattle"),
+            "intricate": ("winch", "projector", "sewing", "rattle"),
             "heavy": ("press", "winch", "roller"),
             "colossal": ("press", "roller", "winch"),
             "pneumatic": ("press", "sewing", "projector"),
@@ -165,7 +165,7 @@ def eligible_profiles(stem: str, role: str):
     elif role == "action":
         mapping = {
             "tiny": ("switch", "stapler", "calc"),
-            "clockwork": ("ratchet", "switch", "slide", "calc"),
+            "intricate": ("ratchet", "switch", "slide", "calc"),
             "heavy": ("ratchet", "stapler", "calc"),
             "colossal": ("ratchet", "stapler"),
             "pneumatic": ("switch", "calc", "stapler"),
@@ -174,7 +174,7 @@ def eligible_profiles(stem: str, role: str):
     elif role == "load":
         mapping = {
             "tiny": ("chain",),
-            "clockwork": ("chain",),
+            "intricate": ("chain",),
             "heavy": ("chain", "press"),
             "colossal": ("chain", "press"),
             "pneumatic": ("press", "chain"),
@@ -183,7 +183,7 @@ def eligible_profiles(stem: str, role: str):
     elif role == "release":
         mapping = {
             "tiny": ("spring", "switch"),
-            "clockwork": ("spring", "winch"),
+            "intricate": ("spring", "winch"),
             "heavy": ("spring", "winch", "air"),
             "colossal": ("spring", "winch", "air"),
             "pneumatic": ("air", "spring", "switch"),
