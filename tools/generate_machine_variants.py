@@ -146,6 +146,24 @@ def profile_transform(x: np.ndarray, sr: int, profile: str, role: str) -> np.nda
         if role in {"action","release","stop"}:
             y = reverse_tail(y, 0.22, 0.18)
 
+    if role == "friction":
+        # Preserve a real scrape/squeal gesture but scale it to the fictional
+        # machine. Large machines become slower/darker; broken machinery keeps
+        # more harsh upper-mid energy.
+        if profile == "heavy":
+            y = rate_change(y, 0.82)
+            y = lowpass(y, sr, 7000.0)
+        elif profile == "colossal":
+            y = rate_change(y, 0.58)
+            y = lowpass(y, sr, 4600.0)
+        elif profile == "pneumatic":
+            y = rate_change(y, 0.92)
+            y = highpass(y, sr, 110.0)
+        elif profile == "broken":
+            y = rate_change(y, 0.74)
+            y = soft_clip(y, 0.24)
+            y = transient_emphasis(y, 0.12)
+
     return normalize_safe(fade(y, sr))
 
 
@@ -189,6 +207,15 @@ def eligible_profiles(stem: str, role: str):
             "pneumatic": ("air", "spring", "switch"),
             "broken": ("spring", "winch", "switch"),
         }
+    elif role == "friction":
+        mapping = {
+            "tiny": (),
+            "intricate": (),
+            "heavy": ("friction", "scrape", "squeaky"),
+            "colossal": ("friction", "scrape", "squeaky"),
+            "pneumatic": ("friction", "scrape", "squeaky"),
+            "broken": ("friction", "scrape", "squeaky"),
+        }
     elif role == "start":
         mapping = {p: ("projector","winch") for p in PROFILES}
     elif role == "stop":
@@ -211,7 +238,7 @@ def main():
     for src in sorted(args.sample_dir.glob("*.wav")):
         stem = src.stem
         role = stem.split("__",1)[0].lower()
-        if role not in {"start","run","action","load","release","stop"}:
+        if role not in {"start","run","action","load","release","stop","friction"}:
             continue
 
         sr, x = read_mono(src)
