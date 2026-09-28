@@ -96,6 +96,12 @@ tresult PLUGIN_API Processor::setProcessing(TBool state) {
         lastPressureStatus_ = false;
         lastFrictionStatus_ = false;
         lastStallStatus_ = false;
+        pressureLampHoldSamples_ = 0;
+        frictionLampHoldSamples_ = 0;
+        stallLampHoldSamples_ = 0;
+        lastPressureEventCount_ = engine_.pressureEventCount();
+        lastFrictionEventCount_ = engine_.frictionEventCount();
+        lastStallEventCount_ = engine_.stallEventCount();
         updateEngineParameters();
     }
     return kResultOk;
@@ -115,6 +121,12 @@ tresult PLUGIN_API Processor::setActive(TBool state) {
         lastPressureStatus_ = false;
         lastFrictionStatus_ = false;
         lastStallStatus_ = false;
+        pressureLampHoldSamples_ = 0;
+        frictionLampHoldSamples_ = 0;
+        stallLampHoldSamples_ = 0;
+        lastPressureEventCount_ = engine_.pressureEventCount();
+        lastFrictionEventCount_ = engine_.frictionEventCount();
+        lastStallEventCount_ = engine_.stallEventCount();
         updateEngineParameters();
     } else {
         statusExchange_.onDeactivate();
@@ -325,6 +337,12 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
                 // the only note allowed to stop that new cycle.
                 engine_.reset();
                 engine_.setSampleSet(assets_.profile(machineIndex_));
+                lastPressureEventCount_ = 0;
+                lastFrictionEventCount_ = 0;
+                lastStallEventCount_ = 0;
+                pressureLampHoldSamples_ = 0;
+                frictionLampHoldSamples_ = 0;
+                stallLampHoldSamples_ = 0;
                 updateEngineParameters();
                 engine_.start();
 
@@ -398,6 +416,12 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
         engine_.reset();
         engine_.setSampleSet(assets_.profile(machineIndex_));
         spaceEngine_.reset();
+        lastPressureEventCount_ = 0;
+        lastFrictionEventCount_ = 0;
+        lastStallEventCount_ = 0;
+        pressureLampHoldSamples_ = 0;
+        frictionLampHoldSamples_ = 0;
+        stallLampHoldSamples_ = 0;
         updateEngineParameters();
     }
     transportWasPlaying_ = transportPlaying;
@@ -444,10 +468,31 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
         }
     };
 
-    emitStatus(kPressureStatus, pressureSeen, lastPressureStatus_);
-    emitStatus(kFrictionStatus, frictionSeen, lastFrictionStatus_);
-    emitStatus(kStallStatus, stallSeen, lastStallStatus_);
-    sendStatusExchange(pressureSeen, frictionSeen, stallSeen, data.numSamples);
+    // Status events can be much shorter than a 30 Hz GUI telemetry interval.
+    // Hold each real event for six telemetry frames (200 ms), so a genuine
+    // pressure/friction/stall event cannot disappear between GUI updates.
+    const auto lampHold = std::max<int32>(1, static_cast<int32>(std::lround(sampleRate_ * 0.200)));
+    const auto pressureEvents = engine_.pressureEventCount();
+    const auto frictionEvents = engine_.frictionEventCount();
+    const auto stallEvents = engine_.stallEventCount();
+    if (pressureEvents > lastPressureEventCount_ || pressureSeen) pressureLampHoldSamples_ = lampHold;
+    if (frictionEvents > lastFrictionEventCount_ || frictionSeen) frictionLampHoldSamples_ = lampHold;
+    if (stallEvents > lastStallEventCount_ || stallSeen) stallLampHoldSamples_ = lampHold;
+    lastPressureEventCount_ = pressureEvents;
+    lastFrictionEventCount_ = frictionEvents;
+    lastStallEventCount_ = stallEvents;
+
+    const bool pressureVisible = pressureLampHoldSamples_ > 0;
+    const bool frictionVisible = frictionLampHoldSamples_ > 0;
+    const bool stallVisible = stallLampHoldSamples_ > 0;
+    pressureLampHoldSamples_ = std::max<int32>(0, pressureLampHoldSamples_ - data.numSamples);
+    frictionLampHoldSamples_ = std::max<int32>(0, frictionLampHoldSamples_ - data.numSamples);
+    stallLampHoldSamples_ = std::max<int32>(0, stallLampHoldSamples_ - data.numSamples);
+
+    emitStatus(kPressureStatus, pressureVisible, lastPressureStatus_);
+    emitStatus(kFrictionStatus, frictionVisible, lastFrictionStatus_);
+    emitStatus(kStallStatus, stallVisible, lastStallStatus_);
+    sendStatusExchange(pressureVisible, frictionVisible, stallVisible, data.numSamples);
     statusInitialized_ = true;
 
     return kResultOk;

@@ -59,6 +59,7 @@ def png_size(path):
 asset_sizes={
     ROOT/"resource/mechamorph-faceplate-runtime.png":(1440,960),
     ROOT/"resource/mechamorph-controls/mechamorph-knob-grip-64.png":(125,8000),
+    ROOT/"resource/mechamorph-controls/mechamorph-knob-grip-256-master.png":(256,16384),
     ROOT/"resource/mechamorph-controls/knob-machine-64.png":(render["machine"],render["machine"]*64),
     ROOT/"resource/mechamorph-controls/knob-main-64.png":(render["main"],render["main"]*64),
     ROOT/"resource/mechamorph-controls/knob-scale-64.png":(render["scale"],render["scale"]*64),
@@ -75,6 +76,7 @@ assert fw*2==fh*3,("faceplate source must be 3:2",fw,fh)
 assert fw>=1440 and fh>=960,("faceplate source too small",fw,fh)
 
 assert abs(float(layout["knobFillRatio"])-0.94)<1e-9
+assert abs(float(layout["machineFillRatio"])-1.0)<1e-9
 assert layout["renderSizes"]["machine"]==256, "machine strip must stay <= 16384 px high (256*64)"
 
 tpl=root.find("template")
@@ -85,14 +87,15 @@ names=[v.attrib["custom-view-name"] for v in views]
 required=[
  "Faceplate","UIScale","Machine","MachinePosRow1","MachinePosRow2",
  "PressureLamp","FrictionLamp","StallLamp",
- "Speed","Load","Action","Wear","Scale","Body","Space","Output"
+ "Speed","Load","Action","Wear","Scale","Body","Space","Output",
+ "BodyLabel","SpaceLabel","OutputLabel"
 ]
 missing=[n for n in required if n not in names]
 assert not missing,missing
 for forbidden in [
  "BrandLogo","BrandTitle","BrandSubtitle","MachineLabel",
  "PressureLabel","FrictionLabel","StallLabel",
- "SpeedLabel","LoadLabel","ActionLabel","WearLabel","ScaleLabel","BodyLabel","SpaceLabel","OutputLabel"
+ "SpeedLabel","LoadLabel","ActionLabel","WearLabel","ScaleLabel"
 ]:
     assert forbidden not in names,("baked faceplate text must not be redrawn",forbidden)
 assert len(names)==len(set(names)),"duplicate custom view names"
@@ -131,5 +134,8 @@ for key,name in [("pressure","PressureLamp"),("friction","FrictionLamp"),("stall
     cx,cy=layout["top"]["status"][key]
     x,y,w,h=box(name)
     assert x+w/2==cx and y+h/2==cy,(name,"status axis mismatch")
+
+for key,name in [("body","BodyLabel"),("space","SpaceLabel"),("output","OutputLabel")]:
+    assert box(name)==tuple(layout["labels"][key]),(name,"utility label mismatch")
 
 print("Mechamorph baked-faceplate GUI geometry + unified control sizing PASS")

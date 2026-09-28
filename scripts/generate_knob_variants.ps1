@@ -38,10 +38,10 @@ try {
 } finally { $face.Dispose() }
 
 $variants = @(
-    @{ Name = "knob-machine-64.png"; Size = 256 },
-    @{ Name = "knob-main-64.png";    Size = 168 },
-    @{ Name = "knob-scale-64.png";   Size = 198 },
-    @{ Name = "knob-utility-64.png"; Size = 90 }
+    @{ Name = "knob-machine-64.png"; Size = 256; Fill = 1.00 },
+    @{ Name = "knob-main-64.png";    Size = 168; Fill = $fillRatio },
+    @{ Name = "knob-scale-64.png";   Size = 198; Fill = $fillRatio },
+    @{ Name = "knob-utility-64.png"; Size = 90;  Fill = $fillRatio }
 )
 
 $src = [System.Drawing.Bitmap]::FromFile((Resolve-Path $Source))
@@ -79,7 +79,8 @@ try {
     foreach ($variant in $variants) {
         $size = [int]$variant.Size
         $outPath = Join-Path $OutputDir $variant.Name
-        $drawSize = [int][Math]::Round($size*$fillRatio)
+        $fill = [double]$variant.Fill
+        $drawSize = [int][Math]::Round($size*$fill)
         $margin = [int][Math]::Floor(($size-$drawSize)/2)
         $dst = New-Object System.Drawing.Bitmap($size, ($size * $frames), [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
         try {
@@ -98,7 +99,7 @@ try {
                 }
             } finally { $g.Dispose() }
             $dst.Save($outPath, [System.Drawing.Imaging.ImageFormat]::Png)
-            Write-Host "$($variant.Name): $size x $($size*$frames), visible fill=$([Math]::Round($fillRatio*100))%"
+            Write-Host "$($variant.Name): $size x $($size*$frames), visible fill=$([Math]::Round($fill*100))%"
         } finally { $dst.Dispose() }
     }
 } finally { $src.Dispose() }

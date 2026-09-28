@@ -6,6 +6,7 @@
 #include "MachineSpaceEngine.h"
 #include "public.sdk/source/vst/utility/dataexchange.h"
 #include "status_exchange.h"
+#include <cstdint>
 
 namespace MechamorphMachine {
 
@@ -56,6 +57,12 @@ private:
     bool lastStallStatus_ = false;
     Steinberg::Vst::DataExchangeHandler statusExchange_;
     Steinberg::int32 statusExchangeCountdown_ = 0;
+    Steinberg::int32 pressureLampHoldSamples_ = 0;
+    Steinberg::int32 frictionLampHoldSamples_ = 0;
+    Steinberg::int32 stallLampHoldSamples_ = 0;
+    std::uint64_t lastPressureEventCount_ = 0;
+    std::uint64_t lastFrictionEventCount_ = 0;
+    std::uint64_t lastStallEventCount_ = 0;
 };
 
 } // namespace MechamorphMachine

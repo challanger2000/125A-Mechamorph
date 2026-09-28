@@ -152,21 +152,37 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
     c->setDrawMode(VSTGUI::kAntiAliasing);
 
 
-    if(style_ != Style::Machine){
+    {
         const double half = std::min(r.getWidth(), r.getHeight()) * 0.5;
-        const double outer = half - (style_==Style::Scale ? 5.0 : 3.0);
-        constexpr int tickCount = 21;
-        for(int i=0;i<tickCount;++i){
-            const bool major=(i%5)==0;
-            const double angle=(135.0 + 270.0*(static_cast<double>(i)/(tickCount-1))) * kPi/180.0;
-            const double inner = outer - (major ? (style_==Style::Scale ? 11.0 : 8.0)
-                                                : (style_==Style::Scale ? 6.5 : 4.5));
-            const VSTGUI::CPoint a{center.x+std::cos(angle)*inner,center.y+std::sin(angle)*inner};
-            const VSTGUI::CPoint b{center.x+std::cos(angle)*outer,center.y+std::sin(angle)*outer};
-            c->setFrameColor(major ? VSTGUI::CColor{221,198,153,225}
-                                   : VSTGUI::CColor{151,143,128,185});
-            c->setLineWidth(major ? 1.7 : 1.0);
-            c->drawLine(a,b);
+        if(style_ == Style::Machine){
+            // Six discrete MACHINE positions share the same 270-degree travel as
+            // the six snapped parameter values. Draw only six authoritative marks.
+            const double outer = half - 2.0;
+            constexpr int tickCount = 6;
+            for(int i=0;i<tickCount;++i){
+                const double angle=(135.0 + 270.0*(static_cast<double>(i)/(tickCount-1))) * kPi/180.0;
+                const double inner=outer-12.0;
+                const VSTGUI::CPoint a{center.x+std::cos(angle)*inner,center.y+std::sin(angle)*inner};
+                const VSTGUI::CPoint b{center.x+std::cos(angle)*outer,center.y+std::sin(angle)*outer};
+                c->setFrameColor({231,204,150,235});
+                c->setLineWidth(2.0);
+                c->drawLine(a,b);
+            }
+        } else {
+            const double outer = half - (style_==Style::Scale ? 5.0 : 3.0);
+            constexpr int tickCount = 21;
+            for(int i=0;i<tickCount;++i){
+                const bool major=(i%5)==0;
+                const double angle=(135.0 + 270.0*(static_cast<double>(i)/(tickCount-1))) * kPi/180.0;
+                const double inner = outer - (major ? (style_==Style::Scale ? 11.0 : 8.0)
+                                                    : (style_==Style::Scale ? 6.5 : 4.5));
+                const VSTGUI::CPoint a{center.x+std::cos(angle)*inner,center.y+std::sin(angle)*inner};
+                const VSTGUI::CPoint b{center.x+std::cos(angle)*outer,center.y+std::sin(angle)*outer};
+                c->setFrameColor(major ? VSTGUI::CColor{221,198,153,225}
+                                       : VSTGUI::CColor{151,143,128,185});
+                c->setLineWidth(major ? 1.7 : 1.0);
+                c->drawLine(a,b);
+            }
         }
     }
 
@@ -182,6 +198,22 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
         }
     } else {
         radial(c,imageRect,{70,72,73,255},{18,20,21,255});
+    }
+
+    // Give the baked amber index a restrained, position-following diffuse glow.
+    // This is intentionally a light source around the index, not a full neon ring.
+    if(bakedIndicator){
+        const double angle=(135.0+270.0*v)*kPi/180.0;
+        const double radius=imageRadius*(style_==Style::Utility ? 0.70 : 0.73);
+        const VSTGUI::CPoint glowCenter{
+            center.x+std::cos(angle)*radius,
+            center.y+std::sin(angle)*radius};
+        const double gr=style_==Style::Machine ? 18.0 :
+                        style_==Style::Utility ? 11.0 : 14.0;
+        const VSTGUI::CRect glowRect{
+            glowCenter.x-gr,glowCenter.y-gr,
+            glowCenter.x+gr,glowCenter.y+gr};
+        radial(c,glowRect,{255,196,92,78},{255,118,12,0});
     }
 
     // The unified filmstrip already contains its indicator.
@@ -210,16 +242,25 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
     setDirty(false);
 }
 
-GuiLabel::GuiLabel(const VSTGUI::CRect& s,std::string text,double fs,bool muted)
-:CView(s),text_(std::move(text)),fontSize_(fs),muted_(muted){setMouseEnabled(false);}
-GuiLabel::GuiLabel(const GuiLabel& o):CView(o),text_(o.text_),fontSize_(o.fontSize_),muted_(o.muted_){}
+GuiLabel::GuiLabel(const VSTGUI::CRect& s,std::string text,double fs,bool muted,bool panelMask)
+:CView(s),text_(std::move(text)),fontSize_(fs),muted_(muted),panelMask_(panelMask){setMouseEnabled(false);}
+GuiLabel::GuiLabel(const GuiLabel& o)
+:CView(o),text_(o.text_),fontSize_(o.fontSize_),muted_(o.muted_),panelMask_(o.panelMask_){}
 void GuiLabel::draw(VSTGUI::CDrawContext* c){
     const auto r=getViewSize(); c->setDrawMode(VSTGUI::kAntiAliasing);
+    VSTGUI::CRect textRect=r;
+    if(panelMask_){
+        // Cover the old baked utility caption with a deliberate small header plate,
+        // then place the caption above the knob scale instead of on top of it.
+        fillRound(c,r,4.0,{43,44,41,250},{27,28,26,250});
+        textRect.bottom=std::min(r.bottom,r.top+22.0);
+        textRect.top+=1.0;
+    }
     c->setFont(VSTGUI::kNormalFont,fontSize_,VSTGUI::kBoldFace);
-    VSTGUI::CRect sh=r; sh.offset(0,1); c->setFontColor({0,0,0,170});
+    VSTGUI::CRect sh=textRect; sh.offset(0,1); c->setFontColor({0,0,0,170});
     c->drawString(VSTGUI::UTF8String(text_.c_str()),sh,VSTGUI::kCenterText);
     c->setFontColor(muted_?VSTGUI::CColor{154,153,147,255}:kIvory);
-    c->drawString(VSTGUI::UTF8String(text_.c_str()),r,VSTGUI::kCenterText);
+    c->drawString(VSTGUI::UTF8String(text_.c_str()),textRect,VSTGUI::kCenterText);
     setDirty(false);
 }
 

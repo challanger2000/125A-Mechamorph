@@ -30,5 +30,9 @@
     <view class="CView" custom-view-name="Body" origin="1288,463" size="118,118"/>
     <view class="CView" custom-view-name="Space" origin="1288,611" size="118,118"/>
     <view class="CView" custom-view-name="Output" origin="1286,755" size="118,118"/>
+
+    <view class="CView" custom-view-name="BodyLabel" origin="1288,436" size="118,40" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="SpaceLabel" origin="1288,582" size="118,40" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="OutputLabel" origin="1288,726" size="118,40" mouse-enabled="false"/>
   </template>
 </vstgui-ui-description>
