@@ -52,7 +52,7 @@ void Voice::start(
     clip_ = clip;
     role_ = role;
     gain_ = gain;
-    rate_ = std::clamp<double>(rate, 0.25, 4.0);
+    rate_ = std::clamp<double>(rate, 0.04, 4.0);
     position_ = static_cast<double>(std::min(startOffset, clip.frames - 1));
     active_ = clip.mono && clip.frames > 0;
 }
