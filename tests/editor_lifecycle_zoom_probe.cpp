@@ -11,6 +11,8 @@
 #include "public.sdk/source/vst/hosting/module.h"
 
 #include <algorithm>
+#include <cmath>
+#include <vector>
 #include <iostream>
 #include <string>
 
@@ -46,6 +48,36 @@ void pump(DWORD ms) {
         }
         Sleep(5);
     } while(GetTickCount64()<end);
+}
+
+HWND findVstguiChild(HWND parent) {
+    struct Search { HWND found{}; } search;
+    EnumChildWindows(parent, [](HWND child, LPARAM data)->BOOL {
+        auto* s=reinterpret_cast<Search*>(data);
+        wchar_t className[128]{};
+        if(GetClassNameW(child,className,static_cast<int>(std::size(className)))>0) {
+            const std::wstring name{className};
+            if(name.rfind(L"VSTGUI",0)==0) {
+                s->found=child;
+                return FALSE;
+            }
+        }
+        return TRUE;
+    }, reinterpret_cast<LPARAM>(&search));
+    return search.found;
+}
+
+bool clickUiScale(HWND vstguiChild,double currentZoom) {
+    if(!vstguiChild) return false;
+    // UIScale logical rect: x=48..154, y=294..324.
+    // VSTGUI's user zoom scales both the control geometry and the platform child.
+    const int x=static_cast<int>(std::lround(101.0*currentZoom));
+    const int y=static_cast<int>(std::lround(309.0*currentZoom));
+    const LPARAM p=MAKELPARAM(x,y);
+    SendMessageW(vstguiChild,WM_LBUTTONDOWN,MK_LBUTTON,p);
+    SendMessageW(vstguiChild,WM_LBUTTONUP,0,p);
+    pump(80);
+    return true;
 }
 
 class HostFrame final : public FObject, public IPlugFrame {
@@ -186,7 +218,29 @@ int run(const std::string& path) {
                     return 14;
                 }
             }
+            if(scale->setContentScaleFactor(1.0f)!=kResultTrue) return 19;
+            pump(40);
             scale->release();
+
+            // Exercise the actual in-GUI UI-scale button, not merely host DPI/content scale.
+            HWND vstguiChild=findVstguiChild(hwnd);
+            if(!vstguiChild) {
+                std::cerr<<"VSTGUI child HWND not found\n";
+                return 20;
+            }
+            const double zoomBefore[]={1.0,1.25,1.5,2.0};
+            const double zoomAfter []={1.25,1.5,2.0,1.0};
+            for(int zi=0;zi<4;++zi) {
+                if(!clickUiScale(vstguiChild,zoomBefore[zi])) return 21;
+                int w=0,h=0;
+                const int expectedW=static_cast<int>(std::lround(baseW*zoomAfter[zi]));
+                const int expectedH=static_cast<int>(std::lround(baseH*zoomAfter[zi]));
+                if(!validRect(view,w,h) || w!=expectedW || h!=expectedH) {
+                    std::cerr<<"UI zoom "<<zoomAfter[zi]<<" produced "<<w<<"x"<<h
+                             <<"; expected "<<expectedW<<"x"<<expectedH<<"\n";
+                    return 22;
+                }
+            }
 
             view->onFocus(true);
             pump(10);
@@ -204,7 +258,7 @@ int run(const std::string& path) {
     }
 
     if(editors==0) return 18;
-    std::cout<<"Mechamorph editor lifecycle + 100/125/150/200% content scale PASS ("<<editors<<" editor cycles)\n";
+    std::cout<<"Mechamorph editor lifecycle + DPI multires + actual UI zoom 100/125/150/200% PASS ("<<editors<<" editor cycles)\n";
     return 0;
 }
 }
