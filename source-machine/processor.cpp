@@ -72,6 +72,10 @@ tresult PLUGIN_API Processor::setActive(TBool state) {
         engine_.reset();
         engine_.setSampleSet(assets_.profile(machineIndex_));
         spaceEngine_.reset();
+        statusInitialized_ = false;
+        lastPressureStatus_ = false;
+        lastFrictionStatus_ = false;
+        lastStallStatus_ = false;
         updateEngineParameters();
     }
     return AudioEffect::setActive(state);
@@ -339,12 +343,18 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
     transportWasPlaying_ = transportPlaying;
 
     float peak = 0.0f;
+    bool pressureSeen = false;
+    bool frictionSeen = false;
+    bool stallSeen = false;
     for (int32 i = 0; i < data.numSamples; ++i) {
         applyParamsAt(i);
         applyEventsAt(i);
 
         float mono = 0.0f;
         engine_.process(&mono, 1);
+        pressureSeen = pressureSeen || engine_.pressureActive();
+        frictionSeen = frictionSeen || engine_.frictionActive();
+        stallSeen = stallSeen || engine_.stalled();
 
         float outL = 0.0f;
         float outR = 0.0f;
@@ -359,6 +369,26 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
     applyEventsAt(data.numSamples);
 
     out.silenceFlags = peak < 1.0e-12f ? 0x3ull : 0;
+
+    auto emitStatus = [&](ParamID id, bool value, bool& previous) {
+        if (!data.outputParameterChanges)
+            return;
+        if (statusInitialized_ && value == previous)
+            return;
+        int32 queueIndex = 0;
+        if (auto* queue = data.outputParameterChanges->addParameterData(id, queueIndex)) {
+            int32 pointIndex = 0;
+            const int32 offset = std::max<int32>(0, data.numSamples - 1);
+            queue->addPoint(offset, value ? 1.0 : 0.0, pointIndex);
+            previous = value;
+        }
+    };
+
+    emitStatus(kPressureStatus, pressureSeen, lastPressureStatus_);
+    emitStatus(kFrictionStatus, frictionSeen, lastFrictionStatus_);
+    emitStatus(kStallStatus, stallSeen, lastStallStatus_);
+    statusInitialized_ = true;
+
     return kResultOk;
 }
 
