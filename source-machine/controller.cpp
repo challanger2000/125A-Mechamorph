@@ -24,7 +24,7 @@ tresult PLUGIN_API Controller::initialize(FUnknown* context) {
         STR16("Machine"), kMachine, nullptr,
         ParameterInfo::kCanAutomate | ParameterInfo::kIsList);
     machine->appendString(STR16("Tiny"));
-    machine->appendString(STR16("Clockwork"));
+    machine->appendString(STR16("Intricate"));
     machine->appendString(STR16("Heavy"));
     machine->appendString(STR16("Colossal"));
     machine->appendString(STR16("Pneumatic"));
