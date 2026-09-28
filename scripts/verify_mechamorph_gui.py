@@ -1,11 +1,27 @@
 #!/usr/bin/env python3
 import json
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
 ROOT=Path(__file__).resolve().parents[1]
-layout=json.loads((ROOT/"resource/mechamorph.layout.json").read_text(encoding="utf-8"))
-root=ET.parse(ROOT/"resource/mechamorph.uidesc").getroot()
+layout_path=ROOT/"resource/mechamorph.layout.json"
+ui_path=ROOT/"resource/mechamorph.uidesc"
+layout=json.loads(layout_path.read_text(encoding="utf-8"))
+
+with tempfile.TemporaryDirectory() as td:
+    generated_path=Path(td)/"mechamorph.uidesc"
+    subprocess.run([
+        sys.executable,str(ROOT/"scripts/generate_mechamorph_gui.py"),
+        "--layout",str(layout_path),"--output",str(generated_path)
+    ],check=True)
+    generated=generated_path.read_text(encoding="utf-8")
+actual=ui_path.read_text(encoding="utf-8")
+assert actual==generated,"mechamorph.uidesc is stale; regenerate from mechamorph.layout.json"
+
+root=ET.fromstring(generated)
 tpl=root.find("template")
 assert tpl is not None
 assert tpl.attrib.get("size")=="1440,900"
