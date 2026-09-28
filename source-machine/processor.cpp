@@ -144,6 +144,18 @@ void Processor::applyParameter(ParamID id, float normalized) noexcept {
 }
 
 void Processor::updateEngineParameters() noexcept {
+    // Internal machine personality: pressure is not another user macro.
+    static constexpr float kPressureByMachine[6] = {
+        0.00f, // TINY
+        0.06f, // INTRICATE
+        0.24f, // HEAVY
+        0.34f, // COLOSSAL
+        1.00f, // PNEUMATIC
+        0.28f  // BROKEN
+    };
+    machineParams_.pressure =
+        kPressureByMachine[std::clamp(machineIndex_, 0, 5)];
+
     engine_.setParameters(machineParams_);
 
     // BODY is now a true independent control.
