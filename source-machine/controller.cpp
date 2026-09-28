@@ -5,6 +5,7 @@
 #include "public.sdk/source/vst/vstparameters.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 using namespace Steinberg;
@@ -96,6 +97,14 @@ tresult PLUGIN_API Controller::setComponentState(IBStream* state) {
             return kResultFalse;
     } else {
         return kResultFalse;
+    }
+
+    const std::array<float, 9> restoredValues{
+        machine, speed, load, action, wear, scale, body, space, output
+    };
+    for (float value : restoredValues) {
+        if (!std::isfinite(value))
+            return kResultFalse;
     }
 
     if (version <= 3) {
