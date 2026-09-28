@@ -121,6 +121,8 @@ public:
     State state() const noexcept { return state_; }
     double phase() const noexcept { return phase_; }
     bool stalled() const noexcept { return stallCountdown_ > 0; }
+    bool pressureActive() const noexcept;
+    bool frictionActive() const noexcept;
     std::uint64_t stallEventCount() const noexcept { return stallEvents_; }
     std::uint64_t frictionEventCount() const noexcept { return frictionEvents_; }
     std::uint64_t pressureEventCount() const noexcept { return pressureEvents_; }
