@@ -22,7 +22,8 @@ enum class Role : std::uint8_t {
     Action,
     Load,
     Release,
-    Stop
+    Stop,
+    Friction
 };
 
 struct Clip {
@@ -53,6 +54,7 @@ struct SampleSet {
     Pool load;
     Pool release;
     Pool stop;
+    Pool friction;
 };
 
 struct Parameters {
@@ -145,10 +147,11 @@ private:
 
     std::array<Voice, kMaxVoices> voices_ {};
     std::array<PendingEvent, kMaxPending> pending_ {};
-    std::array<std::size_t, 6> lastClipIndex_ {
+    std::array<std::size_t, 7> lastClipIndex_ {
         static_cast<std::size_t>(-1), static_cast<std::size_t>(-1),
         static_cast<std::size_t>(-1), static_cast<std::size_t>(-1),
-        static_cast<std::size_t>(-1), static_cast<std::size_t>(-1)
+        static_cast<std::size_t>(-1), static_cast<std::size_t>(-1),
+        static_cast<std::size_t>(-1)
     };
 
     double phase_ = 0.0;
