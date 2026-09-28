@@ -17,8 +17,8 @@ def generate(L):
     W,H=L["canvas"]["w"],L["canvas"]["h"]
     sz=L["sizes"]; top=L["top"]; controls=L["controls"]; labels=L["labels"]
     bitmap_families=[
-      ("mech-machine","machine",250,6,[("1.25",313),("1.5",375),("2",500)]),
-      ("mech-main","main",170,96,[("1.25",213),("1.5",255),("2",340)]),
+      ("mech-machine","machine",250,6,[("1.252",313),("1.5",375),("2",500)]),
+      ("mech-main","main",170,96,[("1.2529411764705882",213),("1.5",255),("2",340)]),
       ("mech-scale","scale",220,72,[("1.25",275),("1.5",330),("2",440)]),
       ("mech-utility","utility",104,128,[("1.25",130),("1.5",156),("2",208)]),
     ]
