@@ -116,6 +116,7 @@ public:
 
     State state() const noexcept { return state_; }
     double phase() const noexcept { return phase_; }
+    bool stalled() const noexcept { return stallCountdown_ > 0; }
 
 private:
     struct PendingEvent {
