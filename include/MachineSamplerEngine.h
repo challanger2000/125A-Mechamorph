@@ -23,7 +23,8 @@ enum class Role : std::uint8_t {
     Load,
     Release,
     Stop,
-    Friction
+    Friction,
+    Pressure
 };
 
 struct Clip {
@@ -55,6 +56,7 @@ struct SampleSet {
     Pool release;
     Pool stop;
     Pool friction;
+    Pool pressure;
 };
 
 struct Parameters {
@@ -121,6 +123,7 @@ public:
     bool stalled() const noexcept { return stallCountdown_ > 0; }
     std::uint64_t stallEventCount() const noexcept { return stallEvents_; }
     std::uint64_t frictionEventCount() const noexcept { return frictionEvents_; }
+    std::uint64_t pressureEventCount() const noexcept { return pressureEvents_; }
 
 private:
     struct PendingEvent {
@@ -149,10 +152,11 @@ private:
 
     std::array<Voice, kMaxVoices> voices_ {};
     std::array<PendingEvent, kMaxPending> pending_ {};
-    std::array<std::size_t, 7> lastClipIndex_ {
+    std::array<std::size_t, 8> lastClipIndex_ {
         static_cast<std::size_t>(-1), static_cast<std::size_t>(-1),
         static_cast<std::size_t>(-1), static_cast<std::size_t>(-1),
         static_cast<std::size_t>(-1), static_cast<std::size_t>(-1),
+        static_cast<std::size_t>(-1),
         static_cast<std::size_t>(-1)
     };
 
@@ -168,6 +172,8 @@ private:
     int stallCooldown_ = 0;
     std::uint64_t stallEvents_ = 0;
     std::uint64_t frictionEvents_ = 0;
+    std::uint64_t pressureEvents_ = 0;
+    int pressureCooldown_ = 0;
 };
 
 } // namespace mechamorph::machine
