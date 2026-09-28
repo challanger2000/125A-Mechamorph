@@ -240,7 +240,7 @@ jobs:
           if (-not $probe) { Write-Error "mechamorph_editor_lifecycle_probe.exe not found"; exit 1 }
           & $probe.FullName $plugin.FullName
           $rc = $LASTEXITCODE
-          Write-Host "Process contract native exit code: $rc"
+          Write-Host "Editor lifecycle native exit code: $rc"
           if ($rc -ne 0) { exit $rc }
 
       - name: Test state save restore and legacy migration
@@ -261,7 +261,9 @@ jobs:
           if (-not $plugin) { Write-Error "MechamorphMachine.vst3 not found for process contract probe"; exit 1 }
           if (-not $probe) { Write-Error "mechamorph_process_contract_probe.exe not found"; exit 1 }
           & $probe.FullName $plugin.FullName
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $rc = $LASTEXITCODE
+          Write-Host "Process contract native exit code: $rc"
+          if ($rc -ne 0) { exit $rc }
 
       - name: Measure BODY and SPACE on real machine material
         shell: pwsh
