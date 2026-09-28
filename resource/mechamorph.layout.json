@@ -51,6 +51,28 @@
       124,
       218,
       18
+    ],
+    "machinePositions": [
+      {
+        "name": "MachinePosRow1",
+        "rect": [
+          558,
+          320,
+          324,
+          16
+        ],
+        "text": "1 TINY   2 INTRICATE   3 HEAVY"
+      },
+      {
+        "name": "MachinePosRow2",
+        "rect": [
+          558,
+          340,
+          324,
+          16
+        ],
+        "text": "4 COLOSSAL   5 PNEUMATIC   6 BROKEN"
+      }
     ]
   },
   "sizes": {
