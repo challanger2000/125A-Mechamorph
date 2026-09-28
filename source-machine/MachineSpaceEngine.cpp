@@ -92,7 +92,6 @@ void MachineSpaceEngine::processTailStereo(
 
     left=0.0f;
     right=0.0f;
-    if(space_<=0.0f) return;
 
     const std::array<double,kDelayCount> baseMs{31.1,37.3,43.7,53.9};
     const double roomScale=0.82+0.72*static_cast<double>(scale_);
@@ -121,8 +120,9 @@ void MachineSpaceEngine::processTailStereo(
 
     for(std::size_t i=0;i<kDelayCount;++i){
         dampingState_[i]+=damping*(mixed[i]-dampingState_[i]);
+        const float excitation = space_ > 0.0f ? input : 0.0f;
         delays_[i][delayWrite_[i]]=
-            input*0.22f+dampingState_[i]*feedback;
+            excitation*0.22f+dampingState_[i]*feedback;
         delayWrite_[i]=(delayWrite_[i]+1)%delays_[i].size();
     }
 
