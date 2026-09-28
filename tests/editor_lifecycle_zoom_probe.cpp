@@ -24,6 +24,15 @@ namespace {
 constexpr wchar_t kWindowClassName[] = L"125A_Mechamorph_EditorLifecycle";
 constexpr int kCycles = 5;
 
+void trace(const std::string& message) {
+    std::cout << "[editor-probe] " << message << std::endl;
+}
+
+int fail(int code, const std::string& message) {
+    std::cerr << "[editor-probe] FAIL " << code << ": " << message << std::endl;
+    return code;
+}
+
 LRESULT CALLBACK wndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
     return DefWindowProcW(h,m,w,l);
 }
@@ -154,64 +163,72 @@ int run(const std::string& path) {
     auto module=Module::create(path,error);
     if(!module) {
         std::cerr<<"module load failed: "<<error<<"\n";
-        return 1;
+        return fail(1,"module load failed: "+error);
     }
-    if(!ensureWindowClass()) return 2;
+    if(!ensureWindowClass()) return fail(2,"window class registration failed");
 
     HostApplication hostApplication;
     FUnknown* host=&hostApplication;
     auto factory=module->getFactory();
     factory.setHostContext(host);
+    trace("module loaded; factory ready");
 
     int editors=0;
     for(const auto& info:factory.classInfos()) {
+        trace("factory class: "+info.name());
         // Probe any factory class that actually implements IComponent.
         // This avoids coupling the host-side QA probe to SDK-version-specific
         // factory category constants.
         auto component=factory.createInstance<IComponent>(info.ID());
         if(!component) continue;
-        if(component->initialize(host)!=kResultOk) return 4;
+        if(component->initialize(host)!=kResultOk) return fail(4,"component initialize failed");
+        trace("component initialized");
 
         ControllerHolder holder;
         if(!acquireController(component.get(),factory,host,holder)) {
+            trace("no controller for class; skipping");
             component->terminate();
             continue;
         }
+        trace("controller acquired");
 
         for(int cycle=0;cycle<kCycles;++cycle) {
+            trace("cycle "+std::to_string(cycle+1)+"/"+std::to_string(kCycles)+" createView");
             IPlugView* view=holder.controller->createView(ViewType::kEditor);
-            if(!view) return 5;
+            if(!view) return fail(5,"createView returned null");
             ++editors;
 
             int baseW=0,baseH=0;
-            if(!validRect(view,baseW,baseH)) return 6;
+            if(!validRect(view,baseW,baseH)) return fail(6,"base getSize failed");
             if(baseW!=1440 || baseH!=900) {
                 std::cerr<<"unexpected base editor size "<<baseW<<"x"<<baseH<<"\n";
-                return 7;
+                return fail(7,"unexpected base editor size");
             }
 
             HWND hwnd=CreateWindowExW(WS_EX_TOOLWINDOW,kWindowClassName,L"Mechamorph QA",
                 WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,baseW,baseH,
                 nullptr,nullptr,GetModuleHandleW(nullptr),nullptr);
-            if(!hwnd) return 8;
+            if(!hwnd) return fail(8,"host HWND creation failed");
 
             auto* frame=new HostFrame(hwnd);
-            if(view->setFrame(frame)!=kResultTrue) return 9;
-            if(view->isPlatformTypeSupported(kPlatformTypeHWND)!=kResultTrue) return 10;
-            if(view->attached(reinterpret_cast<void*>(hwnd),kPlatformTypeHWND)!=kResultTrue) return 11;
+            trace("cycle "+std::to_string(cycle+1)+" setFrame");
+            if(view->setFrame(frame)!=kResultTrue) return fail(9,"setFrame failed");
+            if(view->isPlatformTypeSupported(kPlatformTypeHWND)!=kResultTrue) return fail(10,"HWND platform not supported");
+            trace("cycle "+std::to_string(cycle+1)+" attached");
+            if(view->attached(reinterpret_cast<void*>(hwnd),kPlatformTypeHWND)!=kResultTrue) return fail(11,"attached failed");
             ShowWindow(hwnd,SW_SHOWNA);
             UpdateWindow(hwnd);
             pump(80);
 
             IPlugViewContentScaleSupport* scale{};
             if(view->queryInterface(IPlugViewContentScaleSupport::iid,reinterpret_cast<void**>(&scale))!=kResultTrue || !scale) {
-                std::cerr<<"editor does not expose IPlugViewContentScaleSupport\n";
-                return 12;
+                return fail(12,"editor does not expose IPlugViewContentScaleSupport");
             }
             for(float factor:{1.0f,1.25f,1.5f,2.0f}) {
+                trace("cycle "+std::to_string(cycle+1)+" content-scale "+std::to_string(factor));
                 if(scale->setContentScaleFactor(factor)!=kResultTrue) {
                     std::cerr<<"content scale rejected: "<<factor<<"\n";
-                    return 13;
+                    return fail(13,"content scale rejected");
                 }
                 pump(50);
                 int w=0,h=0;
@@ -220,56 +237,63 @@ int run(const std::string& path) {
                 if(!validRect(view,w,h) || w!=expectedW || h!=expectedH) {
                     std::cerr<<"content scale "<<factor<<" produced "<<w<<"x"<<h
                              <<"; expected "<<expectedW<<"x"<<expectedH<<"\n";
-                    return 14;
+                    return fail(14,"content scale size mismatch");
                 }
             }
-            if(scale->setContentScaleFactor(1.0f)!=kResultTrue) return 19;
+            trace("cycle "+std::to_string(cycle+1)+" content-scale reset 1.0");
+            if(scale->setContentScaleFactor(1.0f)!=kResultTrue) return fail(19,"content scale reset rejected");
             pump(40);
             {
                 int w=0,h=0;
                 if(!validRect(view,w,h) || w!=baseW || h!=baseH) {
                     std::cerr<<"content scale reset did not restore base size: "<<w<<"x"<<h<<"\n";
-                    return 23;
+                    return fail(23,"content scale reset size mismatch");
                 }
             }
             scale->release();
 
             // Exercise the actual in-GUI UI-scale button, not merely host DPI/content scale.
+            trace("cycle "+std::to_string(cycle+1)+" locating VSTGUI child");
             HWND vstguiChild=findVstguiChild(hwnd);
-            if(!vstguiChild) {
-                std::cerr<<"VSTGUI child HWND not found\n";
-                return 20;
-            }
+            if(!vstguiChild) return fail(20,"VSTGUI child HWND not found");
             const double zoomBefore[]={1.0,1.25,1.5,2.0};
             const double zoomAfter []={1.25,1.5,2.0,1.0};
             for(int zi=0;zi<4;++zi) {
-                if(!clickUiScale(vstguiChild,zoomBefore[zi])) return 21;
+                trace("cycle "+std::to_string(cycle+1)+" UI zoom click "
+                      +std::to_string(zoomBefore[zi])+" -> "+std::to_string(zoomAfter[zi]));
+                if(!clickUiScale(vstguiChild,zoomBefore[zi])) return fail(21,"UI scale click failed");
                 int w=0,h=0;
                 const int expectedW=static_cast<int>(std::lround(baseW*zoomAfter[zi]));
                 const int expectedH=static_cast<int>(std::lround(baseH*zoomAfter[zi]));
                 if(!validRect(view,w,h) || w!=expectedW || h!=expectedH) {
                     std::cerr<<"UI zoom "<<zoomAfter[zi]<<" produced "<<w<<"x"<<h
                              <<"; expected "<<expectedW<<"x"<<expectedH<<"\n";
-                    return 22;
+                    return fail(22,"UI zoom size mismatch");
                 }
             }
 
+            trace("cycle "+std::to_string(cycle+1)+" focus on/off");
             view->onFocus(true);
             pump(10);
             view->onFocus(false);
-            if(view->removed()!=kResultTrue) return 15;
-            if(view->setFrame(nullptr)!=kResultTrue) return 16;
+            trace("cycle "+std::to_string(cycle+1)+" removed");
+            if(view->removed()!=kResultTrue) return fail(15,"removed failed");
+            trace("cycle "+std::to_string(cycle+1)+" clear frame");
+            if(view->setFrame(nullptr)!=kResultTrue) return fail(16,"clear frame failed");
             frame->release();
             DestroyWindow(hwnd);
             pump(20);
             view->release();
+            trace("cycle "+std::to_string(cycle+1)+" complete");
         }
 
+        trace("closing controller");
         holder.close();
-        if(component->terminate()!=kResultOk) return 17;
+        if(component->terminate()!=kResultOk) return fail(17,"component terminate failed");
+        trace("component terminated");
     }
 
-    if(editors==0) return 18;
+    if(editors==0) return fail(18,"no editor instances exercised");
     std::cout<<"Mechamorph editor lifecycle + DPI multires + actual UI zoom 100/125/150/200% PASS ("<<editors<<" editor cycles)\n";
     return 0;
 }
