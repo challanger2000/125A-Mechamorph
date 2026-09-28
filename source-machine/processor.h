@@ -40,8 +40,6 @@ private:
     float spaceAmount_ = 0.18f;
 
     int machineIndex_ = 0;
-    Steinberg::int32 activeNoteId_ = -1;
-    Steinberg::int16 activePitch_ = -1;
     double sampleRate_ = 48000.0;
     bool transportWasPlaying_ = false;
 };
