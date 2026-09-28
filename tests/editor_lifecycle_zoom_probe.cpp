@@ -193,8 +193,8 @@ private:
 
 struct ControllerHolder {
     IEditController* controller{};
-    IConnectionPoint* componentCP{};
-    IConnectionPoint* controllerCP{};
+    Steinberg::Vst::IConnectionPoint* componentCP{};
+    Steinberg::Vst::IConnectionPoint* controllerCP{};
     bool initialized{};
     bool connected{};
     void close() {
@@ -244,8 +244,8 @@ bool acquireController(IComponent* component,const PluginFactory& factory,FUnkno
     h.controller=c.take();
     if(h.controller->initialize(host)!=kResultOk) return false;
     h.initialized=true;
-    const bool a=component->queryInterface(IConnectionPoint::iid,reinterpret_cast<void**>(&h.componentCP))==kResultTrue && h.componentCP;
-    const bool b=h.controller->queryInterface(IConnectionPoint::iid,reinterpret_cast<void**>(&h.controllerCP))==kResultTrue && h.controllerCP;
+    const bool a=component->queryInterface(Steinberg::Vst::IConnectionPoint::iid,reinterpret_cast<void**>(&h.componentCP))==kResultTrue && h.componentCP;
+    const bool b=h.controller->queryInterface(Steinberg::Vst::IConnectionPoint::iid,reinterpret_cast<void**>(&h.controllerCP))==kResultTrue && h.controllerCP;
     if(a && b) {
         const auto c2e=h.componentCP->connect(h.controllerCP);
         const auto e2c=h.controllerCP->connect(h.componentCP);
