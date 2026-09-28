@@ -4,8 +4,9 @@
   <template name="view" class="CViewContainer" origin="0,0" size="1440,900" transparent="false" background-color="Background">
     <view class="CView" custom-view-name="Faceplate" origin="0,0" size="1440,900" mouse-enabled="false"/>
 
-    <view class="CView" custom-view-name="BrandTitle" origin="48,64" size="430,62" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="BrandSubtitle" origin="48,132" size="430,28" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="BrandLogo" origin="54,58" size="196,98" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="BrandTitle" origin="266,76" size="218,42" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="BrandSubtitle" origin="266,124" size="218,18" mouse-enabled="false"/>
     <view class="CView" custom-view-name="UIScale" origin="48,294" size="106,30"/>
 
     <view class="CView" custom-view-name="MachineLabel" origin="620,42" size="200,26" mouse-enabled="false"/>
