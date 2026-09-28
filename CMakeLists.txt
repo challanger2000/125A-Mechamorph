@@ -159,8 +159,37 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
     target_include_directories(measure_machine_space PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/source-machine"
         "${MECHAMORPH_MACHINE_GENERATED_DIR}"
+        "${CMAKE_BINARY_DIR}"
     )
     target_compile_features(measure_machine_space PRIVATE cxx_std_17)
+
+    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/resource/125A_Logo_Master_FINAL.svg" MECHAMORPH_BRANDING_SVG)
+    string(REGEX MATCHALL "<path d=\\\"[^\\\"]+\\\" fill=\\\"#[0-9A-Fa-f]+\\\"/>" MECHAMORPH_BRANDING_PATH_TAGS "${MECHAMORPH_BRANDING_SVG}")
+    list(LENGTH MECHAMORPH_BRANDING_PATH_TAGS MECHAMORPH_BRANDING_PATH_COUNT)
+    if(NOT MECHAMORPH_BRANDING_PATH_COUNT EQUAL 30)
+        message(FATAL_ERROR "125A branding master must contain exactly 30 vector paths; found ${MECHAMORPH_BRANDING_PATH_COUNT}.")
+    endif()
+    set(MECHAMORPH_BRANDING_PATHS "")
+    foreach(MECHAMORPH_BRANDING_TAG IN LISTS MECHAMORPH_BRANDING_PATH_TAGS)
+        if(NOT MECHAMORPH_BRANDING_TAG MATCHES "^<path d=\\\"([^\\\"]+)\\\" fill=\\\"([^\\\"]+)\\\"/>$")
+            message(FATAL_ERROR "Could not parse 125A branding path tag.")
+        endif()
+        set(MECHAMORPH_BRANDING_D "${CMAKE_MATCH_1}")
+        set(MECHAMORPH_BRANDING_FILL "${CMAKE_MATCH_2}")
+        if(MECHAMORPH_BRANDING_FILL STREQUAL "#D71920")
+            set(MECHAMORPH_BRANDING_RED "true")
+        elseif(MECHAMORPH_BRANDING_FILL STREQUAL "#D9D9D9")
+            set(MECHAMORPH_BRANDING_RED "false")
+        else()
+            message(FATAL_ERROR "Unexpected 125A branding fill: ${MECHAMORPH_BRANDING_FILL}")
+        endif()
+        string(APPEND MECHAMORPH_BRANDING_PATHS "    {\\\"${MECHAMORPH_BRANDING_D}\\\", ${MECHAMORPH_BRANDING_RED}},\\n")
+    endforeach()
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/source-machine/branding_master.h.in"
+        "${CMAKE_BINARY_DIR}/branding_master.h"
+        @ONLY
+    )
 
     smtg_add_vst3plugin(MechamorphMachine
         source/version.h
