@@ -44,6 +44,10 @@ private:
     Steinberg::int16 activePitch_ = -1;
     double sampleRate_ = 48000.0;
     bool transportWasPlaying_ = false;
+    bool statusInitialized_ = false;
+    bool lastPressureStatus_ = false;
+    bool lastFrictionStatus_ = false;
+    bool lastStallStatus_ = false;
 };
 
 } // namespace MechamorphMachine
