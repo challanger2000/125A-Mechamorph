@@ -245,6 +245,20 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
         _CRT_SECURE_NO_WARNINGS NOMINMAX
     )
     target_compile_features(mechamorph_state_recall_probe PRIVATE cxx_std_17)
+
+    add_executable(mechamorph_process_contract_probe
+        tests/machine_process_contract_probe.cpp
+        "${vst3sdk_machine_SOURCE_DIR}/public.sdk/source/vst/hosting/eventlist.cpp"
+        "${vst3sdk_machine_SOURCE_DIR}/public.sdk/source/vst/hosting/parameterchanges.cpp"
+        "${vst3sdk_machine_SOURCE_DIR}/public.sdk/source/vst/hosting/module_win32.cpp"
+    )
+    target_link_libraries(mechamorph_process_contract_probe PRIVATE
+        sdk_hosting sdk_common base pluginterfaces
+    )
+    target_compile_definitions(mechamorph_process_contract_probe PRIVATE
+        _CRT_SECURE_NO_WARNINGS NOMINMAX
+    )
+    target_compile_features(mechamorph_process_contract_probe PRIVATE cxx_std_17)
     smtg_target_add_plugin_resources(MechamorphMachine RESOURCES "resource/mechamorph.uidesc")
     smtg_target_add_plugin_resources(MechamorphMachine
         OUTPUT_SUBDIRECTORY "mechamorph-controls"
