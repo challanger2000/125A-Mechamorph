@@ -120,6 +120,8 @@ void Engine::reset() noexcept {
     runLoopSpawned_ = false;
     loadActive_ = false;
     stopCountdown_ = 0;
+    stallCountdown_ = 0;
+    stallCooldown_ = 0;
     rng_.seed(0x125A4D414348494EULL);
     for (auto& v : voices_) v.reset();
     for (auto& e : pending_) e = {};
@@ -325,6 +327,15 @@ void Engine::updateMachineState() noexcept {
     inertiaState_ += inertiaCoeff * (targetSpeed - inertiaState_);
 
     double phaseSpeed = std::max(0.03f, inertiaState_);
+
+    // Rare mechanical stall/jam: the drive almost stops for a short moment.
+    // This is intentionally stateful and sparse, not random LFO modulation.
+    if (stallCountdown_ > 0) {
+        phaseSpeed *= 0.035;
+        --stallCountdown_;
+    } else if (stallCooldown_ > 0) {
+        --stallCooldown_;
+    }
     // LOAD is a real continuous machine control. A loaded machine slows and
     // feels heavier even when no discrete LOAD gesture is currently playing.
     phaseSpeed *= 1.0 - 0.18 * continuousLoad;
@@ -346,11 +357,14 @@ void Engine::updateMachineState() noexcept {
         (0.004 + 0.012 * static_cast<double>(wear)) *
         static_cast<double>(wear) *
         std::sin(phase_);
-    const double runRateScale =
+    double runRateScale =
         (0.65 + 0.85 * speedForRate) *
         static_cast<double>(scaleRate) *
         (1.0 - 0.18 * loadForRate) *
         wearEccentricity;
+
+    if (stallCountdown_ > 0)
+        runRateScale *= 0.055;
 
     for (auto& v : voices_) {
         if (v.active() && v.role() == Role::Run) {
@@ -373,6 +387,30 @@ void Engine::updateMachineState() noexcept {
         const int currentSector = static_cast<int>(phase_ / sector);
 
         const bool wrapped = phase_ < previousPhase_;
+
+        // Once per revolution at most, a stressed/worn mechanism may briefly
+        // hang. At normal settings this is effectively absent; in the creative
+        // range it becomes an occasional believable machine fault.
+        if (wrapped && stallCountdown_ <= 0 && stallCooldown_ <= 0) {
+            const float stress =
+                std::max(0.0f, wear - 0.55f) *
+                std::max(0.0f, continuousLoad - 0.30f);
+            const float stallProbability =
+                std::min(0.085f, 0.55f * stress * stress);
+
+            if (stallProbability > 0.0f &&
+                rng_.uniform01() < stallProbability) {
+                const float holdSeconds =
+                    0.06f +
+                    0.30f * scale +
+                    0.26f * wear;
+                stallCountdown_ =
+                    static_cast<int>(holdSeconds * sampleRate_);
+                stallCooldown_ =
+                    static_cast<int>((2.0f + 5.0f * (1.0f - wear)) * sampleRate_);
+            }
+        }
+
         if (wrapped || currentSector != previousSector) {
             const float loadAmount = clamp01(params_.load);
 
