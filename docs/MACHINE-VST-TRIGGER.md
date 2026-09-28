@@ -31,3 +31,5 @@ Final anti-repeat archetype verification: independent STOP source and duplicate-
 Verify INTRICATE rename and sparse STALL/JAM behavior.
 
 Verify INTRICATE + FRICTION/SQUEAL/SCRAPE stress behavior and rare-event QA.
+
+Retry FRICTION build after robust CC0 scrape file iteration fix.
