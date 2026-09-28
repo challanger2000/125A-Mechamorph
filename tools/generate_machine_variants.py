@@ -164,6 +164,21 @@ def profile_transform(x: np.ndarray, sr: int, profile: str, role: str) -> np.nda
             y = soft_clip(y, 0.24)
             y = transient_emphasis(y, 0.12)
 
+    if role == "pressure":
+        if profile == "heavy":
+            y = rate_change(y, 0.88)
+            y = lowpass(y, sr, 8500.0)
+        elif profile == "colossal":
+            y = rate_change(y, 0.70)
+            y = lowpass(y, sr, 6200.0)
+        elif profile == "pneumatic":
+            y = rate_change(y, 1.00)
+            y = highpass(y, sr, 90.0)
+            y = transient_emphasis(y, 0.10)
+        elif profile == "broken":
+            y = rate_change(y, 0.82)
+            y = soft_clip(y, 0.16)
+
     return normalize_safe(fade(y, sr))
 
 
@@ -216,6 +231,15 @@ def eligible_profiles(stem: str, role: str):
             "pneumatic": ("friction", "scrape", "squeaky"),
             "broken": ("friction", "scrape", "squeaky"),
         }
+    elif role == "pressure":
+        mapping = {
+            "tiny": (),
+            "intricate": (),
+            "heavy": ("pressure", "hiss", "steam"),
+            "colossal": ("pressure", "hiss", "steam"),
+            "pneumatic": ("pressure", "hiss", "steam"),
+            "broken": ("pressure", "hiss", "steam"),
+        }
     elif role == "start":
         mapping = {p: ("projector","winch") for p in PROFILES}
     elif role == "stop":
@@ -238,7 +262,7 @@ def main():
     for src in sorted(args.sample_dir.glob("*.wav")):
         stem = src.stem
         role = stem.split("__",1)[0].lower()
-        if role not in {"start","run","action","load","release","stop","friction"}:
+        if role not in {"start","run","action","load","release","stop","friction","pressure"}:
             continue
 
         sr, x = read_mono(src)
