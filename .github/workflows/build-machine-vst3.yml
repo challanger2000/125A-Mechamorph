@@ -213,12 +213,22 @@ jobs:
       - name: Build instrument, tests, BODY SPACE lab and validator
         shell: pwsh
         run: |
-          cmake --build build-machine-vst --config Release --target MechamorphMachine machine_sampler_tests measure_machine_space validator --parallel 2
+          cmake --build build-machine-vst --config Release --target MechamorphMachine machine_sampler_tests measure_machine_space mechamorph_editor_lifecycle_probe validator --parallel 2
 
       - name: Test machine engine
         shell: pwsh
         run: |
           ctest --test-dir build-machine-vst -C Release -R machine_sampler_tests --output-on-failure
+
+      - name: Test editor lifecycle and multires scaling
+        shell: pwsh
+        run: |
+          $plugin = Get-ChildItem -Path build-machine-vst -Recurse -Directory -Filter "MechamorphMachine.vst3" | Select-Object -First 1
+          $probe = Get-ChildItem -Path build-machine-vst -Recurse -File -Filter "mechamorph_editor_lifecycle_probe.exe" | Select-Object -First 1
+          if (-not $plugin) { Write-Error "MechamorphMachine.vst3 not found for editor lifecycle probe"; exit 1 }
+          if (-not $probe) { Write-Error "mechamorph_editor_lifecycle_probe.exe not found"; exit 1 }
+          & $probe.FullName $plugin.FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Measure BODY and SPACE on real machine material
         shell: pwsh
