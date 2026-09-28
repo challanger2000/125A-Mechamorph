@@ -152,6 +152,7 @@ VSTGUI::CView* Controller::createCustomView(VSTGUI::UTF8StringPtr name,
     };
 
     if(std::strcmp(name,"Faceplate")==0) return new GuiFaceplate(r);
+    if(std::strcmp(name,"BrandLogo")==0) return new GuiLogo(r);
     if(std::strcmp(name,"UIScale")==0) return new GuiScale(r,editor);
 
     if(auto* v=knob("Machine",kMachine,GuiKnob::Style::Machine)) return v;
