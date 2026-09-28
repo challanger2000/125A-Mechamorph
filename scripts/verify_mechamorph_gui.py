@@ -29,20 +29,24 @@ assert bitmaps_node is not None,"UIDESC bitmaps section missing"
 bitmap_nodes={b.attrib["name"]:b for b in bitmaps_node.findall("bitmap")}
 expected={
     "mech-faceplate":"mechamorph-faceplate.png",
-    "mech-static-machine":"mechamorph-controls/knob-static-250.png",
-    "mech-static-main":"mechamorph-controls/knob-static-170.png",
-    "mech-main-film":"mechamorph-controls/main-knob-64.png",
-    "mech-knob-master":"mechamorph-controls/knob-master-64.png",
-    "mech-static-scale":"mechamorph-controls/knob-static-220.png",
-    "mech-static-utility":"mechamorph-controls/knob-static-104.png",
+    "mech-knob-machine":"mechamorph-controls/knob-machine-64.png",
+    "mech-knob-main":"mechamorph-controls/knob-main-64.png",
+    "mech-knob-scale":"mechamorph-controls/knob-scale-64.png",
+    "mech-knob-utility":"mechamorph-controls/knob-utility-64.png",
 }
 assert set(bitmap_nodes)==set(expected),("unexpected bitmap nodes",set(bitmap_nodes)^set(expected))
 for name,path in expected.items():
     assert bitmap_nodes[name].attrib.get("path")==path,(name,bitmap_nodes[name].attrib.get("path"),path)
-for film_name in ("mech-main-film","mech-knob-master"):
+film_specs={
+    "mech-knob-machine":("64","250,250"),
+    "mech-knob-main":("64","125,125"),
+    "mech-knob-scale":("64","220,220"),
+    "mech-knob-utility":("64","104,104"),
+}
+for film_name,(frames,frame_size) in film_specs.items():
     film=bitmap_nodes[film_name]
-    assert film.attrib.get("multiframe-num-frames")=="64"
-    assert film.attrib.get("multiframe-size")=="125,125"
+    assert film.attrib.get("multiframe-num-frames")==frames
+    assert film.attrib.get("multiframe-size")==frame_size
     assert film.attrib.get("mulitframe-frames-per-row")=="1"
 
 def png_size(path):
@@ -52,12 +56,11 @@ def png_size(path):
 
 asset_sizes={
     ROOT/"resource/mechamorph-faceplate.png":(1440,960),
-    ROOT/"resource/mechamorph-controls/knob-static-250.png":(250,250),
-    ROOT/"resource/mechamorph-controls/knob-static-220.png":(220,220),
-    ROOT/"resource/mechamorph-controls/knob-static-170.png":(170,170),
-    ROOT/"resource/mechamorph-controls/main-knob-64.png":(125,8000),
     ROOT/"resource/mechamorph-controls/knob-master-64.png":(125,8000),
-    ROOT/"resource/mechamorph-controls/knob-static-104.png":(104,104),
+    ROOT/"resource/mechamorph-controls/knob-machine-64.png":(250,16000),
+    ROOT/"resource/mechamorph-controls/knob-main-64.png":(125,8000),
+    ROOT/"resource/mechamorph-controls/knob-scale-64.png":(220,14080),
+    ROOT/"resource/mechamorph-controls/knob-utility-64.png":(104,6656),
 }
 for path,size in asset_sizes.items():
     assert path.exists(),f"missing asset {path}"

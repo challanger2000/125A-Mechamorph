@@ -155,16 +155,8 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
     if(auto* bitmap=getDrawBackground()){
         if(auto* mfb=dynamic_cast<VSTGUI::CMultiFrameBitmap*>(bitmap)){
             const auto frame=mfb->normalizedValueToFrameIndex((float)v);
-            constexpr double sourceFrameSize=125.0;
-            const double scale=imageSize/sourceFrameSize;
-            c->setBitmapInterpolationQuality(VSTGUI::BitmapInterpolationQuality::kHigh);
-            VSTGUI::CDrawContext::Transform t{
-                *c,
-                VSTGUI::CGraphicsTransform()
-                    .translate(center.x,center.y)
-                    .scale(scale,scale)
-            };
-            mfb->drawFrame(c,frame,{-sourceFrameSize*0.5,-sourceFrameSize*0.5});
+            const VSTGUI::CPoint pos{center.x-imageRadius,center.y-imageRadius};
+            mfb->drawFrame(c,frame,pos);
             bakedIndicator=true;
         } else {
             bitmap->draw(c,imageRect,{0,0});

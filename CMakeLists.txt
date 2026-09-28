@@ -266,12 +266,10 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
     smtg_target_add_plugin_resources(MechamorphMachine
         OUTPUT_SUBDIRECTORY "mechamorph-controls"
         RESOURCES
-            "resource/mechamorph-controls/knob-static-250.png"
-            "resource/mechamorph-controls/knob-static-220.png"
-            "resource/mechamorph-controls/knob-static-170.png"
-            "resource/mechamorph-controls/main-knob-64.png"
-            "resource/mechamorph-controls/knob-master-64.png"
-            "resource/mechamorph-controls/knob-static-104.png"
+            "resource/mechamorph-controls/knob-machine-64.png"
+            "resource/mechamorph-controls/knob-main-64.png"
+            "resource/mechamorph-controls/knob-scale-64.png"
+            "resource/mechamorph-controls/knob-utility-64.png"
     )
     target_compile_features(MechamorphMachine PRIVATE cxx_std_17)
     smtg_target_configure_version_file(MechamorphMachine)

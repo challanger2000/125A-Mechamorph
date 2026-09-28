@@ -171,15 +171,15 @@ VSTGUI::CView* Controller::createCustomView(VSTGUI::UTF8StringPtr name,
     if(std::strcmp(name,"BrandLogo")==0) return new GuiLogo(r);
     if(std::strcmp(name,"UIScale")==0) return new GuiScale(r,editor);
 
-    if(auto* v=knob("Machine",kMachine,GuiKnob::Style::Machine,"mech-knob-master",0.00f)) return v;
-    if(auto* v=knob("Speed",kSpeed,GuiKnob::Style::Main,"mech-knob-master",0.32f)) return v;
-    if(auto* v=knob("Load",kLoad,GuiKnob::Style::Main,"mech-knob-master",0.20f)) return v;
-    if(auto* v=knob("Action",kAction,GuiKnob::Style::Main,"mech-knob-master",0.48f)) return v;
-    if(auto* v=knob("Wear",kWear,GuiKnob::Style::Main,"mech-knob-master",0.18f)) return v;
-    if(auto* v=knob("Scale",kScale,GuiKnob::Style::Scale,"mech-knob-master",0.35f)) return v;
-    if(auto* v=knob("Body",kBody,GuiKnob::Style::Utility,"mech-knob-master",0.28f)) return v;
-    if(auto* v=knob("Space",kSpace,GuiKnob::Style::Utility,"mech-knob-master",0.18f)) return v;
-    if(auto* v=knob("Output",kOutput,GuiKnob::Style::Utility,"mech-knob-master",0.38f)) return v;
+    if(auto* v=knob("Machine",kMachine,GuiKnob::Style::Machine,"mech-knob-machine",0.00f)) return v;
+    if(auto* v=knob("Speed",kSpeed,GuiKnob::Style::Main,"mech-knob-main",0.32f)) return v;
+    if(auto* v=knob("Load",kLoad,GuiKnob::Style::Main,"mech-knob-main",0.20f)) return v;
+    if(auto* v=knob("Action",kAction,GuiKnob::Style::Main,"mech-knob-main",0.48f)) return v;
+    if(auto* v=knob("Wear",kWear,GuiKnob::Style::Main,"mech-knob-main",0.18f)) return v;
+    if(auto* v=knob("Scale",kScale,GuiKnob::Style::Scale,"mech-knob-scale",0.35f)) return v;
+    if(auto* v=knob("Body",kBody,GuiKnob::Style::Utility,"mech-knob-utility",0.28f)) return v;
+    if(auto* v=knob("Space",kSpace,GuiKnob::Style::Utility,"mech-knob-utility",0.18f)) return v;
+    if(auto* v=knob("Output",kOutput,GuiKnob::Style::Utility,"mech-knob-utility",0.38f)) return v;
 
     if(std::strcmp(name,"PressureLamp")==0) return new GuiStatusLamp(r,editor,kPressureStatus,GuiStatusLamp::Kind::Pressure);
     if(std::strcmp(name,"FrictionLamp")==0) return new GuiStatusLamp(r,editor,kFrictionStatus,GuiStatusLamp::Kind::Friction);

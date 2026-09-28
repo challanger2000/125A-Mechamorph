@@ -209,6 +209,11 @@ jobs:
           Copy-Item machine-set/machine_space_ir_generated.h generated-machine/machine_space_ir_generated.h
           Get-ChildItem generated-machine
 
+      - name: Generate unified knob filmstrip variants
+        shell: pwsh
+        run: |
+          ./scripts/generate_knob_variants.ps1
+
       - name: Verify GUI geometry contract
         shell: pwsh
         run: |
