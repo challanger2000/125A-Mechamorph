@@ -25,8 +25,8 @@ assert actual==generated,"mechamorph.uidesc is stale; regenerate from mechamorph
 root=ET.fromstring(generated)
 
 bitmap_specs={
-    "mech-machine":("machine",250,6,[("1.25",313),("1.5",375),("2",500)]),
-    "mech-main":("main",170,96,[("1.25",213),("1.5",255),("2",340)]),
+    "mech-machine":("machine",250,6,[("1.252",313),("1.5",375),("2",500)]),
+    "mech-main":("main",170,96,[("1.2529411764705882",213),("1.5",255),("2",340)]),
     "mech-scale":("scale",220,72,[("1.25",275),("1.5",330),("2",440)]),
     "mech-utility":("utility",104,128,[("1.25",130),("1.5",156),("2",208)]),
 }
@@ -62,6 +62,9 @@ for base_name,(stem,size,frames,scaled) in bitmap_specs.items():
         path=asset_root/f"{stem}#{factor}x.png"
         assert path.exists(),f"missing scaled asset {path}"
         assert png_size(path)==(width,width*frames),(path,png_size(path),(width,width*frames))
+        sf=float(factor)
+        assert width/sf==size,(name,"scaled bitmap logical width mismatch",width,sf,size)
+        assert (width*frames)/sf==size*frames,(name,"scaled strip logical height mismatch")
 
 assert set(bitmap_nodes)==expected_names,("unexpected bitmap nodes",set(bitmap_nodes)-expected_names)
 assert len(list(asset_root.glob("*.png")))==16,"expected exactly 16 control PNGs"
