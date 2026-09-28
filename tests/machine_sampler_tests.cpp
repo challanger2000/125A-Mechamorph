@@ -428,6 +428,51 @@ int main() {
         assert(stressed.frictionEventCount() <= 30);
     }
 
+    // GUI status telemetry primitives must represent real active engine states,
+    // not event counters. PRESSURE and FRICTION go high only while their
+    // corresponding sample voices are active and return low afterwards.
+    {
+        std::vector<float> pressureClip(static_cast<std::size_t>(0.12 * sr), 0.2f);
+        std::vector<float> frictionClip(static_cast<std::size_t>(0.10 * sr), 0.2f);
+        SampleSet statusSet;
+        assert(statusSet.pressure.add({
+            pressureClip.data(), pressureClip.size(), sr, false, "pressure_status"}));
+        assert(statusSet.friction.add({
+            frictionClip.data(), frictionClip.size(), sr, false, "friction_status"}));
+
+        Engine statusEngine;
+        statusEngine.prepare(sr);
+        statusEngine.setSampleSet(&statusSet);
+
+        Parameters statusP;
+        statusP.load = 1.0f;
+        statusP.pressure = 1.0f;
+        statusP.wear = 1.0f;
+        statusP.scale = 0.5f;
+        statusP.output = 0.5f;
+        statusEngine.setParameters(statusP);
+        statusEngine.start();
+
+        bool sawPressureActive = false;
+        bool sawFrictionActive = false;
+        float sample = 0.0f;
+        for (int i = 0; i < static_cast<int>(90.0 * sr); ++i) {
+            statusEngine.process(&sample, 1);
+            sawPressureActive = sawPressureActive || statusEngine.pressureActive();
+            sawFrictionActive = sawFrictionActive || statusEngine.frictionActive();
+            if (sawPressureActive && sawFrictionActive)
+                break;
+        }
+        assert(sawPressureActive);
+        assert(sawFrictionActive);
+
+        std::vector<float> tail(static_cast<std::size_t>(1.0 * sr), 0.0f);
+        statusEngine.stop();
+        statusEngine.process(tail.data(), tail.size());
+        assert(!statusEngine.pressureActive());
+        assert(!statusEngine.frictionActive());
+    }
+
     std::cout << "Machine sampler engine tests PASS\n";
     return 0;
 }
