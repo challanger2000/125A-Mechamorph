@@ -24,70 +24,74 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          src_commit="2a779df"
-          # Resolve the current v0.2.0 asset commit once, then pin exact blob contents through SHA256 manifest below.
           base="https://raw.githubusercontent.com/challanger2000/125A-Knob-Designer/v0.2.0/generated-assets/mechamorph-v0.1.0"
+          rm -rf resource/mechamorph-controls
           mkdir -p resource/mechamorph-controls
-          files=(
-            main_170px_96f_scale-1x.png
-            main_213px_96f_scale-1p25x.png
-            main_255px_96f_scale-1p5x.png
-            main_340px_96f_scale-2x.png
-            scale_220px_72f_scale-1x.png
-            scale_275px_72f_scale-1p25x.png
-            scale_330px_72f_scale-1p5x.png
-            scale_440px_72f_scale-2x.png
-            utility_104px_128f_scale-1x.png
-            utility_130px_128f_scale-1p25x.png
-            utility_156px_128f_scale-1p5x.png
-            utility_208px_128f_scale-2x.png
-            machine_250px_6f_scale-1x.png
-            machine_313px_6f_scale-1p25x.png
-            machine_375px_6f_scale-1p5x.png
-            machine_500px_6f_scale-2x.png
+
+          declare -A files=(
+            [main.png]=main_170px_96f_scale-1x.png
+            [main#1.25x.png]=main_213px_96f_scale-1p25x.png
+            [main#1.5x.png]=main_255px_96f_scale-1p5x.png
+            [main#2x.png]=main_340px_96f_scale-2x.png
+
+            [scale.png]=scale_220px_72f_scale-1x.png
+            [scale#1.25x.png]=scale_275px_72f_scale-1p25x.png
+            [scale#1.5x.png]=scale_330px_72f_scale-1p5x.png
+            [scale#2x.png]=scale_440px_72f_scale-2x.png
+
+            [utility.png]=utility_104px_128f_scale-1x.png
+            [utility#1.25x.png]=utility_130px_128f_scale-1p25x.png
+            [utility#1.5x.png]=utility_156px_128f_scale-1p5x.png
+            [utility#2x.png]=utility_208px_128f_scale-2x.png
+
+            [machine.png]=machine_250px_6f_scale-1x.png
+            [machine#1.25x.png]=machine_313px_6f_scale-1p25x.png
+            [machine#1.5x.png]=machine_375px_6f_scale-1p5x.png
+            [machine#2x.png]=machine_500px_6f_scale-2x.png
           )
-          for file in "${files[@]}"; do
-            curl --fail --location --retry 3 "$base/$file" -o "resource/mechamorph-controls/$file"
-            test -s "resource/mechamorph-controls/$file"
+
+          for dst in "${!files[@]}"; do
+            src="${files[$dst]}"
+            curl --fail --location --retry 3 "$base/$src" -o "resource/mechamorph-controls/$dst"
+            test -s "resource/mechamorph-controls/$dst"
           done
           curl --fail --location --retry 3 "$base/manifest.json" -o resource/mechamorph-controls/manifest.json
 
-      - name: Verify source manifest and PNG headers
+      - name: Verify normalized multires PNGs
         shell: python
         run: |
           import json, struct
           from pathlib import Path
           root=Path("resource/mechamorph-controls")
           m=json.loads((root/"manifest.json").read_text())
+
           expect={
-            "main":(170,96,[170,213,255,340]),
-            "scale":(220,72,[220,275,330,440]),
-            "utility":(104,128,[104,130,156,208]),
-            "machine":(250,6,[250,313,375,500]),
+            "main":(96,[(1.0,"main.png",170),(1.25,"main#1.25x.png",213),(1.5,"main#1.5x.png",255),(2.0,"main#2x.png",340)]),
+            "scale":(72,[(1.0,"scale.png",220),(1.25,"scale#1.25x.png",275),(1.5,"scale#1.5x.png",330),(2.0,"scale#2x.png",440)]),
+            "utility":(128,[(1.0,"utility.png",104),(1.25,"utility#1.25x.png",130),(1.5,"utility#1.5x.png",156),(2.0,"utility#2x.png",208)]),
+            "machine":(6,[(1.0,"machine.png",250),(1.25,"machine#1.25x.png",313),(1.5,"machine#1.5x.png",375),(2.0,"machine#2x.png",500)]),
           }
-          for key,(base,frames,widths) in expect.items():
-            c=m["controls"][key]
-            assert c["baseFrame"]==[base,base]
-            assert c["frameCount"]==frames
-            assert [x["frameWidth"] for x in c["outputs"]]==widths
-            for x in c["outputs"]:
-              p=root/x["file"]
+          for key,(frames,variants) in expect.items():
+            assert m["controls"][key]["frameCount"]==frames
+            for factor,name,width in variants:
+              p=root/name
               data=p.read_bytes()
               assert data[:8]==b"\x89PNG\r\n\x1a\n"
               w,h=struct.unpack(">II",data[16:24])
-              assert w==x["frameWidth"],(p,w,x["frameWidth"])
-              assert h==x["frameHeight"]*frames,(p,h,x["frameHeight"]*frames)
-          print("Mechamorph GUI asset sync PASS")
+              assert w==width,(name,w,width)
+              assert h==width*frames,(name,h,width*frames)
+          assert len(list(root.glob("*.png")))==16
+          print("Mechamorph normalized VSTGUI multires assets PASS")
 
       - name: Commit approved assets
         shell: bash
         run: |
           git config user.name "125A GUI Asset Bot"
           git config user.email "actions@users.noreply.github.com"
-          git add resource/mechamorph-controls
+          git add -A resource/mechamorph-controls
           if git diff --cached --quiet; then
             echo "GUI assets unchanged."
             exit 0
           fi
-          git commit -m "Sync approved Mechamorph GUI filmstrips [skip ci]"
+          git commit -m "Normalize Mechamorph VSTGUI multires assets [skip ci]"
           git push origin HEAD:v0.1.0
