@@ -19,6 +19,9 @@ using namespace VST3::Hosting;
 
 namespace {
 
+void trace(const std::string& s){ std::cout<<"[process-probe] "<<s<<std::endl; }
+int fail(int code,const std::string& s){ std::cerr<<"[process-probe] FAIL "<<code<<": "<<s<<std::endl; return code; }
+
 bool finiteBuffers(const std::vector<float>& l,const std::vector<float>& r){
     for(float v:l) if(!std::isfinite(v)) return false;
     for(float v:r) if(!std::isfinite(v)) return false;
@@ -143,80 +146,96 @@ bool runBlock(IComponent* component,IAudioProcessor* processor,ProcessModes mode
 }
 
 int run(const std::string& path){
+    trace("start: "+path);
     std::string error;
+    trace("loading module");
     auto module=Module::create(path,error);
-    if(!module){ std::cerr<<"[FAIL] module load "<<error<<"\n"; return 1; }
+    if(!module) return fail(1,"module load: "+error);
+    trace("module loaded");
 
     HostApplication hostApplication;
     FUnknown* host=&hostApplication;
     auto factory=module->getFactory();
     factory.setHostContext(host);
+    trace("factory ready");
 
     for(const auto& info:factory.classInfos()){
+        trace("factory class: "+info.name());
         auto component=factory.createInstance<IComponent>(info.ID());
-        if(!component) continue;
-        if(component->initialize(host)!=kResultOk) return 2;
+        if(!component){ trace("not an IComponent; skip"); continue; }
+        trace("component created");
+        if(component->initialize(host)!=kResultOk) return fail(2,"component initialize");
+        trace("component initialized");
 
         IAudioProcessor* processor{};
         if(component->queryInterface(IAudioProcessor::iid,reinterpret_cast<void**>(&processor))!=kResultTrue || !processor){
+            trace("component is not IAudioProcessor; skip");
             component->terminate();
             continue;
         }
+        trace("audio processor acquired");
 
         if(processor->canProcessSampleSize(kSample32)!=kResultTrue){
-            std::cerr<<"[FAIL] 32-bit processing unsupported\n"; return 3;
+            std::cerr<<"[FAIL] 32-bit processing unsupported\n"; return fail(3,"32-bit processing unsupported");
         }
         if(processor->canProcessSampleSize(kSample64)==kResultTrue){
-            std::cerr<<"[FAIL] plugin unexpectedly claims 64-bit processing\n"; return 4;
+            std::cerr<<"[FAIL] plugin unexpectedly claims 64-bit processing\n"; return fail(4,"unexpected 64-bit support");
         }
 
         if(component->getBusCount(kAudio,kInput)!=0 ||
            component->getBusCount(kAudio,kOutput)!=1 ||
            component->getBusCount(kEvent,kInput)!=1){
-            std::cerr<<"[FAIL] bus topology mismatch\n"; return 5;
+            std::cerr<<"[FAIL] bus topology mismatch\n"; return fail(5,"bus topology mismatch");
         }
 
         SpeakerArrangement stereo=SpeakerArr::kStereo;
         if(processor->setBusArrangements(nullptr,0,&stereo,1)!=kResultTrue){
-            std::cerr<<"[FAIL] stereo instrument arrangement rejected\n"; return 6;
+            std::cerr<<"[FAIL] stereo instrument arrangement rejected\n"; return fail(6,"stereo arrangement rejected");
         }
+        trace("activating buses");
         component->activateBus(kAudio,kOutput,0,true);
         component->activateBus(kEvent,kInput,0,true);
 
         for(auto mode:{kRealtime,kOffline}){
             for(double sr:{44100.0,48000.0,96000.0,192000.0}){
                 for(int32 block:{1,16,64,257,1024}){
+                    trace("matrix mode="+std::to_string(static_cast<int>(mode))+
+                          " sr="+std::to_string(static_cast<int>(sr))+
+                          " block="+std::to_string(block));
                     if(!runBlock(component.get(),processor,mode,sr,block)){
                         processor->release();
                         component->terminate();
-                        return 7;
+                        return fail(7,"process matrix case failed");
                     }
                 }
             }
         }
 
         // Repeated activation after the stress matrix must still succeed.
+        trace("process matrix complete; activation loop");
         ProcessSetup finalSetup{};
         finalSetup.processMode=kRealtime;
         finalSetup.symbolicSampleSize=kSample32;
         finalSetup.maxSamplesPerBlock=128;
         finalSetup.sampleRate=48000.0;
-        if(processor->setupProcessing(finalSetup)!=kResultTrue) return 8;
+        if(processor->setupProcessing(finalSetup)!=kResultTrue) return fail(8,"final setupProcessing");
         for(int i=0;i<8;++i){
-            if(component->setActive(true)!=kResultTrue) return 9;
-            if(processor->setProcessing(true)!=kResultTrue) return 10;
-            if(processor->setProcessing(false)!=kResultTrue) return 11;
-            if(component->setActive(false)!=kResultTrue) return 12;
+            if(component->setActive(true)!=kResultTrue) return fail(9,"activation loop setActive true");
+            if(processor->setProcessing(true)!=kResultTrue) return fail(10,"activation loop setProcessing true");
+            if(processor->setProcessing(false)!=kResultTrue) return fail(11,"activation loop setProcessing false");
+            if(component->setActive(false)!=kResultTrue) return fail(12,"activation loop setActive false");
         }
 
+        trace("activation loop complete; releasing processor");
         processor->release();
-        if(component->terminate()!=kResultOk) return 13;
+        trace("terminating component");
+        if(component->terminate()!=kResultOk) return fail(13,"component terminate");
+        trace("component terminated");
         std::cout<<"Mechamorph VST3 process contract PASS: realtime/offline, 4 rates, 5 block sizes, MIDI, automation, NaN, activate/deactivate\n";
         return 0;
     }
 
-    std::cerr<<"[FAIL] no audio processor class\n";
-    return 14;
+    return fail(14,"no audio processor class");
 }
 }
 
