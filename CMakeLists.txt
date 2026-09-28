@@ -159,6 +159,7 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
     target_include_directories(measure_machine_space PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/source-machine"
         "${MECHAMORPH_MACHINE_GENERATED_DIR}"
+        "${vst3sdk_machine_SOURCE_DIR}/vstgui4"
     )
     target_compile_features(measure_machine_space PRIVATE cxx_std_17)
 
