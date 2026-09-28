@@ -16,6 +16,14 @@ public:
     void draw(VSTGUI::CDrawContext* context) override;
 };
 
+class GuiLogo final : public VSTGUI::CView {
+public:
+    explicit GuiLogo(const VSTGUI::CRect& size);
+    GuiLogo(const GuiLogo& other);
+    VSTGUI::CBaseObject* newCopy() const override { return new GuiLogo(*this); }
+    void draw(VSTGUI::CDrawContext* context) override;
+};
+
 class GuiKnob final : public VSTGUI::CAnimKnob {
 public:
     enum class Style { Main, Scale, Utility, Machine };
