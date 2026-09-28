@@ -1,5 +1,6 @@
 #include "controller.h"
 #include "parameters.h"
+#include "MechamorphGui.h"
 
 #include "base/source/fstreamer.h"
 #include "public.sdk/source/vst/vstparameters.h"
@@ -7,6 +8,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstring>
 
 using namespace Steinberg;
 using namespace Steinberg::Vst;
@@ -128,6 +130,60 @@ tresult PLUGIN_API Controller::setComponentState(IBStream* state) {
     setParamNormalized(kOutput, std::clamp<double>(output,0.0,1.0));
 
     return kResultOk;
+}
+
+
+VSTGUI::CView* Controller::createCustomView(VSTGUI::UTF8StringPtr name,
+                                             const VSTGUI::UIAttributes& attributes,
+                                             const VSTGUI::IUIDescription*,
+                                             VSTGUI::VST3Editor* editor) {
+    if(!name || !editor) return nullptr;
+
+    VSTGUI::CPoint origin{0,0}, size{64,64};
+    attributes.getPointAttribute("origin",origin);
+    attributes.getPointAttribute("size",size);
+    const VSTGUI::CRect r(origin.x,origin.y,origin.x+size.x,origin.y+size.y);
+
+    auto knob=[&](const char* n, ParamID id, GuiKnob::Style style)->VSTGUI::CView* {
+        return std::strcmp(name,n)==0 ? static_cast<VSTGUI::CView*>(new GuiKnob(r,editor,id,style)) : nullptr;
+    };
+    auto label=[&](const char* n,const char* text,double fs,bool muted=false)->VSTGUI::CView* {
+        return std::strcmp(name,n)==0 ? static_cast<VSTGUI::CView*>(new GuiLabel(r,text,fs,muted)) : nullptr;
+    };
+
+    if(std::strcmp(name,"Faceplate")==0) return new GuiFaceplate(r);
+    if(std::strcmp(name,"UIScale")==0) return new GuiScale(r,editor);
+
+    if(auto* v=knob("Machine",kMachine,GuiKnob::Style::Machine)) return v;
+    if(auto* v=knob("Speed",kSpeed,GuiKnob::Style::Main)) return v;
+    if(auto* v=knob("Load",kLoad,GuiKnob::Style::Main)) return v;
+    if(auto* v=knob("Action",kAction,GuiKnob::Style::Main)) return v;
+    if(auto* v=knob("Wear",kWear,GuiKnob::Style::Main)) return v;
+    if(auto* v=knob("Scale",kScale,GuiKnob::Style::Scale)) return v;
+    if(auto* v=knob("Body",kBody,GuiKnob::Style::Utility)) return v;
+    if(auto* v=knob("Space",kSpace,GuiKnob::Style::Utility)) return v;
+    if(auto* v=knob("Output",kOutput,GuiKnob::Style::Utility)) return v;
+
+    if(std::strcmp(name,"PressureLamp")==0) return new GuiStatusLamp(r,GuiStatusLamp::Kind::Pressure);
+    if(std::strcmp(name,"FrictionLamp")==0) return new GuiStatusLamp(r,GuiStatusLamp::Kind::Friction);
+    if(std::strcmp(name,"StallLamp")==0) return new GuiStatusLamp(r,GuiStatusLamp::Kind::Stall);
+
+    if(auto* v=label("BrandTitle","MECHAMORPH",28.0)) return v;
+    if(auto* v=label("BrandSubtitle","MECHANICAL INSTRUMENT",11.0,true)) return v;
+    if(auto* v=label("MachineLabel","MACHINE",13.0)) return v;
+    if(auto* v=label("SpeedLabel","SPEED",12.0)) return v;
+    if(auto* v=label("LoadLabel","LOAD",12.0)) return v;
+    if(auto* v=label("ActionLabel","ACTION",12.0)) return v;
+    if(auto* v=label("WearLabel","WEAR",12.0)) return v;
+    if(auto* v=label("ScaleLabel","SCALE",12.0)) return v;
+    if(auto* v=label("BodyLabel","BODY",10.0)) return v;
+    if(auto* v=label("SpaceLabel","SPACE",10.0)) return v;
+    if(auto* v=label("OutputLabel","OUTPUT",10.0)) return v;
+    if(auto* v=label("PressureLabel","PRESSURE",9.0,true)) return v;
+    if(auto* v=label("FrictionLabel","FRICTION",9.0,true)) return v;
+    if(auto* v=label("StallLabel","STALL",9.0,true)) return v;
+
+    return nullptr;
 }
 
 } // namespace MechamorphMachine
