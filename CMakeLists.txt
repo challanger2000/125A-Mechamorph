@@ -221,6 +221,26 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
 
     target_link_libraries(MechamorphMachine PRIVATE sdk vstgui_support)
     smtg_target_add_plugin_resources(MechamorphMachine RESOURCES "resource/mechamorph.uidesc")
+    smtg_target_add_plugin_resources(MechamorphMachine
+        OUTPUT_SUBDIRECTORY "mechamorph-controls"
+        RESOURCES
+            "resource/mechamorph-controls/machine.png"
+            "resource/mechamorph-controls/machine#1.25x.png"
+            "resource/mechamorph-controls/machine#1.5x.png"
+            "resource/mechamorph-controls/machine#2x.png"
+            "resource/mechamorph-controls/main.png"
+            "resource/mechamorph-controls/main#1.25x.png"
+            "resource/mechamorph-controls/main#1.5x.png"
+            "resource/mechamorph-controls/main#2x.png"
+            "resource/mechamorph-controls/scale.png"
+            "resource/mechamorph-controls/scale#1.25x.png"
+            "resource/mechamorph-controls/scale#1.5x.png"
+            "resource/mechamorph-controls/scale#2x.png"
+            "resource/mechamorph-controls/utility.png"
+            "resource/mechamorph-controls/utility#1.25x.png"
+            "resource/mechamorph-controls/utility#1.5x.png"
+            "resource/mechamorph-controls/utility#2x.png"
+    )
     target_compile_features(MechamorphMachine PRIVATE cxx_std_17)
     smtg_target_configure_version_file(MechamorphMachine)
 endif()
