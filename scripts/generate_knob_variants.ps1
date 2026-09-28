@@ -1,5 +1,5 @@
 param(
-    [string]$Source = "resource/mechamorph-controls/mechamorph-knob-grip-64.png",
+    [string]$Source = "resource/mechamorph-controls/mechamorph-knob-grip-256-master.png",
     [string]$FaceplateSource = "resource/mechamorph-faceplate-v2.png",
     [string]$FaceplateOutput = "resource/mechamorph-faceplate-runtime.png",
     [string]$OutputDir = "resource/mechamorph-controls"
@@ -9,7 +9,7 @@ $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Drawing
 
 $frames = 64
-$sourceFrame = 125
+$sourceFrame = 256
 $fillRatio = 0.94
 
 # Normalize the accepted source faceplate to the plugin's fixed 1440x960 logical canvas.
@@ -47,7 +47,7 @@ $variants = @(
 $src = [System.Drawing.Bitmap]::FromFile((Resolve-Path $Source))
 try {
     if ($src.Width -ne $sourceFrame -or $src.Height -ne ($sourceFrame * $frames)) {
-        throw "Unexpected master filmstrip dimensions: $($src.Width)x$($src.Height); expected 125x8000"
+        throw "Unexpected master filmstrip dimensions: $($src.Width)x$($src.Height); expected $sourceFrame x $($sourceFrame * $frames)"
     }
 
     # Find the actual non-transparent knob bounds once. Use one symmetric crop for every frame,
