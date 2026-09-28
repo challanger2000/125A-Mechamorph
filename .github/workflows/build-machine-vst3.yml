@@ -293,3 +293,5 @@ jobs:
           path: packaged/
           if-no-files-found: error
           retention-days: 7
+
+# editor lifecycle gate trigger
