@@ -84,14 +84,19 @@ jobs:
             friction-src/friction__oga_squeakyclick2.wav
 
           i=1
-          while IFS= read -r file; do
+          for file in friction-pack/*; do
+            [ -f "$file" ] || continue
+            case "${file,,}" in
+              *.wav|*.ogg) ;;
+              *) continue ;;
+            esac
             [ "$i" -gt 6 ] && break
             printf -v tag "%02d" "$i"
             ffmpeg -hide_banner -loglevel error -y \
               -i "$file" -ac 1 -ar 48000 -c:a pcm_s16le \
               "friction-src/friction__oga_scrape_${tag}.wav"
             i=$((i+1))
-          done < <(find friction-pack -type f \( -iname "*.wav" -o -iname "*.ogg" \) | sort)
+          done
       - name: Build curated sample set
         shell: bash
         run: |
