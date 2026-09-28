@@ -301,6 +301,8 @@ int main() {
             normalStalled = normalStalled || normal.stalled();
         }
         assert(!normalStalled);
+        assert(normal.stallEventCount() == 0);
+        assert(normal.frictionEventCount() == 0);
 
         Engine stressed;
         stressed.prepare(sr);
@@ -323,6 +325,12 @@ int main() {
             }
         }
         assert(stressedStalled);
+        assert(stressed.stallEventCount() >= 1);
+        assert(stressed.frictionEventCount() >= stressed.stallEventCount());
+        // Rare means rare: even at pathological stress this must not become
+        // continuous squeal/jam spam.
+        assert(stressed.stallEventCount() <= 12);
+        assert(stressed.frictionEventCount() <= 30);
     }
 
     std::cout << "Machine sampler engine tests PASS\n";
