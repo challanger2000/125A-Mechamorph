@@ -13,13 +13,13 @@
 
     <view class="CView" custom-view-name="UIScale" origin="390,170" size="100,24"/>
 
-    <view class="CView" custom-view-name="Machine" origin="580,98" size="280,280"/>
+    <view class="CView" custom-view-name="Machine" origin="578,99" size="280,280"/>
     <view class="CView" custom-view-name="MachinePosRow1" origin="570,390" size="300,16" mouse-enabled="false"/>
     <view class="CView" custom-view-name="MachinePosRow2" origin="570,412" size="300,16" mouse-enabled="false"/>
 
-    <view class="CView" custom-view-name="PressureLamp" origin="1012,98" size="52,52" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="FrictionLamp" origin="1162,99" size="52,52" mouse-enabled="false"/>
-    <view class="CView" custom-view-name="StallLamp" origin="1313,99" size="52,52" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="PressureLamp" origin="1012,100" size="52,52" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="FrictionLamp" origin="1164,101" size="52,52" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="StallLamp" origin="1311,100" size="52,52" mouse-enabled="false"/>
 
     <view class="CView" custom-view-name="Speed" origin="41,570" size="190,190"/>
     <view class="CView" custom-view-name="Load" origin="276,572" size="190,190"/>

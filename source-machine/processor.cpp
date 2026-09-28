@@ -20,7 +20,14 @@ namespace {
 constexpr int32 kStateVersion = 4;
 }
 
-Processor::Processor() {
+Processor::Processor()
+: statusExchange_(this, [](auto& config, const auto&) {
+    config.blockSize = sizeof(StatusExchangeData);
+    config.numBlocks = 16;
+    config.alignment = alignof(StatusExchangeData);
+    config.userContextID = kStatusExchangeContext;
+    return true;
+}) {
     setControllerClass(ControllerUID);
 
     machineParams_.speed = 0.32f;
@@ -49,6 +56,17 @@ tresult PLUGIN_API Processor::initialize(FUnknown* context) {
 
     engine_.setSampleSet(assets_.profile(machineIndex_));
     return kResultOk;
+}
+
+tresult PLUGIN_API Processor::connect(IConnectionPoint* other) {
+    auto result = AudioEffect::connect(other);
+    statusExchange_.onConnect(other, getHostContext());
+    return result;
+}
+
+tresult PLUGIN_API Processor::disconnect(IConnectionPoint* other) {
+    statusExchange_.onDisconnect(other);
+    return AudioEffect::disconnect(other);
 }
 
 tresult PLUGIN_API Processor::setupProcessing(ProcessSetup& setup) {
@@ -85,6 +103,8 @@ tresult PLUGIN_API Processor::setProcessing(TBool state) {
 
 tresult PLUGIN_API Processor::setActive(TBool state) {
     if (state) {
+        statusExchange_.onActivate(processSetup);
+        statusExchangeCountdown_ = 0;
         transportWasPlaying_ = false;
         activeNoteId_ = -1;
         activePitch_ = -1;
@@ -96,6 +116,9 @@ tresult PLUGIN_API Processor::setActive(TBool state) {
         lastFrictionStatus_ = false;
         lastStallStatus_ = false;
         updateEngineParameters();
+    } else {
+        statusExchange_.onDeactivate();
+        statusExchangeCountdown_ = 0;
     }
     return AudioEffect::setActive(state);
 }
@@ -191,6 +214,24 @@ void Processor::updateEngineParameters() noexcept {
     spaceEngine_.setBody(effectiveBody);
     spaceEngine_.setSpace(spaceAmount_);
     spaceEngine_.setScale(machineParams_.scale);
+}
+
+
+void Processor::sendStatusExchange(bool pressure, bool friction, bool stall, int32 numSamples) noexcept {
+    statusExchangeCountdown_ -= std::max<int32>(1, numSamples);
+    if (statusExchangeCountdown_ > 0) return;
+    statusExchangeCountdown_ = std::max<int32>(1, static_cast<int32>(std::lround(sampleRate_ / 30.0)));
+    auto block = statusExchange_.getCurrentOrNewBlock();
+    if (block.blockID == InvalidDataExchangeBlockID) return;
+    if (!block.data || block.size < sizeof(StatusExchangeData)) {
+        statusExchange_.discardCurrentBlock();
+        return;
+    }
+    auto* payload = static_cast<StatusExchangeData*>(block.data);
+    payload->pressure = pressure ? 1.0 : 0.0;
+    payload->friction = friction ? 1.0 : 0.0;
+    payload->stall = stall ? 1.0 : 0.0;
+    statusExchange_.sendCurrentBlock();
 }
 
 tresult PLUGIN_API Processor::process(ProcessData& data) {
@@ -406,6 +447,7 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
     emitStatus(kPressureStatus, pressureSeen, lastPressureStatus_);
     emitStatus(kFrictionStatus, frictionSeen, lastFrictionStatus_);
     emitStatus(kStallStatus, stallSeen, lastStallStatus_);
+    sendStatusExchange(pressureSeen, frictionSeen, stallSeen, data.numSamples);
     statusInitialized_ = true;
 
     return kResultOk;

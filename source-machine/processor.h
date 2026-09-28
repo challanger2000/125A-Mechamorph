@@ -4,6 +4,8 @@
 #include "MachineSamplerEngine.h"
 #include "MachineAssetBank.h"
 #include "MachineSpaceEngine.h"
+#include "public.sdk/source/vst/utility/dataexchange.h"
+#include "status_exchange.h"
 
 namespace MechamorphMachine {
 
@@ -16,6 +18,8 @@ public:
     }
 
     Steinberg::tresult PLUGIN_API initialize(Steinberg::FUnknown* context) override;
+    Steinberg::tresult PLUGIN_API connect(Steinberg::Vst::IConnectionPoint* other) override;
+    Steinberg::tresult PLUGIN_API disconnect(Steinberg::Vst::IConnectionPoint* other) override;
     Steinberg::tresult PLUGIN_API setupProcessing(Steinberg::Vst::ProcessSetup& setup) override;
     Steinberg::tresult PLUGIN_API setProcessing(Steinberg::TBool state) override;
     Steinberg::tresult PLUGIN_API setActive(Steinberg::TBool state) override;
@@ -32,6 +36,7 @@ private:
     void applyParameter(Steinberg::Vst::ParamID id, float normalized) noexcept;
     void updateEngineParameters() noexcept;
     void applyMachineProfile(bool restartIfRunning) noexcept;
+    void sendStatusExchange(bool pressure, bool friction, bool stall, Steinberg::int32 numSamples) noexcept;
 
     MachineAssetBank assets_{};
     mechamorph::machine::Engine engine_{};
@@ -49,6 +54,8 @@ private:
     bool lastPressureStatus_ = false;
     bool lastFrictionStatus_ = false;
     bool lastStallStatus_ = false;
+    Steinberg::Vst::DataExchangeHandler statusExchange_;
+    Steinberg::int32 statusExchangeCountdown_ = 0;
 };
 
 } // namespace MechamorphMachine

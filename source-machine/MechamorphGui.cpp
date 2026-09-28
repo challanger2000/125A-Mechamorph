@@ -151,6 +151,25 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
 
     c->setDrawMode(VSTGUI::kAntiAliasing);
 
+
+    if(style_ != Style::Machine){
+        const double half = std::min(r.getWidth(), r.getHeight()) * 0.5;
+        const double outer = half - (style_==Style::Scale ? 5.0 : 3.0);
+        constexpr int tickCount = 21;
+        for(int i=0;i<tickCount;++i){
+            const bool major=(i%5)==0;
+            const double angle=(135.0 + 270.0*(static_cast<double>(i)/(tickCount-1))) * kPi/180.0;
+            const double inner = outer - (major ? (style_==Style::Scale ? 11.0 : 8.0)
+                                                : (style_==Style::Scale ? 6.5 : 4.5));
+            const VSTGUI::CPoint a{center.x+std::cos(angle)*inner,center.y+std::sin(angle)*inner};
+            const VSTGUI::CPoint b{center.x+std::cos(angle)*outer,center.y+std::sin(angle)*outer};
+            c->setFrameColor(major ? VSTGUI::CColor{221,198,153,225}
+                                   : VSTGUI::CColor{151,143,128,185});
+            c->setLineWidth(major ? 1.7 : 1.0);
+            c->drawLine(a,b);
+        }
+    }
+
     bool bakedIndicator=false;
     if(auto* bitmap=getDrawBackground()){
         if(auto* mfb=dynamic_cast<VSTGUI::CMultiFrameBitmap*>(bitmap)){
@@ -224,6 +243,16 @@ void GuiStatusLamp::draw(VSTGUI::CDrawContext* c){
         return VSTGUI::CColor{ch(a.red,b.red),ch(a.green,b.green),ch(a.blue,b.blue),255};
     };
     const auto active=lerp(dim,bright);
+    if(on > 0.01f){
+        VSTGUI::CColor glow=bright;
+        for(int n=3;n>=1;--n){
+            const double grow=2.8*n;
+            auto gr=lens; gr.inset(-grow,-grow);
+            glow.alpha=static_cast<uint8_t>(std::lround((18.0+12.0*n)*on));
+            c->setFillColor(glow);
+            c->drawEllipse(gr,VSTGUI::kDrawFilled);
+        }
+    }
     radial(c,lens,lerp({85,76,55,255},bright),active);
     c->setFrameColor({5,6,7,255}); c->setLineWidth(1.0); c->drawEllipse(r,VSTGUI::kDrawStroked);
     setDirty(false);

@@ -14,12 +14,25 @@ using namespace Steinberg;
 using namespace Steinberg::Vst;
 
 namespace MechamorphMachine {
+
+Controller::Controller() : statusExchangeReceiver_(this) {}
+
+tresult PLUGIN_API Controller::queryInterface(const TUID iid, void** obj) {
+    if (!obj) return kInvalidArgument;
+    if (std::memcmp(iid, IDataExchangeReceiver::iid, 16) == 0) {
+        *obj = static_cast<IDataExchangeReceiver*>(this);
+        EditControllerEx1::addRef();
+        return kResultOk;
+    }
+    return EditControllerEx1::queryInterface(iid, obj);
+}
+
 namespace {
 constexpr int32 kStateVersion = 4;
 }
 
 tresult PLUGIN_API Controller::initialize(FUnknown* context) {
-    auto r = EditController::initialize(context);
+    auto r = EditControllerEx1::initialize(context);
     if (r != kResultOk)
         return r;
 
@@ -64,6 +77,28 @@ tresult PLUGIN_API Controller::initialize(FUnknown* context) {
         0.0, 1.0, 0.0, 1, ParameterInfo::kIsReadOnly));
 
     return kResultOk;
+}
+
+
+tresult PLUGIN_API Controller::notify(IMessage* message) {
+    if (message && statusExchangeReceiver_.onMessage(message)) return kResultTrue;
+    return EditControllerEx1::notify(message);
+}
+void PLUGIN_API Controller::queueOpened(DataExchangeUserContextID id, uint32 blockSize, TBool& background) {
+    if (id == kStatusExchangeContext && blockSize >= sizeof(StatusExchangeData)) background = false;
+}
+void PLUGIN_API Controller::queueClosed(DataExchangeUserContextID id) {
+    if (id != kStatusExchangeContext) return;
+    setParamNormalized(kPressureStatus,0.0); setParamNormalized(kFrictionStatus,0.0); setParamNormalized(kStallStatus,0.0);
+}
+void PLUGIN_API Controller::onDataExchangeBlocksReceived(DataExchangeUserContextID id, uint32 n, DataExchangeBlock* blocks, TBool) {
+    if (id != kStatusExchangeContext || !blocks || n == 0) return;
+    const StatusExchangeData* latest=nullptr;
+    for (uint32 i=0;i<n;++i) if (blocks[i].data && blocks[i].size >= sizeof(StatusExchangeData)) latest=static_cast<const StatusExchangeData*>(blocks[i].data);
+    if (!latest) return;
+    setParamNormalized(kPressureStatus,std::clamp(latest->pressure,0.0,1.0));
+    setParamNormalized(kFrictionStatus,std::clamp(latest->friction,0.0,1.0));
+    setParamNormalized(kStallStatus,std::clamp(latest->stall,0.0,1.0));
 }
 
 tresult PLUGIN_API Controller::setComponentState(IBStream* state) {
