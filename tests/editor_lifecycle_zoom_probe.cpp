@@ -115,17 +115,38 @@ struct ControllerHolder {
     bool initialized{};
     bool connected{};
     void close() {
+        trace("controller close: begin");
         if(connected && componentCP && controllerCP) {
-            componentCP->disconnect(controllerCP);
-            controllerCP->disconnect(componentCP);
+            trace("controller close: disconnect component -> controller");
+            const auto a=componentCP->disconnect(controllerCP);
+            trace("controller close: component disconnect result "+std::to_string(a));
+            trace("controller close: disconnect controller -> component");
+            const auto b=controllerCP->disconnect(componentCP);
+            trace("controller close: controller disconnect result "+std::to_string(b));
         }
-        if(componentCP) componentCP->release();
-        if(controllerCP) controllerCP->release();
+        if(componentCP) {
+            trace("controller close: release componentCP");
+            componentCP->release();
+            componentCP=nullptr;
+        }
+        if(controllerCP) {
+            trace("controller close: release controllerCP");
+            controllerCP->release();
+            controllerCP=nullptr;
+        }
         if(controller) {
-            if(initialized) controller->terminate();
+            if(initialized) {
+                trace("controller close: terminate controller");
+                const auto tr=controller->terminate();
+                trace("controller close: controller terminate result "+std::to_string(tr));
+            }
+            trace("controller close: release controller");
             controller->release();
+            controller=nullptr;
         }
-        *this={};
+        initialized=false;
+        connected=false;
+        trace("controller close: complete");
     }
     ~ControllerHolder(){ close(); }
 };
