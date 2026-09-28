@@ -52,77 +52,25 @@ bool ensureWindowClass() {
 
 bool saveWindowClientPng(HWND hwnd, const std::wstring& path) {
     if(!hwnd || path.empty()) return false;
-    RECT client{};
-    if(!GetClientRect(hwnd,&client)) return false;
-    const int width=client.right-client.left;
-    const int height=client.bottom-client.top;
+    RECT rc{};
+    if(!GetClientRect(hwnd,&rc)) return false;
+    const int width=rc.right-rc.left;
+    const int height=rc.bottom-rc.top;
     if(width<=0 || height<=0) return false;
 
-    HWND host=GetAncestor(hwnd,GA_ROOT);
-    if(!host) return false;
-
-    RECT hostRect{};
-    if(!GetWindowRect(host,&hostRect)) return false;
-    const int originalHostX=hostRect.left;
-    const int originalHostY=hostRect.top;
-
-    POINT childOrigin{};
-    if(!ClientToScreen(hwnd,&childOrigin)) return false;
-    const int childOffsetX=childOrigin.x-hostRect.left;
-    const int childOffsetY=childOrigin.y-hostRect.top;
-
-    RECT work{};
-    if(!SystemParametersInfoW(SPI_GETWORKAREA,0,&work,0)) return false;
-    const int tileWidth=std::max<int>(1,static_cast<int>(work.right-work.left));
-    const int tileHeight=std::max<int>(1,static_cast<int>(work.bottom-work.top));
-
-    HDC screen=GetDC(nullptr);
-    if(!screen) return false;
-    HDC mem=CreateCompatibleDC(screen);
-    HBITMAP bitmap=mem ? CreateCompatibleBitmap(screen,width,height) : nullptr;
+    HDC src=GetDC(hwnd);
+    if(!src) return false;
+    HDC mem=CreateCompatibleDC(src);
+    HBITMAP bitmap=mem ? CreateCompatibleBitmap(src,width,height) : nullptr;
     if(!mem || !bitmap) {
         if(bitmap) DeleteObject(bitmap);
         if(mem) DeleteDC(mem);
-        ReleaseDC(nullptr,screen);
+        ReleaseDC(hwnd,src);
         return false;
     }
 
     HGDIOBJ old=SelectObject(mem,bitmap);
-    PatBlt(mem,0,0,width,height,BLACKNESS);
-
-    bool ok=true;
-    for(int y=0;y<height && ok;y+=tileHeight) {
-        for(int x=0;x<width && ok;x+=tileWidth) {
-            const int w=std::min(tileWidth,width-x);
-            const int h=std::min(tileHeight,height-y);
-            const int targetHostX=work.left-x-childOffsetX;
-            const int targetHostY=work.top-y-childOffsetY;
-            if(!SetWindowPos(host,HWND_TOP,targetHostX,targetHostY,0,0,
-                             SWP_NOSIZE|SWP_NOACTIVATE|SWP_SHOWWINDOW)) {
-                ok=false;
-                break;
-            }
-            UpdateWindow(host);
-            pump(80);
-
-            POINT currentOrigin{};
-            if(!ClientToScreen(hwnd,&currentOrigin)) {
-                ok=false;
-                break;
-            }
-            const int sourceX=currentOrigin.x+x;
-            const int sourceY=currentOrigin.y+y;
-            if(!BitBlt(mem,x,y,w,h,screen,sourceX,sourceY,SRCCOPY|CAPTUREBLT)) {
-                ok=false;
-                break;
-            }
-        }
-    }
-
-    SetWindowPos(host,nullptr,originalHostX,originalHostY,0,0,
-                 SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_SHOWWINDOW);
-    UpdateWindow(host);
-    pump(30);
+    const BOOL rendered=BitBlt(mem,0,0,width,height,src,0,0,SRCCOPY);
 
     BITMAPINFO info{};
     info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);
@@ -133,12 +81,12 @@ bool saveWindowClientPng(HWND hwnd, const std::wstring& path) {
     info.bmiHeader.biCompression=BI_RGB;
     const UINT stride=((static_cast<UINT>(width)*24u+31u)/32u)*4u;
     std::vector<BYTE> pixels(static_cast<size_t>(stride)*static_cast<size_t>(height));
-    const int rows=ok ? GetDIBits(mem,bitmap,0,static_cast<UINT>(height),pixels.data(),&info,DIB_RGB_COLORS) : 0;
+    const int rows=rendered ? GetDIBits(mem,bitmap,0,static_cast<UINT>(height),pixels.data(),&info,DIB_RGB_COLORS) : 0;
 
     SelectObject(mem,old);
     DeleteObject(bitmap);
     DeleteDC(mem);
-    ReleaseDC(nullptr,screen);
+    ReleaseDC(hwnd,src);
     if(rows!=height) return false;
 
     BYTE minValue=255, maxValue=0;
