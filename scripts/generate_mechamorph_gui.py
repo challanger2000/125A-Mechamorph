@@ -43,9 +43,11 @@ def generate(L):
       view("UIScale",top["uiScale"]),
       '',
       view("MachineLabel",labels["machine"],False),
-      view("Machine",rc(*top["machine"],sz["machine"],sz["machine"])),
-      ''
+      view("Machine",rc(*top["machine"],sz["machine"],sz["machine"]))
     ]
+    for item in top["machinePositions"]:
+        out.append(view(item["name"],item["rect"],False))
+    out.append('')
     for key,name in [("pressure","Pressure"),("friction","Friction"),("stall","Stall")]:
         out.append(view(name+"Lamp",rc(*top["status"][key],sz["status"],sz["status"]),False))
     for key,name in [("pressure","Pressure"),("friction","Friction"),("stall","Stall")]:
