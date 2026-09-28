@@ -184,10 +184,45 @@ Metrics render(
 
 }
 
+bool verifySpaceOffDecay() {
+    constexpr double sr = 48000.0;
+    MechamorphMachine::MachineSpaceEngine engine;
+    engine.prepare(sr);
+    engine.setBody(0.0f);
+    engine.setScale(1.0f);
+    engine.setSpace(1.0f);
+
+    float l=0.0f, r=0.0f;
+    engine.process(1.0f,l,r);
+    for(int i=1;i<static_cast<int>(0.50*sr);++i)
+        engine.process(0.0f,l,r);
+
+    engine.setSpace(0.0f);
+    for(int i=0;i<static_cast<int>(8.0*sr);++i)
+        engine.process(0.0f,l,r);
+
+    engine.setSpace(1.0f);
+    double resumedPeak=0.0;
+    for(int i=0;i<static_cast<int>(0.50*sr);++i){
+        engine.process(0.0f,l,r);
+        resumedPeak=std::max(resumedPeak,
+            std::max(std::fabs(static_cast<double>(l)),
+                     std::fabs(static_cast<double>(r))));
+    }
+
+    std::cout<<"SPACE_OFF_DECAY_RESUME_PEAK,"<<resumedPeak<<"\n";
+    return resumedPeak < 1.0e-5;
+}
+
 int main(int argc,char** argv){
     if(argc<3){
         std::cerr<<"usage: measure_machine_space <mono_pcm16_machine.wav> <output_dir>\n";
         return 2;
+    }
+
+    if(!verifySpaceOffDecay()){
+        std::cerr<<"SPACE off-state tail did not decay; stale tail would resume\n";
+        return 4;
     }
 
     std::vector<float> source;
