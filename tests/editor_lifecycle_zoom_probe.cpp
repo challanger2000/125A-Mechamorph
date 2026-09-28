@@ -165,9 +165,11 @@ int run(const std::string& path) {
 
     int editors=0;
     for(const auto& info:factory.classInfos()) {
-        if(info.category()!=kVstAudioEffectClass) continue;
+        // Probe any factory class that actually implements IComponent.
+        // This avoids coupling the host-side QA probe to SDK-version-specific
+        // factory category constants.
         auto component=factory.createInstance<IComponent>(info.ID());
-        if(!component) return 3;
+        if(!component) continue;
         if(component->initialize(host)!=kResultOk) return 4;
 
         ControllerHolder holder;
