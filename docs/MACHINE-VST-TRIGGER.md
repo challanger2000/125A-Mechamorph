@@ -29,3 +29,5 @@ Build fictional archetypes with transformed anti-repeat material.
 Final anti-repeat archetype verification: independent STOP source and duplicate-free variant set.
 
 Verify INTRICATE rename and sparse STALL/JAM behavior.
+
+Verify INTRICATE + FRICTION/SQUEAL/SCRAPE stress behavior and rare-event QA.
