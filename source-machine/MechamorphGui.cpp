@@ -176,7 +176,7 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
             const auto frame=mfb->normalizedValueToFrameIndex((float)v);
             constexpr double sourceFrameSize=125.0;
             const double scale=imageSize/sourceFrameSize;
-            c->setBitmapInterpolationQuality(VSTGUI::CDrawContext::BitmapInterpolationQuality::kHigh);
+            c->setBitmapInterpolationQuality(VSTGUI::BitmapInterpolationQuality::kHigh);
             VSTGUI::CDrawContext::Transform t{
                 *c,
                 VSTGUI::CGraphicsTransform()
