@@ -15,27 +15,23 @@ def view(name,r,mouse=True):
 
 def generate(L):
     W,H=L["canvas"]["w"],L["canvas"]["h"]
-    sz=L["sizes"]; top=L["top"]; controls=L["controls"]; labels=L["labels"]
+    sz=L["sizes"]; render=L["renderSizes"]; top=L["top"]; controls=L["controls"]
     out=[
       '<?xml version="1.0" encoding="UTF-8"?>',
       '<vstgui-ui-description version="1">',
       '  <colors><color name="Background" rgba="#090A0BFF"/></colors>',
       '  <bitmaps>',
       '    <bitmap name="mech-faceplate" path="mechamorph-faceplate-runtime.png"/>',
-      '    <bitmap name="mech-knob-machine" path="mechamorph-controls/knob-machine-64.png" multiframe-num-frames="64" multiframe-size="250,250" mulitframe-frames-per-row="1"/>',
-      '    <bitmap name="mech-knob-main" path="mechamorph-controls/knob-main-64.png" multiframe-num-frames="64" multiframe-size="125,125" mulitframe-frames-per-row="1"/>',
-      '    <bitmap name="mech-knob-scale" path="mechamorph-controls/knob-scale-64.png" multiframe-num-frames="64" multiframe-size="220,220" mulitframe-frames-per-row="1"/>',
-      '    <bitmap name="mech-knob-utility" path="mechamorph-controls/knob-utility-64.png" multiframe-num-frames="64" multiframe-size="104,104" mulitframe-frames-per-row="1"/>',
+      f'    <bitmap name="mech-knob-machine" path="mechamorph-controls/knob-machine-64.png" multiframe-num-frames="64" multiframe-size="{render["machine"]},{render["machine"]}" mulitframe-frames-per-row="1"/>',
+      f'    <bitmap name="mech-knob-main" path="mechamorph-controls/knob-main-64.png" multiframe-num-frames="64" multiframe-size="{render["main"]},{render["main"]}" mulitframe-frames-per-row="1"/>',
+      f'    <bitmap name="mech-knob-scale" path="mechamorph-controls/knob-scale-64.png" multiframe-num-frames="64" multiframe-size="{render["scale"]},{render["scale"]}" mulitframe-frames-per-row="1"/>',
+      f'    <bitmap name="mech-knob-utility" path="mechamorph-controls/knob-utility-64.png" multiframe-num-frames="64" multiframe-size="{render["utility"]},{render["utility"]}" mulitframe-frames-per-row="1"/>',
       '  </bitmaps>',
       f'  <template name="view" class="CViewContainer" origin="0,0" size="{W},{H}" transparent="false" background-color="Background">',
       view("Faceplate",[0,0,W,H],False),
       '',
-      view("BrandLogo",top["brandLogo"],False),
-      view("BrandTitle",top["brandTitle"],False),
-      view("BrandSubtitle",top["brandSubtitle"],False),
       view("UIScale",top["uiScale"]),
       '',
-      view("MachineLabel",labels["machine"],False),
       view("Machine",rc(*top["machine"],sz["machine"],sz["machine"]))
     ]
     for item in top["machinePositions"]:
@@ -43,8 +39,6 @@ def generate(L):
     out.append('')
     for key,name in [("pressure","Pressure"),("friction","Friction"),("stall","Stall")]:
         out.append(view(name+"Lamp",rc(*top["status"][key],sz["status"],sz["status"]),False))
-    for key,name in [("pressure","Pressure"),("friction","Friction"),("stall","Stall")]:
-        out.append(view(name+"Label",labels[key],False))
     out.append('')
     for key,name in [("speed","Speed"),("load","Load"),("action","Action"),("wear","Wear")]:
         out.append(view(name,rc(*controls[key],sz["main"],sz["main"])))
@@ -52,10 +46,6 @@ def generate(L):
     out.append('')
     for key,name in [("body","Body"),("space","Space"),("output","Output")]:
         out.append(view(name,rc(*controls[key],sz["utility"],sz["utility"])))
-    out.append('')
-    for key,name in [("speed","Speed"),("load","Load"),("action","Action"),("wear","Wear"),("scale","Scale"),
-                     ("body","Body"),("space","Space"),("output","Output")]:
-        out.append(view(name+"Label",labels[key],False))
     out += ['  </template>','</vstgui-ui-description>']
     return "\n".join(out)+"\n"
 

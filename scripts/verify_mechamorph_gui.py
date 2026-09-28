@@ -37,11 +37,13 @@ expected={
 assert set(bitmap_nodes)==set(expected),("unexpected bitmap nodes",set(bitmap_nodes)^set(expected))
 for name,path in expected.items():
     assert bitmap_nodes[name].attrib.get("path")==path,(name,bitmap_nodes[name].attrib.get("path"),path)
+
+render=layout["renderSizes"]
 film_specs={
-    "mech-knob-machine":("64","250,250"),
-    "mech-knob-main":("64","125,125"),
-    "mech-knob-scale":("64","220,220"),
-    "mech-knob-utility":("64","104,104"),
+    "mech-knob-machine":("64",f'{render["machine"]},{render["machine"]}'),
+    "mech-knob-main":("64",f'{render["main"]},{render["main"]}'),
+    "mech-knob-scale":("64",f'{render["scale"]},{render["scale"]}'),
+    "mech-knob-utility":("64",f'{render["utility"]},{render["utility"]}'),
 }
 for film_name,(frames,frame_size) in film_specs.items():
     film=bitmap_nodes[film_name]
@@ -57,10 +59,10 @@ def png_size(path):
 asset_sizes={
     ROOT/"resource/mechamorph-faceplate-runtime.png":(1440,960),
     ROOT/"resource/mechamorph-controls/mechamorph-knob-grip-64.png":(125,8000),
-    ROOT/"resource/mechamorph-controls/knob-machine-64.png":(250,16000),
-    ROOT/"resource/mechamorph-controls/knob-main-64.png":(125,8000),
-    ROOT/"resource/mechamorph-controls/knob-scale-64.png":(220,14080),
-    ROOT/"resource/mechamorph-controls/knob-utility-64.png":(104,6656),
+    ROOT/"resource/mechamorph-controls/knob-machine-64.png":(render["machine"],render["machine"]*64),
+    ROOT/"resource/mechamorph-controls/knob-main-64.png":(render["main"],render["main"]*64),
+    ROOT/"resource/mechamorph-controls/knob-scale-64.png":(render["scale"],render["scale"]*64),
+    ROOT/"resource/mechamorph-controls/knob-utility-64.png":(render["utility"],render["utility"]*64),
 }
 for path,size in asset_sizes.items():
     assert path.exists(),f"missing asset {path}"
@@ -72,20 +74,28 @@ fw,fh=png_size(source_faceplate)
 assert fw*2==fh*3,("faceplate source must be 3:2",fw,fh)
 assert fw>=1440 and fh>=960,("faceplate source too small",fw,fh)
 
+assert abs(float(layout["knobFillRatio"])-0.94)<1e-9
+
 tpl=root.find("template")
 assert tpl is not None
 assert tpl.attrib.get("size")==f"{W},{H}"
 views=[v for v in tpl if v.attrib.get("custom-view-name")]
 names=[v.attrib["custom-view-name"] for v in views]
 required=[
- "Faceplate","BrandLogo","BrandTitle","BrandSubtitle","UIScale","MachineLabel","Machine","MachinePosRow1","MachinePosRow2",
- "PressureLamp","FrictionLamp","StallLamp","PressureLabel","FrictionLabel","StallLabel",
- "Speed","Load","Action","Wear","Scale","Body","Space","Output",
- "SpeedLabel","LoadLabel","ActionLabel","WearLabel","ScaleLabel","BodyLabel","SpaceLabel","OutputLabel"
+ "Faceplate","UIScale","Machine","MachinePosRow1","MachinePosRow2",
+ "PressureLamp","FrictionLamp","StallLamp",
+ "Speed","Load","Action","Wear","Scale","Body","Space","Output"
 ]
 missing=[n for n in required if n not in names]
 assert not missing,missing
+for forbidden in [
+ "BrandLogo","BrandTitle","BrandSubtitle","MachineLabel",
+ "PressureLabel","FrictionLabel","StallLabel",
+ "SpeedLabel","LoadLabel","ActionLabel","WearLabel","ScaleLabel","BodyLabel","SpaceLabel","OutputLabel"
+]:
+    assert forbidden not in names,("baked faceplate text must not be redrawn",forbidden)
 assert len(names)==len(set(names)),"duplicate custom view names"
+
 for v in views:
     x,y=map(int,v.attrib["origin"].split(","))
     w,h=map(int,v.attrib["size"].split(","))
@@ -96,31 +106,29 @@ def box(n):
     x,y=map(int,v.attrib["origin"].split(",")); w,h=map(int,v.attrib["size"].split(","))
     return x,y,w,h
 
-assert box("BrandLogo")==tuple(layout["top"]["brandLogo"])
-assert box("BrandTitle")==tuple(layout["top"]["brandTitle"])
-assert box("BrandSubtitle")==tuple(layout["top"]["brandSubtitle"])
+assert box("UIScale")==tuple(layout["top"]["uiScale"])
 for item in layout["top"]["machinePositions"]:
     assert box(item["name"])==tuple(item["rect"])
 
 axes={
- "Speed":layout["controls"]["speed"][0],
- "Load":layout["controls"]["load"][0],
- "Action":layout["controls"]["action"][0],
- "Wear":layout["controls"]["wear"][0],
- "Scale":layout["controls"]["scale"][0],
- "Body":layout["controls"]["body"][0],
- "Space":layout["controls"]["space"][0],
- "Output":layout["controls"]["output"][0],
- "Machine":layout["top"]["machine"][0],
+ "Speed":layout["controls"]["speed"],
+ "Load":layout["controls"]["load"],
+ "Action":layout["controls"]["action"],
+ "Wear":layout["controls"]["wear"],
+ "Scale":layout["controls"]["scale"],
+ "Body":layout["controls"]["body"],
+ "Space":layout["controls"]["space"],
+ "Output":layout["controls"]["output"],
+ "Machine":layout["top"]["machine"],
 }
-for n,cx in axes.items():
+for n,(cx,cy) in axes.items():
     x,y,w,h=box(n)
-    assert x+w/2==cx,(n,"axis mismatch",x,w,cx)
+    assert x+w/2==cx,(n,"x axis mismatch",x,w,cx)
+    assert y+h/2==cy,(n,"y axis mismatch",y,h,cy)
 
-for knob,label in [("Speed","SpeedLabel"),("Load","LoadLabel"),("Action","ActionLabel"),
-                   ("Wear","WearLabel"),("Scale","ScaleLabel"),("Body","BodyLabel"),
-                   ("Space","SpaceLabel"),("Output","OutputLabel")]:
-    kx,ky,kw,kh=box(knob); lx,ly,lw,lh=box(label)
-    assert abs((kx+kw/2)-(lx+lw/2))<=1,(knob,label,"label not centered")
+for key,name in [("pressure","PressureLamp"),("friction","FrictionLamp"),("stall","StallLamp")]:
+    cx,cy=layout["top"]["status"][key]
+    x,y,w,h=box(name)
+    assert x+w/2==cx and y+h/2==cy,(name,"status axis mismatch")
 
-print("Mechamorph static-faceplate GUI geometry + asset contract PASS")
+print("Mechamorph baked-faceplate GUI geometry + unified control sizing PASS")

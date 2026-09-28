@@ -141,9 +141,9 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
     const auto center=r.getCenter();
     const double v=std::clamp((double)getValueNormalized(),0.0,1.0);
     const double imageSize=
-        style_==Style::Machine ? 250.0 :
-        style_==Style::Scale ? 220.0 :
-        style_==Style::Utility ? 104.0 : 125.0;
+        style_==Style::Machine ? 262.0 :
+        style_==Style::Scale ? 198.0 :
+        style_==Style::Utility ? 90.0 : 168.0;
     const double imageRadius=imageSize*0.5;
     const VSTGUI::CRect imageRect{
         center.x-imageRadius,center.y-imageRadius,
@@ -242,7 +242,7 @@ void GuiScale::draw(VSTGUI::CDrawContext* c){
 }
 VSTGUI::CMouseEventResult GuiScale::onMouseDown(VSTGUI::CPoint& where,const VSTGUI::CButtonState& buttons){
     if(!editor_||!buttons.isLeftButton()||!getViewSize().pointInside(where))return VSTGUI::kMouseEventNotHandled;
-    constexpr double f[]={0.9,1.0,1.1};
+    constexpr double f[]={0.8,1.0,1.2};
     const double z=editor_->getZoomFactor(); size_t best=0; double d=std::abs(z-f[0]);
     for(size_t i=1;i<3;++i){const double q=std::abs(z-f[i]); if(q<d){d=q;best=i;}}
     editor_->setZoomFactor(f[(best+1)%3]); invalid();

@@ -78,10 +78,10 @@ HWND findVstguiChild(HWND parent) {
 
 bool clickUiScale(HWND vstguiChild,double currentZoom) {
     if(!vstguiChild) return false;
-    // UIScale logical rect: x=660..780, y=870..898.
+    // UIScale logical rect: x=390..490, y=170..194.
     // VSTGUI's user zoom scales both the control geometry and the platform child.
-    const int x=static_cast<int>(std::lround(720.0*currentZoom));
-    const int y=static_cast<int>(std::lround(884.0*currentZoom));
+    const int x=static_cast<int>(std::lround(440.0*currentZoom));
+    const int y=static_cast<int>(std::lround(182.0*currentZoom));
     const LPARAM p=MAKELPARAM(x,y);
     SendMessageW(vstguiChild,WM_LBUTTONDOWN,MK_LBUTTON,p);
     SendMessageW(vstguiChild,WM_LBUTTONUP,0,p);
@@ -286,8 +286,8 @@ int run(const std::string& path) {
             trace("cycle "+std::to_string(cycle+1)+" locating VSTGUI child");
             HWND vstguiChild=findVstguiChild(hwnd);
             if(!vstguiChild) return fail(20,"VSTGUI child HWND not found");
-            const double zoomBefore[]={1.0,1.1,0.9};
-            const double zoomAfter []={1.1,0.9,1.0};
+            const double zoomBefore[]={1.0,1.2,0.8};
+            const double zoomAfter []={1.2,0.8,1.0};
             for(int zi=0;zi<3;++zi) {
                 trace("cycle "+std::to_string(cycle+1)+" UI zoom click "
                       +std::to_string(zoomBefore[zi])+" -> "+std::to_string(zoomAfter[zi]));
@@ -307,15 +307,15 @@ int run(const std::string& path) {
             {
                 struct DefaultCase { ParamID id; int x; int y; double def; const char* name; };
                 const DefaultCase cases[] = {
-                    {2000,720,248,0.00,"Machine"},
-                    {2001,137,667,0.32,"Speed"},
-                    {2002,375,667,0.20,"Load"},
-                    {2003,609,667,0.48,"Action"},
-                    {2004,842,667,0.18,"Wear"},
-                    {2005,1118,663,0.35,"Scale"},
-                    {2008,1345,526,0.28,"Body"},
-                    {2006,1345,670,0.18,"Space"},
-                    {2007,1345,818,0.38,"Output"}
+                    {2000,718,238,0.00,"Machine"},
+                    {2001,136,665,0.32,"Speed"},
+                    {2002,371,664,0.20,"Load"},
+                    {2003,609,664,0.48,"Action"},
+                    {2004,839,665,0.18,"Wear"},
+                    {2005,1112,664,0.35,"Scale"},
+                    {2008,1347,522,0.28,"Body"},
+                    {2006,1347,670,0.18,"Space"},
+                    {2007,1345,814,0.38,"Output"}
                 };
                 trace("cycle "+std::to_string(cycle+1)+" Ctrl+click default reset matrix");
                 for(const auto& dc:cases){
@@ -355,7 +355,7 @@ int run(const std::string& path) {
     }
 
     if(editors==0) return fail(18,"no editor instances exercised");
-    std::cout<<"Mechamorph editor lifecycle + DPI multires + actual UI zoom 90/100/110% PASS ("<<editors<<" editor cycles)\n";
+    std::cout<<"Mechamorph editor lifecycle + DPI multires + actual UI zoom 80/100/120% PASS ("<<editors<<" editor cycles)\n";
     return 0;
 }
 }
