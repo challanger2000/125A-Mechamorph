@@ -18,12 +18,16 @@ int main() {
     std::vector<float> load(1800, 0.0f);
     std::vector<float> release(1200, 0.0f);
     std::vector<float> stop(2400, 0.0f);
+    std::vector<float> friction(3200, 0.0f);
+    std::vector<float> pressure(3600, 0.0f);
 
     start[0] = 0.7f;
     stop[0] = 0.7f;
     action[0] = 0.8f;
     load[0] = 0.5f;
     release[0] = 0.4f;
+    friction[0] = 0.35f;
+    pressure[0] = 0.30f;
 
     for (std::size_t i = 0; i < run.size(); ++i)
         run[i] = static_cast<float>(0.08 * std::sin(2.0 * 3.141592653589793 * i / 240.0));
@@ -35,6 +39,8 @@ int main() {
     assert(set.load.add({load.data(), load.size(), sr, false, "load"}));
     assert(set.release.add({release.data(), release.size(), sr, false, "release"}));
     assert(set.stop.add({stop.data(), stop.size(), sr, false, "stop"}));
+    assert(set.friction.add({friction.data(), friction.size(), sr, false, "friction"}));
+    assert(set.pressure.add({pressure.data(), pressure.size(), sr, false, "pressure"}));
 
     Engine engine;
     engine.prepare(sr);
@@ -277,6 +283,45 @@ int main() {
         std::vector<float> second(256, 0.0f);
         retrigger.process(second.data(), second.size());
         assert(retrigger.state() != State::Stopped);
+    }
+
+    // PRESSURE behaviour:
+    // pressure=0 must produce no pressure events; pneumatic-style pressure=1
+    // under load must breathe occasionally but never become a constant hiss.
+    {
+        Engine dryPressure;
+        dryPressure.prepare(sr);
+        dryPressure.setSampleSet(&set);
+        Parameters dp = p;
+        dp.action = 0.0f;
+        dp.load = 1.0f;
+        dp.wear = 0.2f;
+        dp.pressure = 0.0f;
+        dryPressure.setParameters(dp);
+        dryPressure.start();
+
+        float sample = 0.0f;
+        for (int i = 0; i < static_cast<int>(20.0 * sr); ++i)
+            dryPressure.process(&sample, 1);
+        assert(dryPressure.pressureEventCount() == 0);
+
+        Engine pneumatic;
+        pneumatic.prepare(sr);
+        pneumatic.setSampleSet(&set);
+        Parameters pp = p;
+        pp.action = 0.0f;
+        pp.load = 1.0f;
+        pp.wear = 0.2f;
+        pp.pressure = 1.0f;
+        pp.scale = 0.55f;
+        pneumatic.setParameters(pp);
+        pneumatic.start();
+
+        for (int i = 0; i < static_cast<int>(30.0 * sr); ++i)
+            pneumatic.process(&sample, 1);
+
+        assert(pneumatic.pressureEventCount() >= 2);
+        assert(pneumatic.pressureEventCount() <= 24);
     }
 
     // Rare STALL/JAM behaviour:
