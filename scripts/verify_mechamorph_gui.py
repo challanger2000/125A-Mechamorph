@@ -75,6 +75,7 @@ assert fw*2==fh*3,("faceplate source must be 3:2",fw,fh)
 assert fw>=1440 and fh>=960,("faceplate source too small",fw,fh)
 
 assert abs(float(layout["knobFillRatio"])-0.94)<1e-9
+assert layout["renderSizes"]["machine"]==256, "machine strip must stay <= 16384 px high (256*64)"
 
 tpl=root.find("template")
 assert tpl is not None

@@ -38,7 +38,7 @@ try {
 } finally { $face.Dispose() }
 
 $variants = @(
-    @{ Name = "knob-machine-64.png"; Size = 262 },
+    @{ Name = "knob-machine-64.png"; Size = 256 },
     @{ Name = "knob-main-64.png";    Size = 168 },
     @{ Name = "knob-scale-64.png";   Size = 198 },
     @{ Name = "knob-utility-64.png"; Size = 90 }

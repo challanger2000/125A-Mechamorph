@@ -141,7 +141,7 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
     const auto center=r.getCenter();
     const double v=std::clamp((double)getValueNormalized(),0.0,1.0);
     const double imageSize=
-        style_==Style::Machine ? 262.0 :
+        style_==Style::Machine ? 256.0 :
         style_==Style::Scale ? 198.0 :
         style_==Style::Utility ? 90.0 : 168.0;
     const double imageRadius=imageSize*0.5;

@@ -307,12 +307,12 @@ int run(const std::string& path) {
             {
                 struct DefaultCase { ParamID id; int x; int y; double def; const char* name; };
                 const DefaultCase cases[] = {
-                    {2000,718,238,0.00,"Machine"},
+                    {2000,720,238,0.00,"Machine"},
                     {2001,136,665,0.32,"Speed"},
-                    {2002,371,664,0.20,"Load"},
+                    {2002,371,667,0.20,"Load"},
                     {2003,609,664,0.48,"Action"},
-                    {2004,839,665,0.18,"Wear"},
-                    {2005,1112,664,0.35,"Scale"},
+                    {2004,838,667,0.18,"Wear"},
+                    {2005,1108,664,0.35,"Scale"},
                     {2008,1347,522,0.28,"Body"},
                     {2006,1347,670,0.18,"Space"},
                     {2007,1345,814,0.38,"Output"}
