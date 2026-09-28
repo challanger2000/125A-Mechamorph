@@ -171,10 +171,6 @@ const Clip* Engine::chooseClip(Role role) noexcept {
 }
 
 void Engine::spawn(Role role, float force, bool preferLoop) noexcept {
-    const Clip* clip = chooseClip(role);
-    if (!clip)
-        return;
-
     Voice* target = nullptr;
     for (auto& v : voices_) {
         if (!v.active()) {
@@ -183,6 +179,10 @@ void Engine::spawn(Role role, float force, bool preferLoop) noexcept {
         }
     }
     if (!target)
+        return;
+
+    const Clip* clip = chooseClip(role);
+    if (!clip)
         return;
 
     const float wear = clamp01(params_.wear);
@@ -587,8 +587,8 @@ void Engine::process(float* monoOut, std::size_t frames) noexcept {
             if (e.remainingSamples <= 0) {
                 if (e.role == Role::Run) {
                     spawn(Role::Run, e.force, true);
-                    runLoopSpawned_ = true;
-                    if (state_ == State::Starting)
+                    runLoopSpawned_ = hasActiveRole(Role::Run);
+                    if (runLoopSpawned_ && state_ == State::Starting)
                         state_ = loadActive_ ? State::Loaded : State::Running;
                 } else {
                     spawn(e.role, e.force);
@@ -604,7 +604,9 @@ void Engine::process(float* monoOut, std::size_t frames) noexcept {
             bool anyRunLoopCandidate = set_->run.count > 0;
             if (anyRunLoopCandidate && !runLoopSpawned_) {
                 spawn(Role::Run, 1.0f, true);
-                runLoopSpawned_ = true;
+                runLoopSpawned_ = hasActiveRole(Role::Run);
+                if (runLoopSpawned_ && state_ == State::Starting)
+                    state_ = loadActive_ ? State::Loaded : State::Running;
             }
         }
 
