@@ -29,7 +29,7 @@ assert bitmaps_node is not None,"UIDESC bitmaps section missing"
 bitmap_nodes={b.attrib["name"]:b for b in bitmaps_node.findall("bitmap")}
 expected={
     "mech-faceplate":"mechamorph-faceplate-runtime.png",
-    "mech-danger-sign":"mechamorph-controls/mechamorph-dangerous-sign.png",
+    "mech-danger-sign":"mechamorph-controls/mechamorph-dangerous-sign-v2.png",
     "mech-knob-machine":"mechamorph-controls/knob-machine-64.png",
     "mech-knob-main":"mechamorph-controls/knob-main-64.png",
     "mech-knob-scale":"mechamorph-controls/knob-scale-64.png",
@@ -70,7 +70,7 @@ for path,size in asset_sizes.items():
     assert path.exists(),f"missing asset {path}"
     assert png_size(path)==size,(path,png_size(path),size)
 
-danger_sign=ROOT/"resource/mechamorph-controls/mechamorph-dangerous-sign.png"
+danger_sign=ROOT/"resource/mechamorph-controls/mechamorph-dangerous-sign-v2.png"
 assert danger_sign.exists(),f"missing asset {danger_sign}"
 dw,dh=png_size(danger_sign)
 assert dw>=512 and dh>=256,("danger sign source too small",dw,dh)
