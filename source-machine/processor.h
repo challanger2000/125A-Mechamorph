@@ -60,6 +60,8 @@ private:
     Steinberg::int32 pressureLampHoldSamples_ = 0;
     Steinberg::int32 frictionLampHoldSamples_ = 0;
     Steinberg::int32 stallLampHoldSamples_ = 0;
+    Steinberg::int32 ledActivityCountdown_ = 0;
+    std::uint32_t ledActivityState_ = 0x6D2B79F5u;
     std::uint64_t lastPressureEventCount_ = 0;
     std::uint64_t lastFrictionEventCount_ = 0;
     std::uint64_t lastStallEventCount_ = 0;

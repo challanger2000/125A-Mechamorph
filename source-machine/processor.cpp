@@ -99,6 +99,8 @@ tresult PLUGIN_API Processor::setProcessing(TBool state) {
         pressureLampHoldSamples_ = 0;
         frictionLampHoldSamples_ = 0;
         stallLampHoldSamples_ = 0;
+        ledActivityCountdown_ = 0;
+        ledActivityState_ = 0x6D2B79F5u;
         lastPressureEventCount_ = engine_.pressureEventCount();
         lastFrictionEventCount_ = engine_.frictionEventCount();
         lastStallEventCount_ = engine_.stallEventCount();
@@ -124,6 +126,8 @@ tresult PLUGIN_API Processor::setActive(TBool state) {
         pressureLampHoldSamples_ = 0;
         frictionLampHoldSamples_ = 0;
         stallLampHoldSamples_ = 0;
+        ledActivityCountdown_ = 0;
+        ledActivityState_ = 0x6D2B79F5u;
         lastPressureEventCount_ = engine_.pressureEventCount();
         lastFrictionEventCount_ = engine_.frictionEventCount();
         lastStallEventCount_ = engine_.stallEventCount();
@@ -486,20 +490,43 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
         engine_.state() != mechamorph::machine::State::Stopped &&
         engine_.state() != mechamorph::machine::State::Stopping;
 
-    // These two lamps are machine-state indicators, not random event lamps.
-    // Pressure shows that the pressure subsystem is genuinely loaded; Friction
-    // shows mechanical contact/stress while the machine is running. Real short
-    // events still extend the indication through the 200 ms event hold above.
-    const bool pressureLoaded =
-        machineRunning &&
-        machineParams_.pressure > 0.05f &&
-        machineParams_.load > 0.18f;
-    const bool frictionLoaded =
-        machineRunning &&
-        (machineParams_.wear > 0.10f || machineParams_.load > 0.10f);
+    // In addition to genuine pressure/friction/stall events, give the panel
+    // sparse asynchronous "machine activity" flashes. This is display-only:
+    // it never changes DSP state. Only one lamp is chosen per pulse so the
+    // indicators feel irregular rather than rhythmic or decorative.
+    if (machineRunning) {
+        ledActivityCountdown_ -= std::max<int32>(1, data.numSamples);
+        if (ledActivityCountdown_ <= 0) {
+            auto nextRand = [&]() noexcept -> std::uint32_t {
+                ledActivityState_ ^= ledActivityState_ << 13;
+                ledActivityState_ ^= ledActivityState_ >> 17;
+                ledActivityState_ ^= ledActivityState_ << 5;
+                return ledActivityState_;
+            };
+            const auto r0 = nextRand();
+            const auto r1 = nextRand();
+            const int which = static_cast<int>(r0 % 3u);
+            const double pulseSeconds = 0.070 + 0.110 * ((r0 >> 8) & 0xFFu) / 255.0;
+            const int32 pulseSamples = std::max<int32>(
+                1, static_cast<int32>(std::lround(sampleRate_ * pulseSeconds)));
+            if (which == 0)
+                pressureLampHoldSamples_ = std::max(pressureLampHoldSamples_, pulseSamples);
+            else if (which == 1)
+                frictionLampHoldSamples_ = std::max(frictionLampHoldSamples_, pulseSamples);
+            else
+                stallLampHoldSamples_ = std::max(stallLampHoldSamples_, pulseSamples);
 
-    const bool pressureVisible = pressureLampHoldSamples_ > 0 || pressureLoaded;
-    const bool frictionVisible = frictionLampHoldSamples_ > 0 || frictionLoaded;
+            // Roughly 0.35-1.55 s between flashes, deliberately non-periodic.
+            const double gapSeconds = 0.35 + 1.20 * ((r1 >> 8) & 0xFFu) / 255.0;
+            ledActivityCountdown_ = std::max<int32>(
+                1, static_cast<int32>(std::lround(sampleRate_ * gapSeconds)));
+        }
+    } else {
+        ledActivityCountdown_ = 0;
+    }
+
+    const bool pressureVisible = pressureLampHoldSamples_ > 0;
+    const bool frictionVisible = frictionLampHoldSamples_ > 0;
     const bool stallVisible = stallLampHoldSamples_ > 0;
     pressureLampHoldSamples_ = std::max<int32>(0, pressureLampHoldSamples_ - data.numSamples);
     frictionLampHoldSamples_ = std::max<int32>(0, frictionLampHoldSamples_ - data.numSamples);
