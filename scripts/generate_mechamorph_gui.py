@@ -22,7 +22,7 @@ def generate(L):
       '  <colors><color name="Background" rgba="#090A0BFF"/></colors>',
       '  <bitmaps>',
       '    <bitmap name="mech-faceplate" path="mechamorph-faceplate-runtime.png"/>',
-      '    <bitmap name="mech-danger-sign" path="mechamorph-controls/mechamorph-dangerous-sign.png"/>',
+      '    <bitmap name="mech-danger-sign" path="mechamorph-controls/mechamorph-dangerous-sign-v2.png"/>',
       f'    <bitmap name="mech-knob-machine" path="mechamorph-controls/knob-machine-64.png" multiframe-num-frames="64" multiframe-size="{render["machine"]},{render["machine"]}" mulitframe-frames-per-row="1"/>',
       f'    <bitmap name="mech-knob-main" path="mechamorph-controls/knob-main-64.png" multiframe-num-frames="64" multiframe-size="{render["main"]},{render["main"]}" mulitframe-frames-per-row="1"/>',
       f'    <bitmap name="mech-knob-scale" path="mechamorph-controls/knob-scale-64.png" multiframe-num-frames="64" multiframe-size="{render["scale"]},{render["scale"]}" mulitframe-frames-per-row="1"/>',
