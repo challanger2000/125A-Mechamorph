@@ -106,7 +106,6 @@ void GuiDecoration::draw(VSTGUI::CDrawContext* c){
     const auto r=getViewSize();
     if(bitmap_){
         const VSTGUI::CRect src{0,0,bitmap_->getWidth(),bitmap_->getHeight()};
-        c->setBitmapInterpolationQuality(VSTGUI::CDrawContext::kHigh);
         c->fillRectWithBitmap(bitmap_,src,r,1.0f);
     }
     setDirty(false);
