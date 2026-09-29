@@ -16,6 +16,17 @@ public:
     void draw(VSTGUI::CDrawContext* context) override;
 };
 
+class GuiDecoration final : public VSTGUI::CView {
+public:
+    GuiDecoration(const VSTGUI::CRect& size, VSTGUI::CBitmap* bitmap);
+    GuiDecoration(const GuiDecoration& other);
+    ~GuiDecoration() override;
+    VSTGUI::CBaseObject* newCopy() const override { return new GuiDecoration(*this); }
+    void draw(VSTGUI::CDrawContext* context) override;
+private:
+    VSTGUI::CBitmap* bitmap_{nullptr};
+};
+
 class GuiLogo final : public VSTGUI::CView {
 public:
     explicit GuiLogo(const VSTGUI::CRect& size);
