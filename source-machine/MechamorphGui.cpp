@@ -151,6 +151,21 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
 
     c->setDrawMode(VSTGUI::kAntiAliasing);
 
+    // Deliberately strong amber/yellow halo for the visual gate. Draw it behind
+    // the hardware so only a diffuse light spill remains around the knob.
+    {
+        const double spread = style_==Style::Scale ? 22.0 :
+                              style_==Style::Machine ? 14.0 :
+                              style_==Style::Utility ? 13.0 : 14.0;
+        for(int n=4;n>=1;--n){
+            auto glow=imageRect;
+            const double grow=spread*(static_cast<double>(n)/4.0);
+            glow.inset(-grow,-grow);
+            const uint8_t alpha=static_cast<uint8_t>(24 + (5-n)*18);
+            c->setFillColor({255,190,38,alpha});
+            c->drawEllipse(glow,VSTGUI::kDrawFilled);
+        }
+    }
 
     {
         const double half = std::min(r.getWidth(), r.getHeight()) * 0.5;
@@ -198,22 +213,6 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
         }
     } else {
         radial(c,imageRect,{70,72,73,255},{18,20,21,255});
-    }
-
-    // Give the baked amber index a restrained, position-following diffuse glow.
-    // This is intentionally a light source around the index, not a full neon ring.
-    if(bakedIndicator){
-        const double angle=(135.0+270.0*v)*kPi/180.0;
-        const double radius=imageRadius*(style_==Style::Utility ? 0.70 : 0.73);
-        const VSTGUI::CPoint glowCenter{
-            center.x+std::cos(angle)*radius,
-            center.y+std::sin(angle)*radius};
-        const double gr=style_==Style::Machine ? 18.0 :
-                        style_==Style::Utility ? 11.0 : 14.0;
-        const VSTGUI::CRect glowRect{
-            glowCenter.x-gr,glowCenter.y-gr,
-            glowCenter.x+gr,glowCenter.y+gr};
-        radial(c,glowRect,{255,196,92,78},{255,118,12,0});
     }
 
     // The unified filmstrip already contains its indicator.

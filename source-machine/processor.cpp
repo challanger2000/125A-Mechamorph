@@ -482,8 +482,24 @@ tresult PLUGIN_API Processor::process(ProcessData& data) {
     lastFrictionEventCount_ = frictionEvents;
     lastStallEventCount_ = stallEvents;
 
-    const bool pressureVisible = pressureLampHoldSamples_ > 0;
-    const bool frictionVisible = frictionLampHoldSamples_ > 0;
+    const bool machineRunning =
+        engine_.state() != mechamorph::machine::State::Stopped &&
+        engine_.state() != mechamorph::machine::State::Stopping;
+
+    // These two lamps are machine-state indicators, not random event lamps.
+    // Pressure shows that the pressure subsystem is genuinely loaded; Friction
+    // shows mechanical contact/stress while the machine is running. Real short
+    // events still extend the indication through the 200 ms event hold above.
+    const bool pressureLoaded =
+        machineRunning &&
+        machineParams_.pressure > 0.05f &&
+        machineParams_.load > 0.18f;
+    const bool frictionLoaded =
+        machineRunning &&
+        (machineParams_.wear > 0.10f || machineParams_.load > 0.10f);
+
+    const bool pressureVisible = pressureLampHoldSamples_ > 0 || pressureLoaded;
+    const bool frictionVisible = frictionLampHoldSamples_ > 0 || frictionLoaded;
     const bool stallVisible = stallLampHoldSamples_ > 0;
     pressureLampHoldSamples_ = std::max<int32>(0, pressureLampHoldSamples_ - data.numSamples);
     frictionLampHoldSamples_ = std::max<int32>(0, frictionLampHoldSamples_ - data.numSamples);

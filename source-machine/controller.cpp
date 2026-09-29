@@ -195,8 +195,8 @@ VSTGUI::CView* Controller::createCustomView(VSTGUI::UTF8StringPtr name,
         auto* bitmap=description ? description->getBitmap(bitmapName) : nullptr;
         return static_cast<VSTGUI::CView*>(new GuiKnob(r,editor,id,style,bitmap,defaultValue));
     };
-    auto label=[&](const char* n,const char* text,double fs,bool muted=false)->VSTGUI::CView* {
-        return std::strcmp(name,n)==0 ? static_cast<VSTGUI::CView*>(new GuiLabel(r,text,fs,muted)) : nullptr;
+    auto label=[&](const char* n,const char* text,double fs,bool muted=false,bool panelMask=false)->VSTGUI::CView* {
+        return std::strcmp(name,n)==0 ? static_cast<VSTGUI::CView*>(new GuiLabel(r,text,fs,muted,panelMask)) : nullptr;
     };
 
     if(std::strcmp(name,"Faceplate")==0){
@@ -230,9 +230,9 @@ VSTGUI::CView* Controller::createCustomView(VSTGUI::UTF8StringPtr name,
     if(auto* v=label("ActionLabel","ACTION",12.0)) return v;
     if(auto* v=label("WearLabel","WEAR",12.0)) return v;
     if(auto* v=label("ScaleLabel","SCALE",12.0)) return v;
-    if(auto* v=label("BodyLabel","BODY",10.0)) return v;
-    if(auto* v=label("SpaceLabel","SPACE",10.0)) return v;
-    if(auto* v=label("OutputLabel","OUTPUT",10.0)) return v;
+    if(auto* v=label("BodyLabel","BODY",10.0,false,true)) return v;
+    if(auto* v=label("SpaceLabel","SPACE",10.0,false,true)) return v;
+    if(auto* v=label("OutputLabel","OUTPUT",10.0,false,true)) return v;
     if(auto* v=label("PressureLabel","PRESSURE",9.0,true)) return v;
     if(auto* v=label("FrictionLabel","FRICTION",9.0,true)) return v;
     if(auto* v=label("StallLabel","STALL",9.0,true)) return v;
