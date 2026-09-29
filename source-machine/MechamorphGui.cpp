@@ -104,55 +104,10 @@ GuiDecoration::GuiDecoration(const GuiDecoration& o):CView(o),bitmap_(o.bitmap_)
 GuiDecoration::~GuiDecoration(){ if(bitmap_) bitmap_->forget(); }
 void GuiDecoration::draw(VSTGUI::CDrawContext* c){
     const auto r=getViewSize();
-    c->setDrawMode(VSTGUI::kAntiAliasing);
-
-    // Guaranteed in-code warning plate. The bitmap asset remains packaged as
-    // reference material, but this drawing cannot disappear because of a host
-    // resource-loader quirk.
-    VSTGUI::PointList plate{
-        {r.left+8.0,r.top+8.0},
-        {r.right-5.0,r.top+2.0},
-        {r.right-9.0,r.bottom-8.0},
-        {r.left+4.0,r.bottom-2.0}
-    };
-    c->setFillColor({214,157,22,255});
-    c->setFrameColor({45,31,12,255});
-    c->setLineWidth(3.0);
-    c->drawPolygon(plate,VSTGUI::kDrawFilledAndStroked);
-
-    // Industrial hazard stripes, slightly irregular to keep the plate worn.
-    c->setFillColor({24,24,22,245});
-    const double topY=r.top+9.0, bandH=15.0;
-    for(int i=0;i<6;++i){
-        const double x=r.left+18.0+i*35.0;
-        VSTGUI::PointList stripe{
-            {x,topY},{x+15.0,topY-0.5},{x+5.0,topY+bandH},{x-10.0,topY+bandH}
-        };
-        c->drawPolygon(stripe,VSTGUI::kDrawFilled);
+    if(bitmap_){
+        const VSTGUI::CRect src{0,0,bitmap_->getWidth(),bitmap_->getHeight()};
+        c->fillRectWithBitmap(bitmap_,src,r,1.0f);
     }
-    const double bottomY=r.bottom-24.0;
-    for(int i=0;i<6;++i){
-        const double x=r.left+12.0+i*35.0;
-        VSTGUI::PointList stripe{
-            {x,bottomY},{x+15.0,bottomY},{x+5.0,bottomY+14.0},{x-10.0,bottomY+14.0}
-        };
-        c->drawPolygon(stripe,VSTGUI::kDrawFilled);
-    }
-
-    VSTGUI::CRect textRect{r.left+16.0,r.top+25.0,r.right-14.0,r.bottom-23.0};
-    c->setFont(VSTGUI::kNormalFont,26.0,VSTGUI::kBoldFace);
-    c->setFontColor({16,15,13,255});
-    c->drawString(VSTGUI::UTF8String("DANGEROUS"),textRect,VSTGUI::kCenterText);
-
-    // Two dark mounting screws, reinforcing the deliberately crooked plate.
-    for(const auto& p : {VSTGUI::CPoint{r.left+16.0,r.top+15.0},
-                         VSTGUI::CPoint{r.right-17.0,r.top+10.0}}){
-        VSTGUI::CRect screw{p.x-5.0,p.y-5.0,p.x+5.0,p.y+5.0};
-        radial(c,screw,{115,103,82,255},{17,18,18,255});
-        c->setFrameColor({8,8,8,230}); c->setLineWidth(1.2);
-        c->drawLine({p.x-3.0,p.y+2.0},{p.x+3.0,p.y-2.0});
-    }
-
     setDirty(false);
 }
 
