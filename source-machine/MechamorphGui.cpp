@@ -151,17 +151,32 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
 
     c->setDrawMode(VSTGUI::kAntiAliasing);
 
-    // Soft amber spill behind the hardware. Use radial gradients instead of
-    // stacked opaque ellipses, so the light fades continuously and does not
-    // create a painted yellow ring.
+    // Eclipse-style under-lighting: the source sits exactly behind the knob
+    // centre. The hardware occludes the source, so only a soft amber corona is
+    // visible around the edge. The lower half is intentionally a little stronger
+    // to read as light leaking from underneath, never as a painted neon ring.
     {
-        const double spread = style_==Style::Scale ? 24.0 :
-                              style_==Style::Machine ? 18.0 :
-                              style_==Style::Utility ? 15.0 : 17.0;
-        auto glowOuter=imageRect; glowOuter.inset(-spread,-spread);
-        radial(c,glowOuter,{255,186,38,56},{255,142,12,0});
-        auto glowInner=imageRect; glowInner.inset(-spread*0.45,-spread*0.45);
-        radial(c,glowInner,{255,205,78,42},{255,154,18,0});
+        const double spread = style_==Style::Scale ? 26.0 :
+                              style_==Style::Machine ? 20.0 :
+                              style_==Style::Utility ? 16.0 : 18.0;
+
+        auto corona=imageRect;
+        corona.inset(-spread,-spread);
+        radial(c,corona,{255,196,54,62},{255,136,10,0});
+
+        VSTGUI::CRect lower{
+            corona.left,
+            center.y - imageRadius*0.10,
+            corona.right,
+            corona.bottom + spread*0.45
+        };
+        radial(c,lower,{255,208,82,54},{255,142,12,0});
+
+        // Re-darken the exact knob footprint slightly before the hardware is
+        // painted. This reinforces the "eclipse" effect: bright source behind,
+        // dark body in front, diffuse light escaping only beyond the rim.
+        c->setFillColor({8,9,10,36});
+        c->drawEllipse(imageRect,VSTGUI::kDrawFilled);
     }
 
     {
