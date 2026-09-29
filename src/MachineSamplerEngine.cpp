@@ -426,11 +426,14 @@ void Engine::updateMachineState() noexcept {
         stallCountdown_ <= 0 &&
         stallCooldown_ <= 0) {
 
+        // Keep normal settings safe, but make an intentional extreme
+        // WEAR+LOAD test visibly demonstrable instead of waiting forever.
+        // The event is still sparse and still tied to real mechanical stress.
         const float stress =
-            std::max(0.0f, wear - 0.55f) *
-            std::max(0.0f, continuousLoad - 0.30f);
+            std::max(0.0f, wear - 0.45f) *
+            std::max(0.0f, continuousLoad - 0.20f);
         const float stallProbability =
-            std::min(0.085f, 0.55f * stress * stress);
+            std::min(0.12f, 0.75f * stress * stress);
 
         if (stallProbability > 0.0f &&
             rng_.uniform01() < stallProbability) {
