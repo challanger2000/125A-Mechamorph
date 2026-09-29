@@ -296,7 +296,7 @@ jobs:
           Copy-Item -Path $plugin.FullName -Destination packaged -Recurse -Force
 
       - name: Run 125A Plugin Tester full QA
-        if: contains(github.event.head_commit.message, '[full-qa]')
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[full-qa]')
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
