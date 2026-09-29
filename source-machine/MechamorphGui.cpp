@@ -94,23 +94,6 @@ void GuiFaceplate::draw(VSTGUI::CDrawContext* c){
     setDirty(false);
 }
 
-GuiDecoration::GuiDecoration(const VSTGUI::CRect& s,VSTGUI::CBitmap* bitmap):CView(s),bitmap_(bitmap){
-    setMouseEnabled(false); setTransparency(true);
-    if(bitmap_) bitmap_->remember();
-}
-GuiDecoration::GuiDecoration(const GuiDecoration& o):CView(o),bitmap_(o.bitmap_){
-    if(bitmap_) bitmap_->remember();
-}
-GuiDecoration::~GuiDecoration(){ if(bitmap_) bitmap_->forget(); }
-void GuiDecoration::draw(VSTGUI::CDrawContext* c){
-    const auto r=getViewSize();
-    if(bitmap_){
-        const VSTGUI::CRect src{0,0,bitmap_->getWidth(),bitmap_->getHeight()};
-        c->fillRectWithBitmap(bitmap_,src,r,1.0f);
-    }
-    setDirty(false);
-}
-
 GuiLogo::GuiLogo(const VSTGUI::CRect& s):CView(s){setMouseEnabled(false);}
 GuiLogo::GuiLogo(const GuiLogo& o):CView(o){}
 void GuiLogo::draw(VSTGUI::CDrawContext* c){

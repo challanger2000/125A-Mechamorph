@@ -203,10 +203,6 @@ VSTGUI::CView* Controller::createCustomView(VSTGUI::UTF8StringPtr name,
         auto* bitmap=description ? description->getBitmap("mech-faceplate") : nullptr;
         return new GuiFaceplate(r,bitmap);
     }
-    if(std::strcmp(name,"DangerSign")==0){
-        auto* bitmap=description ? description->getBitmap("mech-danger-sign") : nullptr;
-        return new GuiDecoration(r,bitmap);
-    }
     if(std::strcmp(name,"BrandLogo")==0) return new GuiLogo(r);
     if(std::strcmp(name,"UIScale")==0) return new GuiScale(r,editor);
 

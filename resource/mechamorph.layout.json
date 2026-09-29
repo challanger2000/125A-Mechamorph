@@ -179,13 +179,5 @@
     "utility": 90
   },
   "knobFillRatio": 0.94,
-  "machineFillRatio": 1,
-  "decorations": {
-    "dangerSign": [
-      625,
-      858,
-      190,
-      78
-    ]
-  }
+  "machineFillRatio": 1
 }

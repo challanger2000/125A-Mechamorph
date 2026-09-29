@@ -2,6 +2,7 @@ param(
     [string]$Source = "resource/mechamorph-controls/mechamorph-knob-grip-256-master.png",
     [string]$FaceplateSource = "resource/mechamorph-faceplate-v2.png",
     [string]$FaceplateOutput = "resource/mechamorph-faceplate-runtime.png",
+    [string]$DangerSignSource = "resource/mechamorph-controls/mechamorph-dangerous-sign-v2.png",
     [string]$OutputDir = "resource/mechamorph-controls"
 )
 
@@ -32,6 +33,36 @@ try {
             $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
             $g.DrawImage($face, (New-Object System.Drawing.Rectangle(0,0,1440,960)))
         } finally { $g.Dispose() }
+        $sign = [System.Drawing.Bitmap]::FromFile((Resolve-Path $DangerSignSource))
+        try {
+            $minX=$sign.Width; $minY=$sign.Height; $maxX=-1; $maxY=-1
+            for ($sy=0; $sy -lt $sign.Height; $sy++) {
+                for ($sx=0; $sx -lt $sign.Width; $sx++) {
+                    if ($sign.GetPixel($sx,$sy).A -gt 8) {
+                        if ($sx -lt $minX) { $minX=$sx }
+                        if ($sy -lt $minY) { $minY=$sy }
+                        if ($sx -gt $maxX) { $maxX=$sx }
+                        if ($sy -gt $maxY) { $maxY=$sy }
+                    }
+                }
+            }
+            if ($maxX -lt 0) { throw "DANGEROUS sign has no visible alpha pixels" }
+            $cropW=$maxX-$minX+1; $cropH=$maxY-$minY+1
+            $targetX=625; $targetY=858; $targetW=190; $targetH=78
+            $gSign=[System.Drawing.Graphics]::FromImage($faceOut)
+            try {
+                $gSign.CompositingMode=[System.Drawing.Drawing2D.CompositingMode]::SourceOver
+                $gSign.CompositingQuality=[System.Drawing.Drawing2D.CompositingQuality]::HighQuality
+                $gSign.InterpolationMode=[System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+                $gSign.PixelOffsetMode=[System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+                $gSign.SmoothingMode=[System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+                $srcRect=New-Object System.Drawing.Rectangle($minX,$minY,$cropW,$cropH)
+                $dstRect=New-Object System.Drawing.Rectangle($targetX,$targetY,$targetW,$targetH)
+                $gSign.DrawImage($sign,$dstRect,$srcRect,[System.Drawing.GraphicsUnit]::Pixel)
+            } finally { $gSign.Dispose() }
+            Write-Host "DANGEROUS sign v2 baked at $targetX,$targetY $targetW x $targetH"
+        } finally { $sign.Dispose() }
+
         $faceOut.Save($FaceplateOutput, [System.Drawing.Imaging.ImageFormat]::Png)
         Write-Host "Faceplate runtime: 1440 x 960"
     } finally { $faceOut.Dispose() }

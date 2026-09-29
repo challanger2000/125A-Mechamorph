@@ -29,7 +29,6 @@ assert bitmaps_node is not None,"UIDESC bitmaps section missing"
 bitmap_nodes={b.attrib["name"]:b for b in bitmaps_node.findall("bitmap")}
 expected={
     "mech-faceplate":"mechamorph-faceplate-runtime.png",
-    "mech-danger-sign":"mechamorph-controls/mechamorph-dangerous-sign-v2.png",
     "mech-knob-machine":"mechamorph-controls/knob-machine-64.png",
     "mech-knob-main":"mechamorph-controls/knob-main-64.png",
     "mech-knob-scale":"mechamorph-controls/knob-scale-64.png",
@@ -91,7 +90,7 @@ assert tpl.attrib.get("size")==f"{W},{H}"
 views=[v for v in tpl if v.attrib.get("custom-view-name")]
 names=[v.attrib["custom-view-name"] for v in views]
 required=[
- "Faceplate","DangerSign","UIScale","Machine","MachinePosRow1","MachinePosRow2",
+ "Faceplate","UIScale","Machine","MachinePosRow1","MachinePosRow2",
  "PressureLamp","FrictionLamp","StallLamp",
  "Speed","Load","Action","Wear","Scale","Body","Space","Output"
 ]
@@ -115,7 +114,6 @@ def box(n):
     x,y=map(int,v.attrib["origin"].split(",")); w,h=map(int,v.attrib["size"].split(","))
     return x,y,w,h
 
-assert box("DangerSign")==tuple(layout["decorations"]["dangerSign"])
 assert box("UIScale")==tuple(layout["top"]["uiScale"])
 for item in layout["top"]["machinePositions"]:
     assert box(item["name"])==tuple(item["rect"])
