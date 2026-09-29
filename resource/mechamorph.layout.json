@@ -76,10 +76,10 @@
     ]
   },
   "sizes": {
-    "machine": 280,
-    "main": 190,
-    "scale": 250,
-    "utility": 118,
+    "machine": 310,
+    "main": 220,
+    "scale": 260,
+    "utility": 130,
     "status": 52
   },
   "controls": {
@@ -105,15 +105,15 @@
     ],
     "body": [
       1347,
-      546
+      522
     ],
     "space": [
       1347,
-      694
+      670
     ],
     "output": [
       1345,
-      838
+      814
     ]
   },
   "labels": {

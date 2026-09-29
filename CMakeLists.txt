@@ -270,6 +270,7 @@ if(MECHAMORPH_BUILD_MACHINE_VST3)
             "resource/mechamorph-controls/knob-main-64.png"
             "resource/mechamorph-controls/knob-scale-64.png"
             "resource/mechamorph-controls/knob-utility-64.png"
+            "resource/mechamorph-controls/mechamorph-dangerous-sign.png"
     )
     target_compile_features(MechamorphMachine PRIVATE cxx_std_17)
     smtg_target_configure_version_file(MechamorphMachine)

@@ -168,40 +168,34 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
 
     c->setDrawMode(VSTGUI::kAntiAliasing);
 
-    // Eclipse-style under-lighting: the source sits exactly behind the knob
-    // centre. The hardware occludes the source, so only a soft amber corona is
-    // visible around the edge. The lower half is intentionally a little stronger
-    // to read as light leaking from underneath, never as a painted neon ring.
+    // Eclipse-style under-lighting. The source is centered behind the knob;
+    // the knob itself occludes it and only a soft circular amber corona escapes
+    // beyond the rim. The control view is deliberately larger than this corona,
+    // so VSTGUI cannot clip it into a rectangular glow.
     {
-        const double spread = style_==Style::Scale ? 26.0 :
-                              style_==Style::Machine ? 20.0 :
-                              style_==Style::Utility ? 16.0 : 18.0;
-
+        const double spread = style_==Style::Scale ? 28.0 :
+                              style_==Style::Machine ? 24.0 :
+                              style_==Style::Utility ? 18.0 : 20.0;
         auto corona=imageRect;
         corona.inset(-spread,-spread);
-        radial(c,corona,{255,196,54,62},{255,136,10,0});
+        radial(c,corona,{255,202,66,58},{255,140,12,0});
 
-        VSTGUI::CRect lower{
-            corona.left,
-            center.y - imageRadius*0.10,
-            corona.right,
-            corona.bottom + spread*0.45
-        };
-        radial(c,lower,{255,208,82,54},{255,142,12,0});
-
-        // Re-darken the exact knob footprint slightly before the hardware is
-        // painted. This reinforces the "eclipse" effect: bright source behind,
-        // dark body in front, diffuse light escaping only beyond the rim.
-        c->setFillColor({8,9,10,36});
+        // Dark body in front of the centered source: "solar eclipse", not neon.
+        c->setFillColor({8,9,10,30});
         c->drawEllipse(imageRect,VSTGUI::kDrawFilled);
     }
 
     {
-        const double half = std::min(r.getWidth(), r.getHeight()) * 0.5;
+        // Tick geometry is tied to the rendered knob, not the enlarged glow view.
+        // This preserves the accepted scale positions while giving the corona room.
+        const double outerBase =
+            style_==Style::Machine ? 140.0 :
+            style_==Style::Scale ? 120.0 :
+            style_==Style::Utility ? 59.0 : 95.0;
         if(style_ == Style::Machine){
             // Six discrete MACHINE positions share the same 270-degree travel as
             // the six snapped parameter values. Draw only six authoritative marks.
-            const double outer = half - 2.0;
+            const double outer = outerBase;
             constexpr int tickCount = 6;
             for(int i=0;i<tickCount;++i){
                 const double angle=(135.0 + 270.0*(static_cast<double>(i)/(tickCount-1))) * kPi/180.0;
@@ -213,7 +207,7 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
                 c->drawLine(a,b);
             }
         } else {
-            const double outer = half - (style_==Style::Scale ? 5.0 : 3.0);
+            const double outer = outerBase;
             constexpr int tickCount = 21;
             for(int i=0;i<tickCount;++i){
                 const bool major=(i%5)==0;
