@@ -3,7 +3,7 @@
   <colors><color name="Background" rgba="#090A0BFF"/></colors>
   <bitmaps>
     <bitmap name="mech-faceplate" path="mechamorph-faceplate-runtime.png"/>
-    <bitmap name="mech-danger-sign" path="mechamorph-controls/mechamorph-dangerous-sign.png"/>
+    <bitmap name="mech-danger-sign" path="mechamorph-controls/mechamorph-dangerous-sign-v2.png"/>
     <bitmap name="mech-knob-machine" path="mechamorph-controls/knob-machine-64.png" multiframe-num-frames="64" multiframe-size="256,256" mulitframe-frames-per-row="1"/>
     <bitmap name="mech-knob-main" path="mechamorph-controls/knob-main-64.png" multiframe-num-frames="64" multiframe-size="168,168" mulitframe-frames-per-row="1"/>
     <bitmap name="mech-knob-scale" path="mechamorph-controls/knob-scale-64.png" multiframe-num-frames="64" multiframe-size="198,198" mulitframe-frames-per-row="1"/>
@@ -12,7 +12,7 @@
   <template name="view" class="CViewContainer" origin="0,0" size="1440,960" transparent="false" background-color="Background">
     <view class="CView" custom-view-name="Faceplate" origin="0,0" size="1440,960" mouse-enabled="false"/>
 
-    <view class="CView" custom-view-name="DangerSign" origin="605,840" size="230,95" mouse-enabled="false"/>
+    <view class="CView" custom-view-name="DangerSign" origin="625,858" size="190,78" mouse-enabled="false"/>
 
     <view class="CView" custom-view-name="UIScale" origin="390,170" size="100,24"/>
 
