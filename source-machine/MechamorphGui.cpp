@@ -151,20 +151,17 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
 
     c->setDrawMode(VSTGUI::kAntiAliasing);
 
-    // Deliberately strong amber/yellow halo for the visual gate. Draw it behind
-    // the hardware so only a diffuse light spill remains around the knob.
+    // Soft amber spill behind the hardware. Use radial gradients instead of
+    // stacked opaque ellipses, so the light fades continuously and does not
+    // create a painted yellow ring.
     {
-        const double spread = style_==Style::Scale ? 22.0 :
-                              style_==Style::Machine ? 14.0 :
-                              style_==Style::Utility ? 13.0 : 14.0;
-        for(int n=4;n>=1;--n){
-            auto glow=imageRect;
-            const double grow=spread*(static_cast<double>(n)/4.0);
-            glow.inset(-grow,-grow);
-            const uint8_t alpha=static_cast<uint8_t>(24 + (5-n)*18);
-            c->setFillColor({255,190,38,alpha});
-            c->drawEllipse(glow,VSTGUI::kDrawFilled);
-        }
+        const double spread = style_==Style::Scale ? 24.0 :
+                              style_==Style::Machine ? 18.0 :
+                              style_==Style::Utility ? 15.0 : 17.0;
+        auto glowOuter=imageRect; glowOuter.inset(-spread,-spread);
+        radial(c,glowOuter,{255,186,38,56},{255,142,12,0});
+        auto glowInner=imageRect; glowInner.inset(-spread*0.45,-spread*0.45);
+        radial(c,glowInner,{255,205,78,42},{255,154,18,0});
     }
 
     {
@@ -241,25 +238,17 @@ void GuiKnob::draw(VSTGUI::CDrawContext* c){
     setDirty(false);
 }
 
-GuiLabel::GuiLabel(const VSTGUI::CRect& s,std::string text,double fs,bool muted,bool panelMask)
-:CView(s),text_(std::move(text)),fontSize_(fs),muted_(muted),panelMask_(panelMask){setMouseEnabled(false);}
+GuiLabel::GuiLabel(const VSTGUI::CRect& s,std::string text,double fs,bool muted)
+:CView(s),text_(std::move(text)),fontSize_(fs),muted_(muted){setMouseEnabled(false);}
 GuiLabel::GuiLabel(const GuiLabel& o)
-:CView(o),text_(o.text_),fontSize_(o.fontSize_),muted_(o.muted_),panelMask_(o.panelMask_){}
+:CView(o),text_(o.text_),fontSize_(o.fontSize_),muted_(o.muted_){}
 void GuiLabel::draw(VSTGUI::CDrawContext* c){
     const auto r=getViewSize(); c->setDrawMode(VSTGUI::kAntiAliasing);
-    VSTGUI::CRect textRect=r;
-    if(panelMask_){
-        // Cover the old baked utility caption with a deliberate small header plate,
-        // then place the caption above the knob scale instead of on top of it.
-        fillRound(c,r,4.0,{43,44,41,250},{27,28,26,250});
-        textRect.bottom=std::min(r.bottom,r.top+22.0);
-        textRect.top+=1.0;
-    }
     c->setFont(VSTGUI::kNormalFont,fontSize_,VSTGUI::kBoldFace);
-    VSTGUI::CRect sh=textRect; sh.offset(0,1); c->setFontColor({0,0,0,170});
+    VSTGUI::CRect sh=r; sh.offset(0,1); c->setFontColor({0,0,0,170});
     c->drawString(VSTGUI::UTF8String(text_.c_str()),sh,VSTGUI::kCenterText);
     c->setFontColor(muted_?VSTGUI::CColor{154,153,147,255}:kIvory);
-    c->drawString(VSTGUI::UTF8String(text_.c_str()),textRect,VSTGUI::kCenterText);
+    c->drawString(VSTGUI::UTF8String(text_.c_str()),r,VSTGUI::kCenterText);
     setDirty(false);
 }
 

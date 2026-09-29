@@ -46,9 +46,6 @@ def generate(L):
     out.append('')
     for key,name in [("body","Body"),("space","Space"),("output","Output")]:
         out.append(view(name,rc(*controls[key],sz["utility"],sz["utility"])))
-    out.append('')
-    for key,name in [("body","Body"),("space","Space"),("output","Output")]:
-        out.append(view(name+"Label",L["labels"][key],False))
     out += ['  </template>','</vstgui-ui-description>']
     return "\n".join(out)+"\n"
 

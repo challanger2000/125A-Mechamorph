@@ -87,8 +87,7 @@ names=[v.attrib["custom-view-name"] for v in views]
 required=[
  "Faceplate","UIScale","Machine","MachinePosRow1","MachinePosRow2",
  "PressureLamp","FrictionLamp","StallLamp",
- "Speed","Load","Action","Wear","Scale","Body","Space","Output",
- "BodyLabel","SpaceLabel","OutputLabel"
+ "Speed","Load","Action","Wear","Scale","Body","Space","Output"
 ]
 missing=[n for n in required if n not in names]
 assert not missing,missing
@@ -134,8 +133,5 @@ for key,name in [("pressure","PressureLamp"),("friction","FrictionLamp"),("stall
     cx,cy=layout["top"]["status"][key]
     x,y,w,h=box(name)
     assert x+w/2==cx and y+h/2==cy,(name,"status axis mismatch")
-
-for key,name in [("body","BodyLabel"),("space","SpaceLabel"),("output","OutputLabel")]:
-    assert box(name)==tuple(layout["labels"][key]),(name,"utility label mismatch")
 
 print("Mechamorph baked-faceplate GUI geometry + unified control sizing PASS")

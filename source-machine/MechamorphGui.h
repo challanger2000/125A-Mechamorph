@@ -39,7 +39,7 @@ private:
 
 class GuiLabel final : public VSTGUI::CView {
 public:
-    GuiLabel(const VSTGUI::CRect& size, std::string text, double fontSize, bool muted=false, bool panelMask=false);
+    GuiLabel(const VSTGUI::CRect& size, std::string text, double fontSize, bool muted=false);
     GuiLabel(const GuiLabel& other);
     VSTGUI::CBaseObject* newCopy() const override { return new GuiLabel(*this); }
     void draw(VSTGUI::CDrawContext* context) override;
@@ -47,7 +47,6 @@ private:
     std::string text_;
     double fontSize_;
     bool muted_;
-    bool panelMask_;
 };
 
 class GuiStatusLamp final : public VSTGUI::CControl {
